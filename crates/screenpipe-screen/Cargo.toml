@@ -75,9 +75,12 @@ harness = false
 
 # Platform-specific dependencies
 
-# macOS: sck-rs for 12.3+ (ScreenCaptureKit), xcap as fallback for older versions
+# macOS: sck-rs for 12.3+ (ScreenCaptureKit), xcap as fallback for older versions.
+# Vendored under vendor/sck-rs (MIT) so litepipe owns and can fix the capture
+# stack — notably a null window title/app-name crash on macOS 26+ (see that
+# crate's window.rs ns_string_lossy).
 [target.'cfg(target_os = "macos")'.dependencies]
-sck-rs = { git = "https://github.com/screenpipe/sck-rs" , rev = "b7f48a1236b2339350baa1375a805c7ce32f88df"}
+sck-rs = { path = "../../vendor/sck-rs" }
 xcap = "0.9"
 libc = "0.2.168"
 cidre = { git = "https://github.com/yury/cidre.git", rev = "8481f3f0dc7dd39bb5be80d9424bfac0cad3801a", features = ["vn", "cv", "cg", "app"] }
