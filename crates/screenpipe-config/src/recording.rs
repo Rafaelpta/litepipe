@@ -549,7 +549,7 @@ impl Default for RecordingSettings {
             disable_timeline: false,
             monitor_ids: vec![],
             use_all_monitors: true,
-            video_quality: "balanced".to_string(),
+            video_quality: "low".to_string(),
             max_snapshot_width: default_max_snapshot_width(),
             disable_snapshot_compaction: false,
             disable_meeting_detector: false,

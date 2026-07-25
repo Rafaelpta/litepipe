@@ -65,8 +65,8 @@ pub fn setup_dock_menu(app_handle: AppHandle) {
             unsafe {
                 let menu: id = msg_send![class!(NSMenu), new];
 
-                // "Show screenpipe"
-                let title = NSString::alloc(nil).init_str("Show screenpipe");
+                // "Show litepipe"
+                let title = NSString::alloc(nil).init_str("Show litepipe");
                 let action = sel!(showScreenpipe:);
                 let key = NSString::alloc(nil).init_str("");
                 let item: id = msg_send![class!(NSMenuItem), alloc];

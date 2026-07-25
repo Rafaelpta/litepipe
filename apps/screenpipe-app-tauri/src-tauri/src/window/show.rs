@@ -81,8 +81,8 @@ impl RewindWindowId {
 
     pub fn title(&self) -> &str {
         match self {
-            RewindWindowId::Main => "screenpipe",
-            RewindWindowId::Home => "screenpipe",
+            RewindWindowId::Main => "litepipe",
+            RewindWindowId::Home => "litepipe",
             RewindWindowId::Search => "search",
             RewindWindowId::Onboarding => "onboarding",
             RewindWindowId::Chat => "ai chat",
@@ -708,7 +708,7 @@ impl ShowRewindWindow {
                                 "/overlay",
                                 main_label_for_mode("window"),
                             )
-                            .title("screenpipe")
+                            .title("litepipe")
                             .inner_size(win_w, win_h)
                             .min_inner_size(800.0, 600.0)
                             .decorations(true)
@@ -730,7 +730,7 @@ impl ShowRewindWindow {
                                 "/overlay",
                                 main_label_for_mode("window"),
                             )
-                            .title("screenpipe")
+                            .title("litepipe")
                             .inner_size(win_w, win_h)
                             .min_inner_size(800.0, 600.0)
                             .decorations(true)
@@ -1073,7 +1073,7 @@ impl ShowRewindWindow {
                             "/overlay",
                             main_label_for_mode("fullscreen"),
                         )
-                        .title("screenpipe")
+                        .title("litepipe")
                         .visible_on_all_workspaces(true)
                         .always_on_top(true)
                         .decorations(false)
@@ -1128,7 +1128,7 @@ impl ShowRewindWindow {
                             "/overlay",
                             main_label_for_mode("fullscreen"),
                         )
-                        .title("screenpipe")
+                        .title("litepipe")
                         .inner_size(linux_w, linux_h)
                         .min_inner_size(800.0, 600.0)
                         .decorations(true)

@@ -304,11 +304,11 @@ pub fn apply_tier_defaults(settings: &mut RecordingSettings, tier: DeviceTier) {
 
     match tier {
         DeviceTier::High => {
-            settings.video_quality = "balanced".to_string();
+            settings.video_quality = "low".to_string();
             settings.power_mode = Some("auto".to_string());
         }
         DeviceTier::Mid => {
-            settings.video_quality = "balanced".to_string();
+            settings.video_quality = "low".to_string();
             settings.power_mode = Some("auto".to_string());
             // Only record the primary monitor to reduce CPU/GPU load
             settings.use_all_monitors = false;

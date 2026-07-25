@@ -824,7 +824,7 @@ async fn main() {
                 let app_ui_hidden = crate::enterprise_policy::is_app_ui_hidden();
 
                 let mut app_submenu_builder = SubmenuBuilder::new(app, "screenpipe")
-                    .item(&PredefinedMenuItem::about(app, Some("About screenpipe"), None)?)
+                    .item(&PredefinedMenuItem::about(app, Some("About litepipe"), None)?)
                     .separator();
                 if !crate::updates::is_enterprise_build(&app_handle) {
                     app_submenu_builder = app_submenu_builder
