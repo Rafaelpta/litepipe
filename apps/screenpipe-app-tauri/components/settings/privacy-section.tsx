@@ -1,0 +1,1401 @@
+"use client";
+
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import type { SettingsField } from "./settings-search";
+
+/** Settings search index for this section. Co-located with the component so adding a field here means updating one file. See `SettingsField` in `./settings-search` for the schema. */
+export const searchIndex: SettingsField[] = [
+  { label: "Blocklist", keywords: ["ignore", "exclude", "block"] },
+  { label: "PII masking", keywords: ["mask", "redact"] },
+  { label: "Telemetry" },
+];
+import {
+  Eye,
+  EyeOff,
+  Globe,
+  Shield,
+  Monitor,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  AppWindowMac,
+  Tv,
+  Lock,
+  Copy,
+  ClipboardX,
+  Keyboard,
+  FolderTree,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { WindowPicker } from "./window-picker";
+import { useSettings, Settings } from "@/lib/hooks/use-settings";
+import { ScheduleSettings } from "./schedule-settings";
+import { useToast } from "@/components/ui/use-toast";
+import { useSqlAutocomplete } from "@/lib/hooks/use-sql-autocomplete";
+import { useInstalledApps } from "@/lib/hooks/use-installed-apps";
+import { commands } from "@/lib/utils/tauri";
+import posthog from "posthog-js";
+import * as Sentry from "@sentry/react";
+import {
+  validateField,
+  sanitizeValue,
+  debounce,
+  FieldValidationResult,
+} from "@/lib/utils/validation";
+
+const formatCount = (count: number): string => {
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+  return `${count}`;
+};
+
+const getAppIconUrl = (appName: string): string => {
+  return `http://localhost:11435/app-icon?name=${encodeURIComponent(appName)}`;
+};
+
+const createWindowOptions = (
+  windowItems: { name: string; count: number; app_name?: string }[],
+  existingPatterns: string[],
+  installedApps: string[] = []
+) => {
+  // For each observed window, surface BOTH the bare title (matches anywhere)
+  // and a scoped `App::Title` variant (matches that one window of that one
+  // app). Users can pick whichever matches their intent.
+  const seen = new Set<string>();
+  const windowOptions: ReturnType<typeof toOption>[] = [];
+  const sorted = [...windowItems].sort((a, b) => b.count - a.count);
+
+  function toOption(args: {
+    value: string;
+    label: string;
+    iconHint?: string;
+    description: string;
+  }) {
+    return {
+      value: args.value,
+      label: args.label,
+      icon: AppWindowMac,
+      iconUrl: getAppIconUrl(args.iconHint || args.value),
+      description: args.description,
+    };
+  }
+
+  for (const item of sorted) {
+    if (!seen.has(item.name)) {
+      seen.add(item.name);
+      windowOptions.push(
+        toOption({
+          value: item.name,
+          label: item.name,
+          iconHint: item.app_name || item.name,
+          description: [
+            item.app_name && item.app_name !== item.name
+              ? item.app_name
+              : null,
+            `${formatCount(item.count)} captures`,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        })
+      );
+    }
+    if (item.app_name && item.app_name !== item.name) {
+      const scoped = `${item.app_name}::${item.name}`;
+      if (!seen.has(scoped)) {
+        seen.add(scoped);
+        windowOptions.push(
+          toOption({
+            value: scoped,
+            label: scoped,
+            iconHint: item.app_name,
+            description: `scoped: only this window of ${item.app_name}`,
+          })
+        );
+      }
+    }
+  }
+
+  const seenLower = new Set(Array.from(seen, (s) => s.toLowerCase()));
+
+  // Installed apps that have no captures yet. Lets users add an ignore/include
+  // rule for an app before it's ever recorded; the icon still resolves by name
+  // so these render with their real app icon despite zero captures.
+  const installedOptions = installedApps
+    .filter((app) => app && !seenLower.has(app.toLowerCase()))
+    .map((app) => {
+      seenLower.add(app.toLowerCase());
+      return toOption({
+        value: app,
+        label: app,
+        iconHint: app,
+        description: "installed · not captured yet",
+      });
+    });
+
+  const customOptions = existingPatterns
+    .filter((pattern) => !seenLower.has(pattern.toLowerCase()))
+    .map((pattern) => ({
+      value: pattern,
+      label: pattern,
+      icon: AppWindowMac,
+      iconUrl: getAppIconUrl(pattern.includes("::") ? pattern.split("::")[0] : pattern),
+    }));
+
+  return [...windowOptions, ...installedOptions, ...customOptions];
+};
+
+const getFaviconUrl = (domain: string): string => {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+};
+
+const createUrlOptions = (
+  urlItems: { name: string; count: number }[],
+  existingUrls: string[]
+) => {
+  const urlOptions = [...urlItems]
+    .sort((a, b) => b.count - a.count)
+    .map((item) => ({
+      value: item.name,
+      label: item.name,
+      iconUrl: getFaviconUrl(item.name),
+      icon: Globe,
+      description: `${formatCount(item.count)} visits this week`,
+    }));
+
+  const customOptions = existingUrls
+    .filter((url) => !urlItems.some((item) => item.name === url))
+    .map((url) => ({
+      value: url,
+      label: url,
+      iconUrl: getFaviconUrl(url),
+      icon: Globe,
+    }));
+
+  return [...urlOptions, ...customOptions];
+};
+
+function EncryptDataCard({
+  encryptStore,
+  onEncryptStoreChange,
+}: {
+  encryptStore: boolean;
+  onEncryptStoreChange: (checked: boolean) => void;
+}) {
+  const [keychainState, setKeychainState] = useState<string>("loading");
+  const [toggling, setToggling] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    commands.getKeychainStatus().then((res) => {
+      if (res.status === "ok") {
+        setKeychainState(res.data.state);
+      } else {
+        setKeychainState("unavailable");
+      }
+    });
+  }, []);
+
+  // Combined "on" state: keychain enabled AND settings encryption on
+  const isFullyEnabled = keychainState === "enabled" && encryptStore;
+
+  const handleToggle = async (checked: boolean) => {
+    if (toggling) return;
+    setToggling(true);
+
+    if (checked) {
+      // Enable: create keychain key (may trigger OS modal) + encrypt credentials + enable store.bin encryption
+      const res = await commands.enableKeychainEncryption();
+      if (res.status === "ok" && res.data.state === "enabled") {
+        setKeychainState("enabled");
+        onEncryptStoreChange(true);
+        toast({ title: "Encryption enabled", description: "Credentials and settings are now encrypted at rest." });
+      } else {
+        toast({ title: "Keychain access denied", description: "Could not enable encryption. Try again later.", variant: "destructive" });
+      }
+    } else {
+      // Disable: decrypt credentials first, then turn off store.bin encryption.
+      const res = await commands.disableKeychainEncryption();
+      if (res.status === "ok" && res.data.state === "disabled") {
+        setKeychainState("disabled");
+        onEncryptStoreChange(false);
+        toast({
+          title: "Encryption disabled",
+          description: "Credentials and settings are now stored without keychain encryption.",
+        });
+      } else {
+        toast({
+          title: "Could not disable encryption",
+          description: "Encrypted credentials could not be decrypted. Check keychain access and try again.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    setToggling(false);
+  };
+
+  if (keychainState === "loading") return null;
+
+  return (
+    <Card className="border-border bg-card">
+      <CardContent className="px-3 py-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div>
+              <h3 className="text-sm font-medium text-foreground">
+                Encrypt Data at Rest
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {keychainState === "unavailable"
+                  ? "OS keychain not available on this system."
+                  : "Encrypt credentials and settings with your OS keychain."}
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={isFullyEnabled}
+            onCheckedChange={handleToggle}
+            disabled={toggling || keychainState === "unavailable"}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function PrivacySection() {
+  const { settings, updateSettings } = useSettings();
+  const { toast } = useToast();
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [picker, setPicker] = useState<"ignored" | "included" | null>(null);
+
+  const [liveApiKey, setLiveApiKey] = useState<string | null>(null);
+  const [revealApiKey, setRevealApiKey] = useState(false);
+  const [regeneratingKey, setRegeneratingKey] = useState(false);
+  // Tracks a manually-typed key that hasn't been persisted yet. Set on input
+  // change, cleared after handleUpdate saves it to the secret store.
+  const [pendingApiKey, setPendingApiKey] = useState<string | null>(null);
+  const pendingSettingsWriteRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingSettingsRef = useRef<Partial<Settings>>({});
+
+  const loadLiveApiKey = useCallback(async () => {
+    try {
+      const res = await (commands.getLocalApiConfig() as Promise<{ key: string | null }>);
+      setLiveApiKey(res.key ?? null);
+    } catch {
+      setLiveApiKey(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadLiveApiKey();
+  }, [loadLiveApiKey]);
+
+  const { items: windowItems, isLoading: isWindowItemsLoading } =
+    useSqlAutocomplete("window");
+  const { items: urlItems, isLoading: isUrlItemsLoading } =
+    useSqlAutocomplete("url");
+  // Installed apps with no captures yet — merged into the app filters so users
+  // can block/allow an app before it's ever recorded.
+  const { apps: installedApps } = useInstalledApps();
+
+  const handleSettingsChange = useCallback(
+    (newSettings: Partial<Settings>, restart: boolean = true) => {
+      const sanitizedSettings: Partial<Settings> = {};
+      for (const [key, value] of Object.entries(newSettings)) {
+        (sanitizedSettings as any)[key] = sanitizeValue(key as any, value);
+      }
+      pendingSettingsRef.current = {
+        ...pendingSettingsRef.current,
+        ...sanitizedSettings,
+      };
+      const write = pendingSettingsWriteRef.current
+        .catch(() => undefined)
+        .then(() => updateSettings(sanitizedSettings));
+      pendingSettingsWriteRef.current = write;
+      void write.catch((error) => {
+        console.error("Failed to save privacy setting:", error);
+      });
+      if (restart) {
+        setHasUnsavedChanges(true);
+      }
+    },
+    [updateSettings]
+  );
+
+  const handleUpdate = async () => {
+    if (Object.keys(validationErrors).length > 0) {
+      toast({
+        title: "Validation errors",
+        description: "Please fix all validation errors before applying changes",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    setHasUnsavedChanges(false);
+
+    toast({
+      title: "Updating privacy settings",
+      description: "This may take a few moments...",
+    });
+
+    try {
+      const pendingSettings = pendingSettingsRef.current;
+      await pendingSettingsWriteRef.current;
+      pendingSettingsRef.current = {};
+
+      if (pendingApiKey) {
+        const res = await commands.setApiAuthKey(pendingApiKey);
+        if (res.status === "error") throw new Error(res.error);
+        setPendingApiKey(null);
+      }
+
+      const analyticsEnabled =
+        pendingSettings.analyticsEnabled ?? settings.analyticsEnabled;
+
+      // litepipe: telemetry is permanently disabled. There is no re-enable path;
+      // PostHog is never initialized and Sentry is never started.
+      void analyticsEnabled;
+      posthog.opt_out_capturing();
+      Sentry.close();
+
+      await commands.stopScreenpipe();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await commands.spawnScreenpipe(null);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      toast({
+        title: "Settings updated successfully",
+        description: "litepipe has been restarted with new settings",
+      });
+    } catch (error) {
+      console.error("Failed to update settings:", error);
+      toast({
+        title: "Error updating settings",
+        description: "Please try again or check the logs for more information",
+        variant: "destructive",
+      });
+      setHasUnsavedChanges(true);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // ── PII removal: one user-facing toggle, three internal flags ─────
+  //
+  // The UI exposes a single "PII Removal" section with two modes —
+  // Basic (regex on the hot path) and Smart (regex + AI background
+  // worker, also covers images). Underneath we still drive the three
+  // historically-independent backend flags:
+  //
+  //   usePiiRemoval            → hot-path regex (screenpipe-core)
+  //   asyncPiiRedaction        → text reconciliation worker (screenpipe-redact)
+  //   asyncImagePiiRedaction   → image redactor worker (rfdetr_v8)
+  //
+  // Smart implies Basic — there's no reason to disable the cheap
+  // deterministic safety net while running the expensive ML pass, and
+  // keeping them coupled means a single source of truth for "is the
+  // user opted into PII removal at all?" downstream.
+  type PiiMode = "off" | "basic" | "smart";
+  const piiMode: PiiMode = (() => {
+    const aiOn =
+      Boolean(settings.asyncPiiRedaction ?? false) ||
+      Boolean(settings.asyncImagePiiRedaction ?? false);
+    if (aiOn) return "smart";
+    if (settings.usePiiRemoval) return "basic";
+    return "off";
+  })();
+
+  const handlePiiModeChange = (next: PiiMode) => {
+    handleSettingsChange(
+      {
+        usePiiRemoval: next !== "off",
+        asyncPiiRedaction: next === "smart",
+        asyncImagePiiRedaction: next === "smart",
+      },
+      true,
+    );
+  };
+
+  // Cloud media analysis (Gemma 4 E4B inside our Tinfoil enclave) —
+  // toggling this also rewrites the screenpipe-api skill markdown so
+  // agents see the capability iff the toggle is on. Defaults to true.
+  const cloudMediaAnalysisEnabled =
+    settings.cloudMediaAnalysisEnabled ?? true;
+
+  const handleCloudMediaAnalysisChange = useCallback(
+    async (checked: boolean) => {
+      handleSettingsChange({ cloudMediaAnalysisEnabled: checked }, true);
+      try {
+        const res = await commands.setCloudMediaAnalysisSkill(checked);
+        if (res.status === "error") throw new Error(res.error);
+      } catch (e) {
+        console.error("failed to sync cloud media analysis skill:", e);
+        // Don't block on the file mutation — setting still persisted in
+        // the UI store. Worst case Pi sees a stale block until next
+        // toggle or app restart.
+      }
+    },
+    [handleSettingsChange],
+  );
+
+  // On first hydrate sync the skill file with the (default-true) setting.
+  // Cheap idempotent file write; ensures fresh installs land with the
+  // block present, and that flipping settings.json from outside the app
+  // (e.g. importing a config) keeps the skill in sync.
+  useEffect(() => {
+    if (!settings) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!cancelled) {
+          const res = await commands.setCloudMediaAnalysisSkill(cloudMediaAnalysisEnabled);
+          if (res.status === "error") throw new Error(res.error);
+        }
+      } catch (e) {
+        console.error("cloud media analysis skill sync on hydrate failed:", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally NOT depending on cloudMediaAnalysisEnabled — we want
+    // this to fire once on mount; subsequent changes flow through
+    // handleCloudMediaAnalysisChange which calls invoke directly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const aiPiiRemovalEnabled = piiMode === "smart";
+
+  // Where the AI workers run — one switch covers both modalities.
+  const piiBackend = (settings.piiBackend as "local" | "tinfoil" | undefined) ?? "local";
+  const handlePiiBackendChange = (next: "local" | "tinfoil") => {
+    handleSettingsChange({ piiBackend: next } as any, true);
+  };
+
+  // Which PII classes the AI workers actually remove. Secret is the
+  // always-on baseline (the backend forces it in too — see
+  // screenpipe_redact::parse_allow_list); the rest are opt-in. Stored
+  // as canonical snake_case SpanLabel names in `piiRedactionLabels`.
+  // The model detects every class, but only the selected ones get
+  // redacted — everything else stays as searchable timeline value.
+  const PII_FIELD_OPTIONS: {
+    value: string;
+    label: string;
+    desc: string;
+    always?: boolean;
+  }[] = [
+    { value: "secret", label: "Secrets", desc: "passwords, API keys, tokens", always: true },
+    { value: "id", label: "IDs", desc: "SSNs, credit cards, account & license numbers" },
+    { value: "person", label: "Names", desc: "people's names" },
+    { value: "email", label: "Emails", desc: "email addresses" },
+    { value: "phone", label: "Phone numbers", desc: "phone numbers" },
+    { value: "address", label: "Addresses", desc: "postal addresses" },
+    { value: "url", label: "URLs", desc: "links carrying tokens or session IDs" },
+    { value: "date", label: "Dates", desc: "dates of birth, timestamps" },
+    { value: "sensitive", label: "Sensitive info", desc: "health, financial, identity context" },
+  ];
+
+  const piiRedactionLabels = useMemo<string[]>(() => {
+    const raw = (settings.piiRedactionLabels as string[] | undefined) ?? ["secret"];
+    // Secret is always implied, regardless of what's persisted.
+    return raw.includes("secret") ? raw : ["secret", ...raw];
+  }, [settings.piiRedactionLabels]);
+
+  const handlePiiLabelToggle = (value: string, checked: boolean) => {
+    if (value === "secret") return; // always-on baseline; can't be unchecked
+    const next = new Set(piiRedactionLabels);
+    if (checked) next.add(value);
+    else next.delete(value);
+    next.add("secret"); // never drop the baseline
+    // Persist in the canonical option order so diffs stay stable.
+    const ordered = PII_FIELD_OPTIONS.map((o) => o.value).filter((v) => next.has(v));
+    handleSettingsChange({ piiRedactionLabels: ordered } as Partial<Settings>, true);
+  };
+
+  const handleIncognitoToggle = (checked: boolean) => {
+    handleSettingsChange({ ignoreIncognitoWindows: checked }, true);
+  };
+
+  const handleDrmPauseToggle = (checked: boolean) => {
+    handleSettingsChange({ pauseOnDrmContent: checked }, true);
+  };
+
+  const handleClipboardCaptureToggle = (checked: boolean) => {
+    // UI is "Capture clipboard" on/off. Settings store inverts to match
+    // the CLI flag name (--disable-clipboard-capture).
+    handleSettingsChange({ disableClipboardCapture: !checked }, true);
+  };
+
+  const handleKeyboardCaptureToggle = (checked: boolean) => {
+    // UI is "Capture keyboard" on/off. Settings store inverts to match
+    // the CLI flag name (--disable-keyboard-capture).
+    handleSettingsChange({ disableKeyboardCapture: !checked }, true);
+  };
+
+  const handleRecordWhileLockedToggle = (checked: boolean) => {
+    handleSettingsChange({ recordWhileLocked: checked }, true);
+  };
+
+  const handleAnalyticsToggle = (checked: boolean) => {
+    handleSettingsChange({ analyticsEnabled: checked }, true);
+  };
+
+  // Add one pattern from the WindowPicker. Reuses the MultiSelect change
+  // handler so the mutual-exclusion logic (a pattern in ignore is removed
+  // from include and vice versa) stays in one place.
+  const addIgnoredPattern = (pattern: string) => {
+    const lower = pattern.toLowerCase();
+    if (settings.ignoredWindows.some((w) => w.toLowerCase() === lower)) return;
+    handleIgnoredWindowsChange([...settings.ignoredWindows, pattern]);
+  };
+  const addIncludedPattern = (pattern: string) => {
+    const lower = pattern.toLowerCase();
+    if (settings.includedWindows.some((w) => w.toLowerCase() === lower)) return;
+    handleIncludedWindowsChange([...settings.includedWindows, pattern]);
+  };
+
+  const handleIgnoredWindowsChange = (values: string[]) => {
+    const lowerCaseValues = values.map((v) => v.toLowerCase());
+    const currentLowerCase = settings.ignoredWindows.map((v) =>
+      v.toLowerCase()
+    );
+    const addedValues = values.filter(
+      (v) => !currentLowerCase.includes(v.toLowerCase())
+    );
+    const removedValues = settings.ignoredWindows.filter(
+      (v) => !lowerCaseValues.includes(v.toLowerCase())
+    );
+
+    if (addedValues.length > 0) {
+      const newValue = addedValues[0];
+      handleSettingsChange(
+        {
+          ignoredWindows: [...settings.ignoredWindows, newValue],
+          includedWindows: settings.includedWindows.filter(
+            (w) => w.toLowerCase() !== newValue.toLowerCase()
+          ),
+        },
+        true
+      );
+    } else if (removedValues.length > 0) {
+      const removedValue = removedValues[0];
+      handleSettingsChange(
+        {
+          ignoredWindows: settings.ignoredWindows.filter(
+            (w) => w !== removedValue
+          ),
+        },
+        true
+      );
+    }
+  };
+
+  const handleIncludedWindowsChange = (values: string[]) => {
+    const lowerCaseValues = values.map((v) => v.toLowerCase());
+    const currentLowerCase = settings.includedWindows.map((v) =>
+      v.toLowerCase()
+    );
+    const addedValues = values.filter(
+      (v) => !currentLowerCase.includes(v.toLowerCase())
+    );
+    const removedValues = settings.includedWindows.filter(
+      (v) => !lowerCaseValues.includes(v.toLowerCase())
+    );
+
+    if (addedValues.length > 0) {
+      const newValue = addedValues[0];
+      handleSettingsChange(
+        {
+          includedWindows: [...settings.includedWindows, newValue],
+          ignoredWindows: settings.ignoredWindows.filter(
+            (w) => w.toLowerCase() !== newValue.toLowerCase()
+          ),
+        },
+        true
+      );
+    } else if (removedValues.length > 0) {
+      const removedValue = removedValues[0];
+      handleSettingsChange(
+        {
+          includedWindows: settings.includedWindows.filter(
+            (w) => w !== removedValue
+          ),
+        },
+        true
+      );
+    }
+  };
+
+  const handleIgnoredUrlsChange = (values: string[]) => {
+    const currentUrls = settings.ignoredUrls || [];
+    const lowerCaseValues = values.map((v) => v.toLowerCase());
+    const currentLowerCase = currentUrls.map((v) => v.toLowerCase());
+    const addedValues = values.filter(
+      (v) => !currentLowerCase.includes(v.toLowerCase())
+    );
+    const removedValues = currentUrls.filter(
+      (v) => !lowerCaseValues.includes(v.toLowerCase())
+    );
+
+    if (addedValues.length > 0) {
+      const newValue = addedValues[0];
+      handleSettingsChange(
+        { ignoredUrls: [...currentUrls, newValue] },
+        true
+      );
+    } else if (removedValues.length > 0) {
+      const removedValue = removedValues[0];
+      handleSettingsChange(
+        { ignoredUrls: currentUrls.filter((u) => u !== removedValue) },
+        true
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <p className="text-muted-foreground text-sm mb-4">
+        Content filtering, PII redaction, and telemetry
+      </p>
+
+      <div className="flex items-center justify-end">
+          {hasUnsavedChanges && (
+            <Button
+              onClick={handleUpdate}
+              disabled={isUpdating || Object.keys(validationErrors).length > 0}
+              size="sm"
+              data-testid="privacy-apply-restart"
+              className="flex items-center gap-1.5 h-7 text-xs bg-foreground text-background hover:bg-background hover:text-foreground transition-colors duration-150"
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+              Apply & Restart
+            </Button>
+          )}
+      </div>
+
+      {/* Security */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+          Security
+        </h2>
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    Require API Authentication
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    All API requests require a valid token when enabled — including local ones. Most apps pair automatically; use this key only for manual API clients and troubleshooting.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={settings.apiAuth ?? true}
+                onCheckedChange={(checked) => {
+                  handleSettingsChange({ apiAuth: checked });
+                }}
+                data-testid="privacy-api-auth-switch"
+              />
+            </div>
+            {hasUnsavedChanges && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+                <RefreshCw className="h-3 w-3 shrink-0" />
+                click &quot;Apply &amp; Restart&quot; above for auth changes to take effect; existing browser connections keep using the old key until then
+              </p>
+            )}
+            {(settings.apiAuth ?? true) && (
+              <div className="mt-2.5 flex items-center space-x-2.5 pl-6.5">
+                <Input
+                  type="text"
+                  readOnly={!revealApiKey}
+                  placeholder="e.g. sp-abc12345"
+                  data-testid="privacy-api-key-input"
+                  value={
+                    liveApiKey
+                      ? revealApiKey
+                        ? liveApiKey
+                        : "•".repeat(Math.min(liveApiKey.length, 32))
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (!revealApiKey) return;
+                    const val = e.target.value;
+                    setLiveApiKey(val);
+                    setPendingApiKey(val);
+                    if (!val.trim()) {
+                      setValidationErrors((prev) => ({ ...prev, apiKey: "API key cannot be empty" }));
+                    } else {
+                      setValidationErrors(({ apiKey: _, ...rest }) => rest);
+                    }
+                    setHasUnsavedChanges(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && pendingApiKey && pendingApiKey.trim()) {
+                      handleUpdate();
+                    }
+                  }}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                  className="h-8 text-xs font-mono cursor-text select-all"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 shrink-0"
+                  title={revealApiKey ? "Hide key" : "Reveal key"}
+                  onClick={() => setRevealApiKey((v) => !v)}
+                  disabled={!liveApiKey}
+                  data-testid="privacy-api-key-reveal"
+                >
+                  {revealApiKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 shrink-0"
+                  title="Copy key"
+                  disabled={!liveApiKey}
+                  data-testid="privacy-api-key-copy"
+                  onClick={async () => {
+                    if (!liveApiKey) return;
+                    try {
+                      await navigator.clipboard.writeText(liveApiKey);
+                    } catch {
+                      const el = document.createElement("textarea");
+                      el.value = liveApiKey;
+                      el.style.position = "fixed";
+                      el.style.opacity = "0";
+                      document.body.appendChild(el);
+                      el.select();
+                      document.execCommand("copy");
+                      document.body.removeChild(el);
+                    }
+                    toast({ title: "API key copied to clipboard" });
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 shrink-0"
+                  title="Regenerate key"
+                  disabled={regeneratingKey}
+                  data-testid="privacy-api-key-regenerate"
+                  onClick={async () => {
+                    const { confirm } = await import("@tauri-apps/plugin-dialog");
+                    const confirmed = await confirm(
+                      "Regenerate API key? Existing browser extensions stay connected until you Apply & Restart, then they must reconnect with the new key.",
+                      { title: "litepipe", kind: "info" },
+                    );
+                    if (!confirmed) return;
+                    setRegeneratingKey(true);
+                    try {
+                      const res = await commands.regenerateApiAuthKey();
+                      if (res.status === "error") throw new Error(res.error);
+                      const newKey = res.data;
+                      setLiveApiKey(newKey);
+                      setRevealApiKey(true);
+                      setHasUnsavedChanges(true);
+                      toast({
+                        title: "API key regenerated",
+                        description: "Click Apply & Restart. Browser extensions will need to reconnect after restart.",
+                      });
+                    } catch (e: any) {
+                      toast({
+                        title: "Failed to regenerate API key",
+                        description: String(e?.message ?? e),
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setRegeneratingKey(false);
+                    }
+                  }}
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", regeneratingKey && "animate-spin")} />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* LAN access — off by default. Toggling on force-enables api_auth
+            (the backend mirrors this guard in RecordingConfig::from_settings
+            so the API is never exposed to the network unauthenticated). */}
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    Allow LAN access
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Bind the API to <code className="text-[10px]">0.0.0.0</code> so other devices on your local
+                    network can query it. API authentication is force-enabled
+                    whenever this is on. Restart the app to apply.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={settings.listenOnLan ?? false}
+                onCheckedChange={(checked) => {
+                  // Keep the UI consistent with the backend guard: flipping
+                  // LAN on also flips api_auth on, so the user can't
+                  // accidentally leave themselves open.
+                  if (checked) {
+                    handleSettingsChange({ listenOnLan: true, apiAuth: true });
+                  } else {
+                    handleSettingsChange({ listenOnLan: false });
+                  }
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <EncryptDataCard
+          encryptStore={settings.encryptStore ?? true}
+          onEncryptStoreChange={(checked) => {
+            handleSettingsChange({ encryptStore: checked });
+          }}
+        />
+      </div>
+
+      {/* Capture Rules */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+          Capture rules
+        </h2>
+
+      {/* Incognito Detection */}
+      <Card className="border-border bg-card">
+        <CardContent className="px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  Ignore Incognito Windows
+                  <HelpTooltip text="automatically detects and skips private/incognito browser windows in 20+ languages. on macos, uses native browser APIs for chromium browsers (chrome, edge, brave, arc)." />
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Skip all private browsing sessions
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="ignoreIncognitoWindows"
+              checked={Boolean(settings.ignoreIncognitoWindows ?? true)}
+              onCheckedChange={handleIncognitoToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Window Filtering */}
+      {/* Pause for content-protected apps (DRM streaming + remote desktop) */}
+      <Card>
+        <CardContent className="px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <Tv className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  Pause for DRM & Remote Desktop
+                  <HelpTooltip text="pauses all screen capture when a DRM-protected streaming app (netflix, disney+, hulu, prime video, apple tv, etc.) or a remote-desktop client (Omnissa/VMware Horizon) is focused. these apps blank their windows when any app is recording the screen — pausing capture while they're focused keeps them usable. capture resumes automatically when you switch away." />
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Avoid DRM black screens (Netflix, Disney+) and gray Horizon windows.
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="pauseOnDrmContent"
+              checked={Boolean(settings.pauseOnDrmContent ?? false)}
+              onCheckedChange={handleDrmPauseToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Clipboard capture toggle */}
+      <Card>
+        <CardContent className="px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <ClipboardX className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  Capture clipboard
+                  <HelpTooltip text="when on, litepipe records clipboard copy/paste events and contents. turn off if you ship ~/.screenpipe to a remote LLM or share it — passwords, API keys, and private keys frequently pass through the clipboard." />
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Skip if your data leaves the machine (passwords, keys often
+                  pass through copy/paste).
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="captureClipboard"
+              checked={!(settings.disableClipboardCapture ?? true)}
+              onCheckedChange={handleClipboardCaptureToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Keyboard capture toggle */}
+      <Card>
+        <CardContent className="px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <Keyboard className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  Capture keyboard
+                  <HelpTooltip text="when on, litepipe records what you type (your keystrokes). off by default. the accessibility tree and OCR still capture on-screen text either way, so Rewind and Ask keep working — this only controls the raw keystroke stream, where passwords, API keys, and secrets you type would otherwise be logged." />
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Off by default. Records the raw keystroke stream (secrets
+                  often get typed). On-screen text is still captured.
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="captureKeyboard"
+              checked={!(settings.disableKeyboardCapture ?? true)}
+              onCheckedChange={handleKeyboardCaptureToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Record While Locked */}
+      <Card>
+        <CardContent className="px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  Record Audio While Locked
+                  <HelpTooltip text="when enabled, audio recording continues even when your screen is locked. by default, audio recording pauses when the screen is locked to save resources and protect privacy." />
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Continue audio capture when screen is locked
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="recordWhileLocked"
+              checked={Boolean(settings.recordWhileLocked ?? false)}
+              onCheckedChange={handleRecordWhileLockedToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recording Schedule */}
+      <ScheduleSettings
+        enabled={settings.scheduleEnabled ?? false}
+        rules={(settings.scheduleRules as any[]) ?? []}
+        onChange={(enabled, rules) => {
+          handleSettingsChange({ scheduleEnabled: enabled, scheduleRules: rules } as any);
+        }}
+      />
+      </div>
+
+      {/* Data Protection */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+          Data protection
+        </h2>
+        {/* One PII Removal section with two modes — Basic (regex on the
+            hot path) and Smart (regex + AI background worker, also
+            covers images). Smart progressively discloses backend +
+            field selection. See piiMode comment above for the
+            three-flag mapping. */}
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    PII Removal
+                    <HelpTooltip text="Redacts emails, phones, secrets, and more from captures. Smart mode adds names, addresses, and image redaction." />
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {piiMode === "off"
+                      ? "Off — captures store raw text and pixels."
+                      : piiMode === "basic"
+                      ? "Basic — regex on capture. Emails, phones, SSNs, cards, API keys."
+                      : "Smart — AI background worker. Adds names, addresses, image redaction."}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="usePiiRemoval"
+                checked={piiMode !== "off"}
+                onCheckedChange={(checked) =>
+                  handlePiiModeChange(checked ? "basic" : "off")
+                }
+              />
+            </div>
+            {piiMode !== "off" && (
+              <div className="mt-3 ml-6 space-y-3 border-l-2 border-border pl-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-foreground">Mode</p>
+                  <label className="flex cursor-pointer items-start gap-2 text-xs">
+                    <input
+                      type="radio"
+                      name="piiMode"
+                      className="mt-0.5"
+                      checked={piiMode === "basic"}
+                      onChange={() => handlePiiModeChange("basic")}
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Basic</span>
+                      <span className="text-muted-foreground">
+                        {" "}— regex on capture. Free, instant, deterministic.
+                        Catches emails, phones, SSNs, cards, JWTs, API keys,
+                        private keys, connection strings.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2 text-xs">
+                    <input
+                      type="radio"
+                      name="piiMode"
+                      className="mt-0.5"
+                      checked={piiMode === "smart"}
+                      onChange={() => handlePiiModeChange("smart")}
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Smart</span>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded ml-1">
+                        Experimental
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" "}— includes Basic, plus an AI background worker
+                        for semantic PII (names, addresses, sensitive context)
+                        and image redaction on screen frames. Downloads a
+                        ~100 MB model on first run.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+            {aiPiiRemovalEnabled && (
+              <div className="mt-3 ml-6 space-y-2 border-l-2 border-border pl-3">
+                <p className="text-xs font-medium text-foreground">Where it runs</p>
+                <label className="flex cursor-pointer items-start gap-2 text-xs">
+                  <input
+                    type="radio"
+                    name="piiBackend"
+                    className="mt-0.5"
+                    checked={piiBackend === "local"}
+                    onChange={() => handlePiiBackendChange("local")}
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">Local</span>
+                    <span className="text-muted-foreground">
+                      {" "}— on your device. Strongest privacy. Slower on weak hardware.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2 text-xs">
+                  <input
+                    type="radio"
+                    name="piiBackend"
+                    className="mt-0.5"
+                    checked={piiBackend === "tinfoil"}
+                    onChange={() => handlePiiBackendChange("tinfoil")}
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">Cloud (enclave)</span>
+                    <span className="text-muted-foreground">
+                      {" "}— litepipe&apos;s confidential-compute enclave. Fast everywhere; your device cryptographically verifies the enclave is running the open-source build before sending anything.
+                    </span>
+                  </span>
+                </label>
+
+                <p className="text-xs font-medium text-foreground pt-2">
+                  Fields to redact
+                </p>
+                {PII_FIELD_OPTIONS.map((opt) => {
+                  const checked =
+                    opt.always || piiRedactionLabels.includes(opt.value);
+                  return (
+                    <label
+                      key={opt.value}
+                      className={cn(
+                        "flex items-start gap-2 text-xs",
+                        opt.always ? "cursor-default" : "cursor-pointer",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-0.5"
+                        checked={checked}
+                        disabled={opt.always}
+                        onChange={(e) =>
+                          handlePiiLabelToggle(opt.value, e.target.checked)
+                        }
+                      />
+                      <span>
+                        <span className="font-medium text-foreground">
+                          {opt.label}
+                        </span>
+                        {opt.always && (
+                          <span className="text-muted-foreground">
+                            {" "}(always on)
+                          </span>
+                        )}
+                        <span className="text-muted-foreground">
+                          {" "}— {opt.desc}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+                <p className="text-[11px] text-muted-foreground pt-0.5">
+                  Unselected types stay visible so your timeline remains
+                  searchable. Secrets are always removed in both modes.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Cloud media analysis — audio / video / image via Gemma 4 E4B
+            inside the same Tinfoil enclave. Toggle adds/removes the
+            section from ~/.claude/skills/screenpipe-api/SKILL.md so
+            agents literally don't see the capability when it's off. */}
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    AI audio &amp; video analysis
+                    <HelpTooltip text="Lets Pi and Claude Code call litepipe's confidential enclave (Gemma 4 E4B inside a Tinfoil-attested AMD SEV-SNP container, encrypted in flight + at rest, no plaintext at the provider) to transcribe meetings, describe video clips, and analyze image frames from your litepipe data. When off, the capability is stripped from the agent skill markdown so Pi won't try to use it." />
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Confidential enclave for transcription, video, and image understanding.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="cloudMediaAnalysisEnabled"
+                checked={cloudMediaAnalysisEnabled}
+                onCheckedChange={handleCloudMediaAnalysisChange}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+          Content filters
+        </h2>
+
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center space-x-2.5 mb-2">
+              <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                Ignored Apps
+                <HelpTooltip text="Skip captures for these patterns. Plain text (e.g. '1Password') matches the app or any window title that contains it. Use 'App::Title' to scope to one window of an app (e.g. 'Slack::#hr' blocks only #hr in Slack)." />
+              </h3>
+            </div>
+            <div className="ml-[26px]">
+              <div data-testid="privacy-ignored-apps-select">
+                <MultiSelect
+                  options={createWindowOptions(
+                    windowItems || [],
+                    settings.ignoredWindows,
+                    installedApps
+                  )}
+                  defaultValue={settings.ignoredWindows}
+                  value={settings.ignoredWindows}
+                  onValueChange={handleIgnoredWindowsChange}
+                  placeholder="Select apps to ignore..."
+                  allowCustomValues
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] mt-1.5 gap-1.5"
+                onClick={() => setPicker("ignored")}
+              >
+                <FolderTree className="h-3 w-3" /> browse apps & windows
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center space-x-2.5 mb-2">
+              <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                Included Apps
+                <HelpTooltip text="When set, only matching windows are captured. Plain text is a global include (e.g. 'Slack' = only Slack). 'App::Title' creates a per-app whitelist (e.g. 'Slack::#engineering' keeps only that channel in Slack; other apps stay unaffected)." />
+              </h3>
+            </div>
+            <div className="ml-[26px]">
+              <div data-testid="privacy-included-apps-select">
+                <MultiSelect
+                  options={createWindowOptions(
+                    windowItems || [],
+                    settings.includedWindows,
+                    installedApps
+                  )}
+                  defaultValue={settings.includedWindows}
+                  value={settings.includedWindows}
+                  onValueChange={handleIncludedWindowsChange}
+                  placeholder="Only capture these apps (optional)..."
+                  allowCustomValues
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] mt-1.5 gap-1.5"
+                onClick={() => setPicker("included")}
+              >
+                <FolderTree className="h-3 w-3" /> browse apps & windows
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center space-x-2.5 mb-2">
+              <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                Ignored URLs
+                <HelpTooltip text="Browser URLs matching these patterns will not be captured. Use for privacy — e.g. add 'bank.com' to skip banking sites." />
+              </h3>
+            </div>
+            <div className="ml-[26px]">
+              <MultiSelect
+                options={createUrlOptions(
+                  urlItems || [],
+                  settings.ignoredUrls || []
+                )}
+                defaultValue={settings.ignoredUrls || []}
+                value={settings.ignoredUrls || []}
+                onValueChange={handleIgnoredUrlsChange}
+                placeholder="e.g. wellsfargo.com, chase.com..."
+                allowCustomValues={true}
+              />
+              {(settings.ignoredUrls || []).some(
+                (url) =>
+                  url.length < 5 ||
+                  ["bank", "pay", "money", "finance"].includes(
+                    url.toLowerCase()
+                  )
+              ) && (
+                <p className="text-xs text-yellow-600 dark:text-yellow-500 flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Short patterns may over-match. Use specific domains.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Telemetry */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+          Telemetry
+        </h2>
+        <Card className="border-border bg-card">
+          <CardContent className="px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <Monitor className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    Analytics
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Anonymous usage data
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="analyticsEnabled"
+                checked={settings.analyticsEnabled}
+                onCheckedChange={handleAnalyticsToggle}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Floating apply & restart button */}
+      {hasUnsavedChanges && (
+        <div className="sticky bottom-4 flex justify-end pointer-events-none z-50">
+          <Button
+            onClick={handleUpdate}
+            disabled={isUpdating || Object.keys(validationErrors).length > 0}
+            size="sm"
+            data-testid="privacy-apply-restart"
+            className="pointer-events-auto flex items-center gap-1.5 h-9 px-4 text-sm bg-foreground text-background hover:bg-background hover:text-foreground transition-colors duration-150 shadow-lg"
+          >
+            {isUpdating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            Apply & Restart
+          </Button>
+        </div>
+      )}
+      <WindowPicker
+        open={picker !== null}
+        onOpenChange={(o) => {
+          if (!o) setPicker(null);
+        }}
+        selected={
+          picker === "included" ? settings.includedWindows : settings.ignoredWindows
+        }
+        installedApps={installedApps}
+        onAdd={(p) => {
+          if (picker === "included") addIncludedPattern(p);
+          else addIgnoredPattern(p);
+        }}
+        action={picker === "included" ? "include" : "ignore"}
+      />
+    </div>
+  );
+}

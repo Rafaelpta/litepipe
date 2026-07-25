@@ -1,0 +1,65 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "apps/screenpipe-app-tauri/**/*.ts",
+      "apps/screenpipe-app-tauri/**/*.tsx",
+      "apps/screenpipe-app-tauri/**/*.js",
+      "apps/screenpipe-app-tauri/**/*.jsx",
+      "!**/node_modules/**",
+      "!**/.next/**",
+      "!**/dist/**",
+      "!**/out/**",
+      "!**/.e2e/**",
+      "!**/e2e/**",
+      "!**/src-tauri/target/**",
+      "!apps/screenpipe-app-tauri/lib/utils/tauri.ts"
+    ]
+  },
+  "formatter": { "enabled": false },
+  "javascript": { "formatter": { "enabled": false } },
+  "assist": {
+    "enabled": false,
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "correctness": {
+        "noUnreachable": "error",
+        "noConstAssign": "error",
+        "useHookAtTopLevel": "error",
+        "noChildrenProp": "error",
+        "noRenderReturnValue": "error",
+        "noVoidElementsWithChildren": "error",
+        "useValidForDirection": "error",
+        "useYield": "error"
+      },
+      "suspicious": {
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateParameters": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateCase": "error",
+        "noFallthroughSwitchClause": "error",
+        "noUnsafeNegation": "error",
+        "noSelfCompare": "error",
+        "useGetterReturn": "error"
+      },
+      "complexity": {
+        "noExtraBooleanCast": "error",
+        "noUselessTypeConstraint": "error",
+        "noUselessCatch": "error"
+      }
+    }
+  }
+}

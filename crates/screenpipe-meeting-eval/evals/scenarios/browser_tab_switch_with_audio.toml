@@ -1,0 +1,62 @@
+#
+# Regression test for be6a6f148 + d8ba1dad3: a Google Meet call in a
+# browser where the user switches to another tab partway through. AX
+# controls vanish (controls in non-focused tab not in AX tree), but
+# output audio is still flowing. State machine must keep the meeting
+# Active via the audio extension path, NOT split into multiple
+# meetings or end prematurely.
+
+[meta]
+name = "browser_tab_switch_with_audio"
+description = "Google Meet in browser, user switches tabs mid-call; audio flowing"
+app = "Google Chrome"
+scan_interval_seconds = 5.0
+
+[[ticks]]
+type = "single"
+t = 0
+in_call = false
+
+# call starts and runs visible for 1 min
+[[ticks]]
+type = "constant"
+from = 5
+to = 60
+in_call = true
+
+# user switches to another tab — controls invisible for 4 min
+[[ticks]]
+type = "constant"
+from = 65
+to = 300
+in_call = false
+
+# user comes back to the meeting tab
+[[ticks]]
+type = "constant"
+from = 305
+to = 360
+in_call = true
+
+# user hangs up at 360s
+[[ticks]]
+type = "constant"
+from = 365
+to = 700
+in_call = false
+
+# audio flows continuously through the whole call until hang-up
+[[audio_ranges]]
+from = 5
+to = 360
+
+[expected]
+true_hangup_t_seconds = 360
+meeting_count = 1
+final_state = "Idle"
+# Audio-branch reverts ARE flaps in our metric. We tolerate them here
+# because they're load-bearing — without them this scenario splits.
+# What we don't tolerate is the meeting getting split or ended early.
+flap_count_max = 200
+end_latency_seconds_max = 360
+early_end_max = 0

@@ -1,0 +1,76 @@
+[workspace]
+members = [
+    "crates/*",
+]
+exclude = [
+    "apps/screenpipe-app-tauri/src-tauri",
+    "crates/screenpipe-integrations",
+    "ee/sdk",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.4.15"
+authors = ["louis030195 <hi@louis030195.com>"]
+description = ""
+repository = "https://github.com/screenpipe/screenpipe"
+license = "MIT OR Apache-2.0"
+edition = "2021"
+
+[workspace.dependencies]
+# AI
+tokenizers = "0.21.0"
+hf-hub = { version = "0.3.2", git = "https://github.com/neo773/hf-hub", rev = "437dcf4049233f4a0e0cfc4e1c1dbf5ed2c57760", default-features = false, features = [
+    "native-tls",
+    "tokio",
+    "ureq",
+] }
+log = "0.4"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "chrono"] }
+tracing-appender = { version = "0.2.3" }
+tokio = { version = "1.15", features = ["full", "tracing"] }
+crossbeam = "0.8.4"
+dashmap = "6.1.0"
+image = "0.25"
+criterion = { version = "0.5.1", features = ["async_tokio"] }
+cc = "1.0"
+oasgen = { version = "0.22.0", features = ["axum", "chrono"] }
+once_cell = "1.20.2"
+sentry = { version = "0.36.0", features = ["tracing"] }
+tracing-oslog = "0.3.0"
+
+http-cache-reqwest = "0.15.0"
+# reqwest 0.13 renamed `rustls-tls` → `rustls` and folded the native-roots
+# variants into `rustls-platform-verifier` (which the `rustls` feature pulls
+# in automatically). The `rustls` feature bundles aws-lc-rs as the provider;
+# Windows MSVC links cleanly because of bswap_shim.c in the tauri app crate.
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "multipart", "json", "form", "query", "rustls"] }
+reqwest-middleware = "0.4.1"
+
+
+[patch.crates-io]
+# enables chinese mirror (hf is banned in china) and rustls-tls
+hf-hub = { git = "https://github.com/neo773/hf-hub", rev = "437dcf4049233f4a0e0cfc4e1c1dbf5ed2c57760" }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+
+# Fast local release builds: cargo build --profile release-dev
+# ~3-5x faster than full release, still optimized for testing
+[profile.release-dev]
+inherits = "release"
+lto = "thin"
+codegen-units = 16
+incremental = true
+
+# Faster dev builds - optimize dependencies but keep local code debuggable
+[profile.dev]
+opt-level = 0
+
+[profile.dev.package."*"]
+opt-level = 2      # Optimize all dependencies (faster runtime, same compile time)
+debug = false      # deps don't need debug symbols — keeps target/ from ballooning

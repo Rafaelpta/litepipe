@@ -1,0 +1,31 @@
+# Tests cross-session speaker continuity: the same conversation split by a
+# 30-minute silence gap. Diarization must group speakers identically across
+# the gap to score speaker_continuity well — that's the bug PR #3107 claims
+# to fix.
+
+name = "interrupted_meeting"
+description = "Half a meeting, long silence, second half — same speakers must match across the gap"
+
+[speakers]
+# auto-map via {basename}_{label} — both halves come from bxpwa so labels
+# match naturally without manual override
+
+# bxpwa is ~405s in VoxConverse dev (5 speakers). First half:
+[[segments]]
+kind = "audio"
+source = "voxconverse/audio/bxpwa.wav"
+rttm = "voxconverse/rttm/bxpwa.rttm"
+crop_start = 0.0
+crop_end = 180.0
+
+[[segments]]
+kind = "silence"
+duration = 1800.0          # 30 min "user typing/working between meetings"
+
+# Second half — SAME source, so SAME speakers must keep their cluster ids:
+[[segments]]
+kind = "audio"
+source = "voxconverse/audio/bxpwa.wav"
+rttm = "voxconverse/rttm/bxpwa.rttm"
+crop_start = 180.0
+crop_end = 360.0

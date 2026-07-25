@@ -1,0 +1,14 @@
+{
+  "name": "@screenpipe/browser-extension",
+  "version": "0.3.4",
+  "private": true,
+  "scripts": {
+    "build": "bun build src/worker.ts src/options.ts src/popup.ts --outdir dist --target browser --format esm",
+    "dev": "bun build src/worker.ts src/options.ts src/popup.ts --outdir dist --target browser --format esm --watch",
+    "zip": "bun run build && cd dist && zip -r \"../screenpipe-browser-extension-v$(node -p 'require(\\\"../package.json\\\").version').zip\" . && cd ..",
+    "publish:store": "bun run zip && bunx chrome-webstore-upload-cli@3 upload --source \"screenpipe-browser-extension-v$(node -p 'require(\\\"./package.json\\\").version').zip\" --auto-publish"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287"
+  }
+}

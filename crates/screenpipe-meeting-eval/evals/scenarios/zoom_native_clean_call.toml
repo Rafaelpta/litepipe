@@ -1,0 +1,35 @@
+#
+# Baseline happy-path: native Zoom call, controls visible throughout,
+# user hangs up cleanly. State machine should produce exactly one
+# meeting with end_latency ≤ 30s grace.
+
+[meta]
+name = "zoom_native_clean_call"
+description = "Zoom call, controls visible throughout, clean hang-up"
+app = "zoom.us"
+scan_interval_seconds = 5.0
+
+[[ticks]]
+type = "single"
+t = 0
+in_call = false
+
+[[ticks]]
+type = "constant"
+from = 5
+to = 360
+in_call = true
+
+[[ticks]]
+type = "constant"
+from = 365
+to = 600
+in_call = false
+
+[expected]
+true_hangup_t_seconds = 360
+meeting_count = 1
+final_state = "Idle"
+flap_count_max = 0
+end_latency_seconds_max = 60
+early_end_max = 0

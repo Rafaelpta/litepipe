@@ -1,0 +1,124 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "litepipe",
+  "identifier": "dev.litepipe",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:1420"
+  },
+  "bundle": {
+    "active": true,
+    "publisher": "litepipe",
+    "category": "DeveloperTool",
+    "shortDescription": "Lean, local screen and audio recording",
+    "longDescription": "litepipe records your screen and audio locally and makes it searchable. A lean, fast fork of Screenpipe focused on low CPU and disk use. Fully local, you own your data.",
+    "copyright": "",
+    "targets": [
+      "app",
+      "dmg",
+      "deb",
+      "appimage",
+      "nsis"
+    ],
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/256x256.png",
+      "icons/512x512.png",
+      "icons/1024x1024.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/screenpipe-logo-tray-failed.png",
+      "icons/screenpipe-logo-tray-black.png"
+    ],
+    "resources": [
+      "assets/*",
+      "mlx.metallib"
+    ],
+    "macOS": {
+      "entitlements": "entitlements.plist",
+      "hardenedRuntime": true
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [],
+      "pubkey": ""
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "litepipe"
+        ]
+      },
+      "mobile": [
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/auth"
+          ]
+        },
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/stripe-connect"
+          ]
+        },
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/purchase-successful"
+          ]
+        },
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/settings"
+          ]
+        },
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/changelog"
+          ]
+        },
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/onboarding"
+          ]
+        },
+        {
+          "host": "screenpi.pe",
+          "pathPrefix": [
+            "/status"
+          ]
+        }
+      ]
+    }
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "trayIcon": {
+      "id": "screenpipe_main",
+      "iconPath": "assets/screenpipe-logo-tray-white.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": true
+    },
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPDATA/**",
+          "$HOME/.screenpipe/**"
+        ]
+      },
+      "csp": null
+    },
+    "macOSPrivateApi": true
+  }
+}

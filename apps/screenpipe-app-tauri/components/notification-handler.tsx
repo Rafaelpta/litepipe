@@ -1,0 +1,329 @@
+import React, { useEffect } from "react";
+import { commands } from "@/lib/utils/tauri";
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification as _sendNotification,
+} from "@tauri-apps/plugin-notification";
+import { platform } from "@tauri-apps/plugin-os";
+
+import { listen } from "@tauri-apps/api/event";
+import { showNotificationPanel } from "@/lib/hooks/use-notification-panel";
+import { showChatWithPrefill } from "@/lib/chat-utils";
+import { localFetch } from "@/lib/api";
+
+// notify_rust on Linux calls block_on for D-Bus inside the tokio runtime,
+// which panics and kills the worker thread. Skip OS notifications on Linux.
+function sendNotification(options: { title: string; body: string }) {
+  if (platform() === "linux") return;
+  _sendNotification(options);
+}
+
+type NotificationRequested = {
+  title: string;
+  body: string;
+};
+
+function windowForDeeplink(url: string) {
+  return url.startsWith("screenpipe://meeting/") ||
+    url.startsWith("screenpipe://meeting?")
+    ? { Home: { page: "meetings" } }
+    : "Main";
+}
+
+const NotificationHandler: React.FC = () => {
+
+  useEffect(() => {
+    const checkAndRequestPermission = async () => {
+      let permission = await isPermissionGranted();
+
+      if (!permission) {
+        const result = await requestPermission();
+        permission = result === "granted";
+      }
+
+      if (permission) {
+        try {
+          const welcomeShown = localStorage?.getItem("welcomeNotificationShown");
+
+          if (!welcomeShown) {
+            sendNotification({
+              title: "welcome to litepipe",
+              body: "thank you for using litepipe! we're dedicated to help you get the most out of litepipe.",
+            });
+            localStorage?.setItem("welcomeNotificationShown", "true");
+          }
+        } catch {
+          // localStorage unavailable in some WKWebView contexts
+        }
+      }
+
+      listen<NotificationRequested>("notification-requested", (event) => {
+        console.log(
+          `notification requested ${event.payload.title} ${event.payload.body}`
+        );
+        // Use in-app notification panel instead of OS notifications
+        showNotificationPanel({
+          id: `legacy-${Date.now()}`,
+          type: "general",
+          title: event.payload.title,
+          body: event.payload.body,
+          actions: [],
+          autoDismissMs: 20000,
+        }).catch(() => {
+          // Fallback to OS notification if panel fails
+          sendNotification({
+            title: event.payload.title,
+            body: event.payload.body,
+          });
+        });
+      });
+    };
+
+    checkAndRequestPermission();
+  }, []);
+
+
+  // Save notification history + PostHog tracking when native panel is shown (macOS)
+  useEffect(() => {
+    const unlisten = listen<string>("native-notification-shown", async (event) => {
+      try {
+        const data = JSON.parse(event.payload);
+        // PostHog analytics (same as webview panel)
+        const posthog = (await import("posthog-js")).default;
+        posthog.capture("notification_shown", { type: data.type, id: data.id });
+
+        // Save to notification history (same as webview panel, max 100 entries)
+        const localforage = (await import("localforage")).default;
+        const history = await localforage.getItem<any[]>("notification-history") || [];
+        const entry = {
+          id: data.id,
+          type: data.type,
+          title: data.title,
+          body: data.body,
+          pipe_name: data.pipe_name,
+          timestamp: new Date().toISOString(),
+          read: false,
+        };
+        const updated = [entry, ...history].slice(0, 100);
+        await localforage.setItem("notification-history", updated);
+      } catch (e) {
+        console.error("failed to save native notification history:", e);
+      }
+    });
+    return () => { unlisten.then((u) => u()); };
+  }, []);
+
+  // Handle actions from native SwiftUI notification panel (macOS)
+  useEffect(() => {
+    const unlisten = listen<string>("native-notification-action", async (event) => {
+      try {
+        const action = JSON.parse(event.payload);
+        console.log("native notification action:", action);
+
+        // PostHog tracking for dismiss/action (mirrors webview panel)
+        const posthog = (await import("posthog-js")).default;
+        if (action.type === "dismiss" || action.type === "auto_dismiss") {
+          posthog.capture("notification_dismissed", { auto: action.type === "auto_dismiss" });
+          return;
+        }
+        posthog.capture("notification_action", { action: action.action, actionType: action.type });
+
+        if (action.type === "manage") {
+          const { emit } = await import("@tauri-apps/api/event");
+          // Show window first, then navigate after a brief delay so the
+          // home window's listener is mounted and ready to receive the event
+          try { await commands.showWindow({ Home: { page: null } }); } catch {}
+          await new Promise((r) => setTimeout(r, 300));
+          await emit("navigate", { url: "/home?section=notifications" });
+          return;
+        }
+
+        if (action.type === "mute" && action.pipe_name) {
+          const localforage = (await import("localforage")).default;
+          const raw = await localforage.getItem<string>("screenpipe-settings");
+          const settings = raw ? JSON.parse(raw) : {};
+          const prefs = settings.notificationPrefs || {
+            captureStalls: true, appUpdates: true,
+            pipeSuggestions: true, pipeNotifications: true, mutedPipes: [],
+          };
+          if (!prefs.mutedPipes.includes(action.pipe_name)) {
+            prefs.mutedPipes.push(action.pipe_name);
+          }
+          settings.notificationPrefs = prefs;
+          await localforage.setItem("screenpipe-settings", JSON.stringify(settings));
+          return;
+        }
+
+        // Forward pipe/api/deeplink actions
+        if (action.type === "pipe" && action.pipe) {
+          if (action.open_in_chat) {
+            const contextStr = action.context ? JSON.stringify(action.context, null, 2) : "";
+            await showChatWithPrefill({
+              context: `run pipe "${action.pipe}" with this context:\n${contextStr}`,
+              prompt: `run the ${action.pipe} pipe${action.context ? " with the provided context" : ""}`,
+              autoSend: true,
+              source: `notification-native`,
+            });
+          } else {
+            await localFetch(`/pipes/${action.pipe}/run`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ notification_context: action.context }),
+            });
+          }
+          return;
+        }
+
+        if (action.type === "api" && action.url) {
+          const res = await localFetch(action.url, {
+            method: action.method || "POST",
+            headers: { "Content-Type": "application/json" },
+            body: action.body ? JSON.stringify(action.body) : undefined,
+          });
+          // The "+ HD" action calls /capture/hd/start, which is otherwise
+          // silent — confirm the click with an in-app /notify so the user
+          // knows HD capture actually started. Gated on res.ok so a failed
+          // start never shows a false "started" toast.
+          if (action.action === "record-hd" && res.ok) {
+            await localFetch("/notify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: "HD recording started",
+                body: "Capturing this meeting at high frame rate. Stops automatically when the call ends.",
+              }),
+            }).catch(() => {});
+          }
+          return;
+        }
+
+        if (action.type === "meeting_join" && action.url) {
+          const { open } = await import("@tauri-apps/plugin-shell");
+          await open(action.url);
+
+          const deeplink = action.deeplink_url || action.deeplinkUrl;
+          if (typeof deeplink === "string" && deeplink.startsWith("screenpipe://")) {
+            await commands.showWindowActivated(windowForDeeplink(deeplink));
+            await new Promise((r) => setTimeout(r, 150));
+            const { emit } = await import("@tauri-apps/api/event");
+            await emit("deep-link-received", deeplink);
+          }
+          return;
+        }
+
+        // URL-opening actions. Two explicit types so senders can't conflate
+        // them:
+        //   "link"      — external URL, opens in default browser
+        //   "deeplink"  — screenpipe:// in-app route
+        //
+        // Note: these are also handled in Rust inside `native_notif_action_callback`
+        // for the native macOS panel case (where this JS listener may not be
+        // alive). This JS branch remains for the webview notification panel.
+        // Routing is on URL scheme, not the declared type, so a mislabeled
+        // payload still works.
+        if ((action.type === "link" || action.type === "deeplink") && action.url) {
+          if (typeof action.url === "string" && action.url.startsWith("screenpipe://")) {
+            await commands.showWindowActivated(windowForDeeplink(action.url));
+            await new Promise((r) => setTimeout(r, 150));
+            const { emit } = await import("@tauri-apps/api/event");
+            await emit("deep-link-received", action.url);
+          } else {
+            const { open } = await import("@tauri-apps/plugin-shell");
+            await open(action.url);
+          }
+          return;
+        }
+
+        // Legacy string actions. Use `show_window_activated` rather than
+        // `show_window` — notifications can be clicked from outside the app's
+        // active space, and the NonActivating panel style prevents NSApp
+        // activation otherwise.
+        if (action.action === "open_timeline") {
+          await commands.showWindowActivated("Main");
+        } else if (action.action === "open_chat") {
+          await commands.showWindowActivated("Chat");
+        } else if (action.action === "open_pipe_suggestions") {
+          await showChatWithPrefill({
+            context: PIPE_SUGGESTION_PROMPT,
+            prompt: "what pipes should i create based on my recent activity?",
+            autoSend: true,
+            source: "pipe-suggestion-notification",
+          });
+        } else if (action.action === "restart_recording") {
+          try {
+            try { await commands.stopScreenpipe(); } catch {}
+            await new Promise((r) => setTimeout(r, 2000));
+            await commands.spawnScreenpipe(null);
+            // Poll health endpoint to confirm restart
+            for (let i = 0; i < 15; i++) {
+              await new Promise((r) => setTimeout(r, 1000));
+              try {
+                const res = await localFetch("/health");
+                if (res.ok) break;
+              } catch {}
+            }
+          } catch (e) {
+            console.error("restart_recording failed:", e);
+          }
+        }
+      } catch (e) {
+        console.error("failed to handle native notification action:", e);
+      }
+    });
+
+    return () => {
+      unlisten.then((u) => u());
+    };
+  }, []);
+
+  // listen for pipe suggestion action from notification panel
+  useEffect(() => {
+    const unlisten = listen("open-pipe-suggestions", async () => {
+      await showChatWithPrefill({
+        context: PIPE_SUGGESTION_PROMPT,
+        prompt: "what pipes should i create based on my recent activity?",
+        autoSend: true,
+        source: "pipe-suggestion-notification",
+      });
+    });
+
+    return () => {
+      unlisten.then((u) => u());
+    };
+  }, []);
+
+  return null;
+};
+
+const PIPE_SUGGESTION_PROMPT = `you are a litepipe automation advisor. the user wants ideas for pipes (scheduled AI agents) they can create based on their actual workflow.
+
+## what is litepipe?
+
+litepipe is a desktop app that continuously captures screen text (via accessibility APIs) and audio (transcription).
+it runs a local API at http://localhost:3030 that lets you query everything you've seen, said, or heard.
+
+## what is a pipe?
+
+a pipe is a scheduled AI agent defined as a single markdown file: ~/.screenpipe/pipes/{name}/pipe.md
+every N minutes, litepipe runs a coding agent with the pipe's prompt.
+the agent can query screen data, write files, call external APIs, send notifications, etc.
+
+## your task
+
+1. first, query the user's recent screen data from the last 24 hours:
+   curl "http://localhost:3030/search?limit=50&content_type=all&start_time=<24h_ago_ISO>&end_time=<now_ISO>"
+
+2. analyze what apps they use, what they work on, what patterns you see
+
+3. suggest 3-5 specific, practical pipe ideas based on their ACTUAL data. each suggestion should:
+   - have a short name
+   - explain what it automates in one sentence
+   - mention which APIs or tools it would connect to
+   - be something they'd actually want running daily/hourly
+
+focus on things like: summarizing meetings, tracking time on projects, syncing notes, monitoring specific topics, auto-journaling, sending digest emails, etc.
+
+be specific to what you see in their data — not generic suggestions.`;
+
+export default NotificationHandler;

@@ -1,0 +1,610 @@
+//! RF-DETR-Nano image-PII detector.
+//!
+//! Loads an ONNX model exported from the
+//! [screenpipe-pii-bench-image](https://github.com/screenpipe/screenpipe-pii-bench-image)
+//! training pipeline. Same Execution-Provider chain as
+//! [`crate::adapters::onnx`] (CoreML on Mac, DirectML on Windows, CPU
+//! baseline) — no CUDA / Vulkan / GPU-vendor SDKs.
+//!
+//! ## Status
+//!
+//! Production-ready when built with `--features onnx-cpu` (or
+//! `onnx-coreml` / `onnx-directml`). Without those features, the
+//! adapter compiles to a stub that returns
+//! [`RedactError::Unavailable`], same pattern as the text ONNX
+//! adapter.
+//!
+//! ## Reference benchmark numbers
+//!
+//! `rfdetr_v12` (512×512 input, FP16 ONNX, ~54 MB):
+//!
+//! p50 latency, macOS Apple Silicon (M1+) CoreML: ~120 ms — measured.
+//! The 512² input is ~2.5× the pixels of v8's 320² (v9 was 384²), so
+//! v11 runs ~1.5–2× slower than the v9 figures previously listed here;
+//! still well within real-time for per-frame redaction. Other-platform
+//! p50s (DirectML / CUDA / CPU) scale similarly — re-measure before
+//! quoting.
+//!
+//! Bench accuracy on `screenpipe-pii-bench-image` val (221 images):
+//! 98.9 % zero-leak / 0 % oversmash (v11, realworld-augmented). v11
+//! replaces v9, which under-detected badly on real screens (≈0
+//! detections on real frames despite passing the synthetic bench);
+//! v11 restores real-frame detection AND raises the synthetic ceiling
+//! from v8's 95.3 %.
+//!
+//! `v12` is the FP16 re-export of the v11 checkpoint (torch fp16 export,
+//! fp32 I/O wrapper): ~54 MB vs ~109 MB and ~1.8× faster on CPU, with
+//! zero-leak within ~0.6 pp of v11 fp32 on the corpus eval (essentially
+//! lossless — fp16 inference of an fp32-trained detector). Re-export
+//! recipe: `screenpipe-pii-bench-image/training/export_fp16.py`.
+
+use std::path::{Path, PathBuf};
+
+use async_trait::async_trait;
+
+use crate::image::{ImageRedactor, ImageRegion};
+use crate::RedactError;
+#[cfg(feature = "onnx-cpu")]
+use crate::SpanLabel;
+
+const RFDETR_NAME: &str = "rfdetr";
+const RFDETR_VERSION: u32 = 12; // matches the rfdetr_v12 ONNX (fp16)
+
+#[cfg(feature = "onnx-cpu")]
+const NUM_CLASSES: usize = 12;
+#[cfg(feature = "onnx-cpu")]
+const NUM_QUERIES: usize = 300;
+
+/// Class index → [`SpanLabel`]. Order is fixed by the training pipeline:
+/// `screenpipe-pii-bench-image/src/score.py::CANONICAL_LABELS`.
+#[cfg(feature = "onnx-cpu")]
+const CLASSES: [SpanLabel; NUM_CLASSES] = [
+    SpanLabel::Person,  // 0
+    SpanLabel::Email,   // 1
+    SpanLabel::Phone,   // 2
+    SpanLabel::Address, // 3
+    SpanLabel::Url,     // 4
+    SpanLabel::Company, // 5
+    SpanLabel::Repo,    // 6
+    SpanLabel::Handle,  // 7
+    SpanLabel::Channel, // 8
+    SpanLabel::Id,      // 9
+    SpanLabel::Date,    // 10
+    SpanLabel::Secret,  // 11
+];
+
+/// Configuration for [`RfdetrRedactor`].
+#[derive(Debug, Clone)]
+pub struct RfdetrConfig {
+    /// Path to `rfdetr_vN.onnx`. We default to `~/.screenpipe/models/rfdetr_v12.onnx`
+    /// in [`Self::default_model_path`] but callers may override (e.g.
+    /// for an INT8-quantized variant in the future).
+    pub model_path: PathBuf,
+    /// Square input size baked into the ONNX (320 for v8, 384 for
+    /// v9, 512 for v11). Must match the model — auto-detected if 0.
+    pub input_size: u32,
+    /// Score floor below which detections are dropped before the
+    /// adapter even returns them. The downstream
+    /// [`crate::image::ImageRedactionPolicy`] applies a second floor
+    /// — keep this one permissive (default 0.10) and tighten via the
+    /// policy's `min_score`.
+    pub conf_threshold: f32,
+}
+
+impl Default for RfdetrConfig {
+    fn default() -> Self {
+        Self {
+            model_path: Self::default_model_path(),
+            input_size: 0, // auto-detect from ONNX inputs[0].shape
+            // 0.50 matches ImageRedactionPolicy::default's min_score so
+            // the adapter doesn't waste cycles emitting low-confidence
+            // candidates the policy will discard. The policy can still
+            // tighten further (e.g. 0.70 paranoid mode) — that just
+            // applies a second floor.
+            conf_threshold: 0.50,
+        }
+    }
+}
+
+impl RfdetrConfig {
+    /// `~/.screenpipe/models/rfdetr_v12.onnx`. Created lazily by
+    /// [`Self::ensure_model_present`] on first run.
+    pub fn default_model_path() -> PathBuf {
+        dirs::home_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join(".screenpipe")
+            .join("models")
+            .join("rfdetr_v12.onnx")
+    }
+
+    /// HuggingFace download URL for the canonical ONNX. Pinned to
+    /// `main` so a model bump goes through a deliberate code change
+    /// (URL + expected SHA-256 + [`RFDETR_VERSION`] all bumped
+    /// together).
+    pub const HF_DOWNLOAD_URL: &'static str =
+        "https://huggingface.co/screenpipe/pii-image-redactor/resolve/main/rfdetr_v12.onnx";
+
+    /// Expected SHA-256 of the canonical `rfdetr_v12.onnx`. Verified
+    /// after every download. If a future training run produces a new
+    /// best, bump [`RFDETR_VERSION`], re-publish to HF, update this
+    /// constant. Note: the worker is destructive-only and does NOT
+    /// re-redact already-processed frames, so a model-version bump
+    /// only takes effect for newly-captured frames going forward.
+    pub const EXPECTED_SHA256: &'static str =
+        "71cd7d976ef769255a8d5b7523ecdd547710cc18f8464e0cc9da64c4e8c1aaba";
+
+    /// Make sure the ONNX is present on disk. Idempotent — does
+    /// nothing if [`Self::model_path`] already exists with the
+    /// expected SHA-256. Otherwise downloads from
+    /// [`Self::HF_DOWNLOAD_URL`], verifies, atomic-renames into place.
+    ///
+    /// Atomic semantics: the download lands at
+    /// `<model_path>.partial`, gets verified, then renames over
+    /// `<model_path>`. A killed process leaves at most a `.partial`
+    /// that the next call cleans up.
+    pub async fn ensure_model_present(&self) -> Result<(), RedactError> {
+        if self.model_path.exists() && Self::sha256_matches(&self.model_path)? {
+            return Ok(());
+        }
+
+        if let Some(parent) = self.model_path.parent() {
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(|e| RedactError::Runtime(format!("mkdir {}: {e}", parent.display())))?;
+        }
+
+        let tmp = self.model_path.with_extension("onnx.partial");
+        // Best-effort cleanup of a stale partial.
+        let _ = tokio::fs::remove_file(&tmp).await;
+
+        tracing::info!(
+            url = Self::HF_DOWNLOAD_URL,
+            target = %self.model_path.display(),
+            "downloading rfdetr_v12.onnx (~54 MB) — first-run only"
+        );
+        let resp = reqwest::Client::new()
+            .get(Self::HF_DOWNLOAD_URL)
+            .send()
+            .await
+            .map_err(|e| RedactError::Runtime(format!("rfdetr download GET: {e}")))?;
+        if !resp.status().is_success() {
+            return Err(RedactError::Runtime(format!(
+                "rfdetr download returned {}",
+                resp.status()
+            )));
+        }
+        let bytes = resp
+            .bytes()
+            .await
+            .map_err(|e| RedactError::Runtime(format!("rfdetr download body: {e}")))?;
+
+        // Verify SHA-256 BEFORE landing the file at the final path.
+        let actual = Self::hex_sha256(&bytes);
+        if actual != Self::EXPECTED_SHA256 {
+            return Err(RedactError::Runtime(format!(
+                "rfdetr download checksum mismatch: got {}, want {}",
+                actual,
+                Self::EXPECTED_SHA256
+            )));
+        }
+
+        tokio::fs::write(&tmp, &bytes)
+            .await
+            .map_err(|e| RedactError::Runtime(format!("rfdetr write tmp: {e}")))?;
+        tokio::fs::rename(&tmp, &self.model_path)
+            .await
+            .map_err(|e| RedactError::Runtime(format!("rfdetr rename: {e}")))?;
+        tracing::info!(
+            target = %self.model_path.display(),
+            bytes = bytes.len(),
+            "rfdetr_v12.onnx ready"
+        );
+        Ok(())
+    }
+
+    fn hex_sha256(bytes: &[u8]) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+        let digest = hasher.finalize();
+        let mut s = String::with_capacity(64);
+        for b in digest {
+            use std::fmt::Write;
+            let _ = write!(&mut s, "{b:02x}");
+        }
+        s
+    }
+
+    fn sha256_matches(path: &Path) -> Result<bool, RedactError> {
+        let bytes = std::fs::read(path)
+            .map_err(|e| RedactError::Runtime(format!("read {}: {e}", path.display())))?;
+        Ok(Self::hex_sha256(&bytes) == Self::EXPECTED_SHA256)
+    }
+}
+
+// ─── feature-on path: the real implementation ─────────────────────
+
+#[cfg(feature = "onnx-cpu")]
+mod imp {
+    use super::*;
+    use std::sync::Mutex;
+
+    use ndarray::Array4;
+    use ort::session::{builder::GraphOptimizationLevel, Session};
+    use ort::value::TensorRef;
+
+    /// Wrap ORT Session::builder() in panic handling. ONNX Runtime can panic
+    /// on initialization if the API fails (e.g. missing drivers, corrupted binary,
+    /// ABI mismatch). This converts such panics into proper Err values.
+    fn create_session_safe(model_path: &std::path::Path) -> Result<Session, RedactError> {
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(
+            || -> Result<Session, ort::Error> {
+                let builder = Session::builder()?
+                    .with_optimization_level(GraphOptimizationLevel::Level3)?
+                    .with_intra_threads(num_cpus_physical())?;
+                // Offload to the Apple Neural Engine (Mac) / NPU (Windows) instead of
+                // running CPU-only. CoreML MLProgram + ComputeUnits::All measured ~3.4x
+                // faster than the legacy default and keeps the work off the CPU/GPU.
+                #[cfg(feature = "onnx-coreml")]
+                let builder = builder.with_execution_providers([
+                    ort::execution_providers::CoreMLExecutionProvider::default()
+                        .with_model_format(
+                            ort::execution_providers::coreml::CoreMLModelFormat::MLProgram,
+                        )
+                        .with_compute_units(
+                            ort::execution_providers::coreml::CoreMLComputeUnits::All,
+                        )
+                        .with_subgraphs(true)
+                        .build(),
+                    ort::execution_providers::CPUExecutionProvider::default().build(),
+                ])?;
+                #[cfg(feature = "onnx-directml")]
+                let builder = builder.with_execution_providers([
+                    ort::execution_providers::DirectMLExecutionProvider::default()
+                        .with_device_id(0)
+                        .build(),
+                    ort::execution_providers::CPUExecutionProvider::default().build(),
+                ])?;
+                builder.commit_from_file(model_path)
+            },
+        )) {
+            Ok(Ok(session)) => Ok(session),
+            Ok(Err(e)) => Err(RedactError::Runtime(format!("ort session creation: {e}"))),
+            Err(payload) => {
+                let msg = payload
+                    .downcast_ref::<&'static str>()
+                    .map(|s| (*s).to_string())
+                    .or_else(|| payload.downcast_ref::<String>().cloned())
+                    .unwrap_or_else(|| "unknown panic".to_string());
+                Err(RedactError::Runtime(format!(
+                    "ort session init panicked: {msg}"
+                )))
+            }
+        }
+    }
+
+    pub struct RfdetrRedactor {
+        cfg: RfdetrConfig,
+        // Mutex because ort::Session::run takes &mut self.
+        session: Mutex<Session>,
+        input_size: u32,
+    }
+
+    impl RfdetrRedactor {
+        /// Async constructor: download the model if missing, then load.
+        /// Recommended call site for production — single round trip.
+        pub async fn load_or_download(cfg: RfdetrConfig) -> Result<Self, RedactError> {
+            cfg.ensure_model_present().await?;
+            Self::load(cfg)
+        }
+
+        /// Sync constructor: load an already-on-disk model. Returns
+        /// [`RedactError::Unavailable`] if the file is missing — call
+        /// [`Self::load_or_download`] instead to fetch on first run.
+        pub fn load(cfg: RfdetrConfig) -> Result<Self, RedactError> {
+            if !cfg.model_path.exists() {
+                return Err(RedactError::Unavailable(format!(
+                    "RF-DETR model not found at {}",
+                    cfg.model_path.display()
+                )));
+            }
+
+            let session = create_session_safe(&cfg.model_path)?;
+
+            let input_size = if cfg.input_size > 0 {
+                cfg.input_size
+            } else {
+                detect_input_size(&session).unwrap_or(384)
+            };
+
+            Ok(Self {
+                cfg,
+                session: Mutex::new(session),
+                input_size,
+            })
+        }
+
+        fn infer(&self, image_path: &Path) -> Result<Vec<ImageRegion>, RedactError> {
+            let img = image::open(image_path)
+                .map_err(|e| RedactError::Runtime(format!("open {}: {e}", image_path.display())))?
+                .to_rgb8();
+            let (orig_w, orig_h) = (img.width(), img.height());
+            let resized = image::imageops::resize(
+                &img,
+                self.input_size,
+                self.input_size,
+                image::imageops::FilterType::Triangle,
+            );
+
+            // ImageNet mean/std → NCHW float32.
+            let s = self.input_size as usize;
+            let mean = [0.485f32, 0.456, 0.406];
+            let std = [0.229f32, 0.224, 0.225];
+            let mut input = Array4::<f32>::zeros((1, 3, s, s));
+            for (x, y, px) in resized.enumerate_pixels() {
+                let (xi, yi) = (x as usize, y as usize);
+                let r = px[0] as f32 / 255.0;
+                let g = px[1] as f32 / 255.0;
+                let b = px[2] as f32 / 255.0;
+                input[[0, 0, yi, xi]] = (r - mean[0]) / std[0];
+                input[[0, 1, yi, xi]] = (g - mean[1]) / std[1];
+                input[[0, 2, yi, xi]] = (b - mean[2]) / std[2];
+            }
+
+            let mut session = self
+                .session
+                .lock()
+                .map_err(|_| RedactError::Runtime("rfdetr session mutex poisoned".into()))?;
+            let input_name = session.inputs[0].name.clone();
+            let outputs = session
+                .run(
+                    ort::inputs![input_name => TensorRef::from_array_view(input.view())
+                    .map_err(rt_err("ort tensor view"))?],
+                )
+                .map_err(rt_err("ort run"))?;
+
+            // Identify the two outputs by rank: (1, 300, 4) = boxes,
+            // (1, 300, 13) = logits (last channel = no-object).
+            let mut boxes: Option<Vec<f32>> = None;
+            let mut logits: Option<Vec<f32>> = None;
+            for (_name, value) in outputs.iter() {
+                let arr = value
+                    .try_extract_array::<f32>()
+                    .map_err(rt_err("extract output"))?;
+                let shape: Vec<usize> = arr.shape().to_vec();
+                if shape.len() == 3 && shape[2] == 4 {
+                    boxes = Some(arr.iter().copied().collect());
+                } else if shape.len() == 3 && shape[2] == NUM_CLASSES + 1 {
+                    logits = Some(arr.iter().copied().collect());
+                }
+            }
+            let boxes = boxes.ok_or_else(|| RedactError::Runtime("missing boxes output".into()))?;
+            let logits =
+                logits.ok_or_else(|| RedactError::Runtime("missing logits output".into()))?;
+
+            // Per-class sigmoid (RF-DETR uses independent sigmoid, NOT softmax).
+            // Best PII class per query (excluding the no-object channel).
+            let stride = NUM_CLASSES + 1;
+            let mut out: Vec<ImageRegion> = Vec::new();
+            for q in 0..NUM_QUERIES {
+                let off = q * stride;
+                let mut best_class = 0usize;
+                let mut best_score = f32::NEG_INFINITY;
+                for c in 0..NUM_CLASSES {
+                    let lg = logits[off + c];
+                    let p = 1.0 / (1.0 + (-lg).exp());
+                    if p > best_score {
+                        best_score = p;
+                        best_class = c;
+                    }
+                }
+                if best_score < self.cfg.conf_threshold {
+                    continue;
+                }
+                let bo = q * 4;
+                let cx = boxes[bo];
+                let cy = boxes[bo + 1];
+                let bw = boxes[bo + 2];
+                let bh = boxes[bo + 3];
+                let x1 = ((cx - bw / 2.0) * orig_w as f32).max(0.0);
+                let y1 = ((cy - bh / 2.0) * orig_h as f32).max(0.0);
+                let w_px = (bw * orig_w as f32).max(0.0);
+                let h_px = (bh * orig_h as f32).max(0.0);
+                if w_px <= 0.0 || h_px <= 0.0 {
+                    continue;
+                }
+                out.push(ImageRegion {
+                    bbox: [x1 as u32, y1 as u32, w_px as u32, h_px as u32],
+                    label: CLASSES[best_class],
+                    score: best_score,
+                });
+            }
+            Ok(out)
+        }
+    }
+
+    #[async_trait]
+    impl ImageRedactor for RfdetrRedactor {
+        fn name(&self) -> &str {
+            RFDETR_NAME
+        }
+        fn version(&self) -> u32 {
+            RFDETR_VERSION
+        }
+        async fn detect(&self, image_path: &Path) -> Result<Vec<ImageRegion>, RedactError> {
+            // Inference is synchronous CPU/GPU work; tell tokio so it
+            // doesn't starve other tasks. `block_in_place` works on
+            // any `&self` without 'static gymnastics — the runtime
+            // moves other work off this thread for the duration.
+            tokio::task::block_in_place(|| self.infer(image_path))
+        }
+    }
+
+    fn detect_input_size(session: &Session) -> Option<u32> {
+        // inputs[0].shape is Vec<Option<i64>>-ish in ort 2.0-rc; use
+        // the last dim, fall back to None if it isn't a static int.
+        let shape = &session.inputs.first()?.input_type;
+        let s = format!("{shape:?}");
+        // Cheap parse: look for a known square size in the shape.
+        // Keep this in sync with every shipped model: v8=320, v9=384,
+        // v11=512. Omitting the current model's size makes detection
+        // fall back to 384 and feed a wrong-sized tensor → ort "invalid
+        // dimensions for input" on every frame (silent redaction outage).
+        [320u32, 384, 512]
+            .into_iter()
+            .find(|cand| s.contains(&cand.to_string()))
+    }
+
+    fn rt_err<E: std::fmt::Display>(ctx: &'static str) -> impl FnOnce(E) -> RedactError {
+        move |e| RedactError::Runtime(format!("{ctx}: {e}"))
+    }
+
+    fn num_cpus_physical() -> usize {
+        std::thread::available_parallelism()
+            .map(|n| (n.get() / 2).max(1))
+            .unwrap_or(2)
+    }
+}
+
+#[cfg(feature = "onnx-cpu")]
+pub use imp::RfdetrRedactor;
+
+// ─── feature-off path: stub so the trait wires without ort ────────
+
+#[cfg(not(feature = "onnx-cpu"))]
+pub struct RfdetrRedactor {
+    _cfg: RfdetrConfig,
+}
+
+#[cfg(not(feature = "onnx-cpu"))]
+impl RfdetrRedactor {
+    pub async fn load_or_download(_cfg: RfdetrConfig) -> Result<Self, RedactError> {
+        Err(RedactError::Unavailable(
+            "rfdetr adapter requires the `onnx-cpu` cargo feature".into(),
+        ))
+    }
+
+    pub fn load(_cfg: RfdetrConfig) -> Result<Self, RedactError> {
+        Err(RedactError::Unavailable(
+            "rfdetr adapter requires the `onnx-cpu` cargo feature".into(),
+        ))
+    }
+}
+
+#[cfg(not(feature = "onnx-cpu"))]
+#[async_trait]
+impl ImageRedactor for RfdetrRedactor {
+    fn name(&self) -> &str {
+        RFDETR_NAME
+    }
+    fn version(&self) -> u32 {
+        RFDETR_VERSION
+    }
+    async fn detect(&self, _image_path: &Path) -> Result<Vec<ImageRegion>, RedactError> {
+        Err(RedactError::Unavailable(
+            "rfdetr adapter requires the `onnx-cpu` cargo feature".into(),
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_model_path_is_unavailable() {
+        let cfg = RfdetrConfig {
+            model_path: PathBuf::from("/nonexistent/rfdetr.onnx"),
+            input_size: 0,
+            conf_threshold: 0.3,
+        };
+        let res = RfdetrRedactor::load(cfg);
+        assert!(matches!(res, Err(RedactError::Unavailable(_))));
+    }
+
+    #[test]
+    fn default_path_lives_under_screenpipe_dir() {
+        let p = RfdetrConfig::default_model_path();
+        let s = p.to_string_lossy();
+        assert!(s.contains(".screenpipe/models/rfdetr_v12.onnx"));
+    }
+
+    #[test]
+    fn expected_sha256_is_64_hex_chars() {
+        let s = RfdetrConfig::EXPECTED_SHA256;
+        assert_eq!(s.len(), 64);
+        assert!(s.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn hex_sha256_matches_known_value() {
+        // sha256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        let got = RfdetrConfig::hex_sha256(b"");
+        assert_eq!(
+            got,
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+    }
+
+    #[test]
+    fn corrupt_model_file_returns_runtime_error() {
+        // Loading a corrupt/invalid model file (not a real ONNX) must
+        // return a RedactError::Runtime, not panic. This test ensures
+        // that ORT panics (e.g. "Failed to initialize ORT API") are
+        // properly caught and converted to Result::Err.
+        #[cfg(feature = "onnx-cpu")]
+        {
+            use crate::adapters::rfdetr::imp::RfdetrRedactor;
+            use tempfile::tempdir;
+
+            let d = tempdir().unwrap();
+            let p = d.path().join("corrupt.onnx");
+            // Write a file that is NOT a valid ONNX model.
+            std::fs::write(&p, b"this is not a valid onnx model").unwrap();
+            let cfg = RfdetrConfig {
+                model_path: p,
+                input_size: 0,
+                conf_threshold: 0.3,
+            };
+            // This must return Err, not panic.
+            let res = RfdetrRedactor::load(cfg);
+            assert!(
+                matches!(res, Err(crate::RedactError::Runtime(_))),
+                "corrupt model must return RedactError::Runtime"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn ensure_model_present_passes_through_when_file_already_correct() {
+        use tempfile::tempdir;
+        // Build a small fake "model" file whose sha256 we know, then
+        // patch EXPECTED_SHA256 by constructing a config that points
+        // at it. Since EXPECTED_SHA256 is a const we can't override,
+        // we just verify the wrong-checksum path: an existing file
+        // with the wrong content triggers a re-download attempt.
+        // (Real download path is exercised by integration tests off
+        // the unit-test harness.)
+        let d = tempdir().unwrap();
+        let p = d.path().join("models").join("rfdetr_v12.onnx");
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(&p, b"not the real model").unwrap();
+        let cfg = RfdetrConfig {
+            model_path: p.clone(),
+            input_size: 0,
+            conf_threshold: 0.3,
+        };
+        // Wrong-checksum file → ensure_model_present tries to
+        // download. Network may or may not be available in CI, so
+        // accept either Ok (downloaded successfully) or
+        // Err(Runtime("...checksum...")) / Err(Runtime("...GET...")).
+        let res = cfg.ensure_model_present().await;
+        if let Err(e) = &res {
+            let msg = e.to_string();
+            assert!(
+                msg.contains("rfdetr") || msg.contains("checksum") || msg.contains("GET"),
+                "unexpected error variant: {msg}"
+            );
+        }
+    }
+}

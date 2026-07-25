@@ -1,0 +1,73 @@
+#
+# Real-world trace: Meeting 72 in Arc (Google Meet), 2026-05-11.
+# Extracted from ~/.screenpipe/screenpipe-app.2026-05-11.log,
+# transitions of `meeting v2: ... -> ...` lines relative to the first
+# `Idle -> Confirming` at 14:45:34Z. Each line is a `TraceEvent`:
+# {t, in_call, has_audio?}.
+#
+# What this captures: the user's 70+ minute Meet call in Arc, which
+# flapped Active⇌Ending many times before being manually stopped at
+# t=4254 (15:56:28Z). Between events the state machine retains its
+# state — boundary events drive the transitions.
+#
+# Run on a long-uptime box (replay binary uses Instant arithmetic
+# bounded by process uptime — 4254s of backdate needed):
+#
+#   cargo run --release -p screenpipe-meeting-eval --bin \
+#     screenpipe-eval-meeting-replay-trace -- \
+#     crates/screenpipe-meeting-eval/evals/traces/meeting72_arc_real.jsonl \
+#     --app Arc --name meeting72 --true-hangup-t 4254
+#
+# The trace ends at the final natural Active→Ending; the user's
+# manual stop at t=4254 is reflected only in `--true-hangup-t`.
+{"t":0.0,"in_call":false}
+{"t":5.0,"in_call":true}
+{"t":15.0,"in_call":false}
+{"t":20.0,"in_call":true}
+{"t":25.0,"in_call":false}
+{"t":48.0,"in_call":true}
+{"t":520.0,"in_call":false}
+{"t":551.0,"in_call":true}
+{"t":618.0,"in_call":false}
+{"t":628.0,"in_call":true}
+{"t":1085.0,"in_call":false}
+{"t":1101.0,"in_call":true}
+{"t":1162.0,"in_call":false}
+{"t":1167.0,"in_call":true}
+{"t":1203.0,"in_call":false}
+{"t":1224.0,"in_call":true}
+{"t":1558.0,"in_call":false}
+{"t":1568.0,"in_call":true}
+{"t":1891.0,"in_call":false}
+{"t":1960.0,"in_call":true}
+{"t":2724.0,"in_call":false}
+{"t":2734.0,"in_call":true}
+{"t":2781.0,"in_call":false}
+{"t":2786.0,"in_call":true}
+{"t":2843.0,"in_call":false}
+{"t":2858.0,"in_call":true}
+{"t":2967.0,"in_call":false}
+{"t":2977.0,"in_call":true}
+{"t":3060.0,"in_call":false}
+{"t":3066.0,"in_call":true}
+{"t":3185.0,"in_call":false}
+{"t":3195.0,"in_call":true}
+{"t":3231.0,"in_call":false}
+{"t":3237.0,"in_call":true}
+{"t":3278.0,"in_call":false}
+{"t":3283.0,"in_call":true}
+{"t":3299.0,"in_call":false}
+{"t":3304.0,"in_call":true}
+{"t":3309.0,"in_call":false}
+{"t":3330.0,"in_call":true}
+{"t":3335.0,"in_call":false}
+{"t":3345.0,"in_call":true}
+{"t":3454.0,"in_call":false}
+{"t":3475.0,"in_call":true}
+{"t":3558.0,"in_call":false}
+{"t":3563.0,"in_call":true}
+{"t":3568.0,"in_call":false}
+{"t":3584.0,"in_call":true}
+{"t":3952.0,"in_call":false}
+{"t":3967.0,"in_call":true}
+{"t":4205.0,"in_call":false}

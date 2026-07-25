@@ -1,0 +1,1556 @@
+import { useSettings } from "@/lib/hooks/use-settings";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Check,
+  ChevronsUpDown,
+  Plus,
+  Copy,
+  Edit2,
+  Star,
+  Trash2,
+  Terminal,
+  Loader2,
+  HelpCircle,
+  Eye,
+  EyeOff,
+  Settings,
+  LogIn,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { AIPreset, commands } from "@/lib/utils/tauri";
+import { ensureChatGptPreset } from "@/lib/utils/chatgpt-preset";
+import { useEnterprisePolicy } from "@/lib/hooks/use-enterprise-policy";
+import {
+  DEFAULT_ENTERPRISE_AI_PRESET_POLICY,
+  filterPresetsForEnterprisePolicy,
+  isEnterpriseManagedPreset,
+} from "@/lib/enterprise-ai-preset-policy";
+
+// Helper to detect UUID-like strings and format preset names nicely
+const formatPresetName = (name: string): string => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(name)) {
+    return `Preset ${name.slice(0, 8)}...`;
+  }
+  return name;
+};
+
+export const Icons = {
+  openai: (props: any) => (
+    <svg
+      fill="currentColor"
+      viewBox="0 0 24 24"
+      role="img"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.0264 1.1706a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4929 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0264 1.1706a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0788 3.7951-5.8144-3.3543 2.0264-1.1706a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.4068-.6813zm2.0834-3.0089-.142-.0852-4.7782-2.7913a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1658a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654 2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z" />
+    </svg>
+  ),
+  settings: Settings,
+  terminal: Terminal,
+  spinner: Loader2,
+};
+
+
+interface BaseRecommendedPreset {
+  id: string;
+  maxContextChars: number;
+  model: string;
+  prompt: string;
+}
+
+type RecommendedPreset = BaseRecommendedPreset &
+  (
+    | {
+        provider: "openai";
+      }
+    | {
+        provider: "native-ollama";
+      }
+  );
+
+interface AIProviderConfigProps {
+  onSubmit: (data: AIPreset) => void;
+  defaultPreset?: AIPreset;
+  showLoginCta?: boolean;
+}
+interface OpenAIModel {
+  id: string;
+  created?: number;
+  owned_by?: string;
+}
+
+export const DEFAULT_PROMPT = `Rules:
+- Media: use standard markdown with angle-bracket local paths, like ![description](</path/to/file.mp4>) for videos and ![description](</path/to/image.jpg>) for images
+- Use the exact absolute file_path from search results inside the angle brackets, do not modify it
+- Always wrap local file paths in angle brackets because litepipe paths often contain spaces or parentheses
+- Always answer my question/intent, do not make up things
+`;
+
+function ChatGptSignInButton() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { settings, updateSettings } = useSettings();
+
+  useEffect(() => {
+    commands.chatgptOauthStatus().then((res) => {
+      if (res.status === "ok") setLoggedIn(res.data.logged_in);
+    });
+  }, []);
+
+  return (
+    <Button
+      type="button"
+      variant={loggedIn ? "outline" : "default"}
+      disabled={loading}
+      className="h-7 text-xs w-full"
+      onClick={async () => {
+        if (loggedIn) {
+          setLoading(true);
+          await commands.chatgptOauthLogout();
+          setLoggedIn(false);
+          setLoading(false);
+        } else {
+          setLoading(true);
+          try {
+            const res = await commands.chatgptOauthLogin();
+            if (res.status === "ok" && res.data) {
+              setLoggedIn(true);
+              // auto-create a ChatGPT preset on first connection
+              await ensureChatGptPreset(
+                settings.aiPresets || [],
+                (presets) => updateSettings({ aiPresets: presets })
+              );
+            }
+          } catch (e) {
+            console.error("chatgpt oauth failed:", e);
+          }
+          setLoading(false);
+        }
+      }}
+    >
+      {loading ? (
+        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+      ) : loggedIn ? (
+        <Check className="h-3 w-3 mr-1 text-green-500" />
+      ) : (
+        <LogIn className="h-3 w-3 mr-1" />
+      )}
+      {loggedIn ? "signed in — sign out" : "sign in with chatgpt"}
+    </Button>
+  );
+}
+
+export function AIProviderConfig({
+  onSubmit,
+  defaultPreset,
+  showLoginCta = true,
+}: AIProviderConfigProps) {
+  const [selectedProvider, setSelectedProvider] = useState<
+    AIPreset["provider"]
+  >(defaultPreset?.provider || "openai");
+  const { settings } = useSettings();
+  const [isLoading, setIsLoading] = useState(false);
+  const [openaiModels, setOpenAIModels] = useState<OpenAIModel[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [idError, setIdError] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const { isEnterprise, policy: enterprisePolicy } = useEnterprisePolicy();
+  const aiPresetPolicy = enterprisePolicy.aiPresetPolicy ?? DEFAULT_ENTERPRISE_AI_PRESET_POLICY;
+  // litepipe: the hosted "litepipe cloud" provider (Pi availability poll +
+  // gateway model list from api.screenpipe.com) was removed — only local and
+  // bring-your-own-key providers remain.
+  const [formData, setFormData] = useState<AIPreset>({
+    provider: defaultPreset?.provider || "openai",
+    apiKey: defaultPreset?.apiKey || "",
+    url: defaultPreset?.url || "",
+    model: defaultPreset?.model || "",
+    maxContextChars: defaultPreset?.maxContextChars || 512000,
+    prompt: defaultPreset?.prompt || DEFAULT_PROMPT,
+    id: defaultPreset?.id || "",
+    defaultPreset: defaultPreset?.defaultPreset || false,
+  });
+
+  const validateId = (id: string | undefined): boolean => {
+    if (!id?.trim()) {
+      setIdError("name is required");
+      return false;
+    }
+
+    // Check if ID ends with 'copy' (case insensitive)
+    if (id.trim().toLowerCase().endsWith("copy")) {
+      setIdError("name cannot end with 'copy'");
+      return false;
+    }
+
+    // Check for duplicate IDs, excluding the current preset being edited
+    const isDuplicate = settings?.aiPresets?.some(
+      (preset) =>
+        preset.id.toLowerCase() === id.toLowerCase() &&
+        preset.id !== defaultPreset?.id,
+    );
+
+    if (isDuplicate) {
+      setIdError("name already exists");
+      return false;
+    }
+
+    setIdError(null);
+    return true;
+  };
+
+  const handleIdChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, id: value }));
+    validateId(value);
+  };
+
+  const fetchOpenAIModels = async (baseUrl: string, apiKey: string) => {
+    setIsLoadingModels(true);
+    try {
+      const response = await fetch(`${baseUrl}/models`, {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("failed to fetch models");
+      }
+
+      const data = await response.json();
+      setOpenAIModels(data.data || []);
+    } catch (error) {
+      console.error("error fetching models:", error);
+      setOpenAIModels([]);
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  const fetchOllamaModels = async (baseUrl: string) => {
+    setIsLoadingModels(true);
+    try {
+      const response = await fetch(`${baseUrl}/models`);
+
+      if (!response.ok) {
+        throw new Error("failed to fetch ollama models");
+      }
+
+      const data = (await response.json()) as {
+        data: OpenAIModel[];
+      };
+      setOpenAIModels(data.data || []);
+    } catch (error) {
+      console.error("error fetching ollama models:", error);
+      setOpenAIModels([]);
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  useEffect(() => {
+    setOpenAIModels([]);
+    if (selectedProvider === "openai" && formData.apiKey) {
+      // Fetch the live model catalog from the user's OpenAI account so the
+      // dropdown reflects whatever they actually have access to (gpt-5*,
+      // gpt-4.1, o-series, etc). Fall back to a curated list when the
+      // request fails (offline / bad key) so the dropdown still has
+      // something usable instead of an empty menu.
+      (async () => {
+        setIsLoadingModels(true);
+        try {
+          const resp = await fetch("https://api.openai.com/v1/models", {
+            headers: {
+              Authorization: `Bearer ${formData.apiKey}`,
+              "Content-Type": "application/json",
+            },
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data?.data?.length > 0) {
+              setOpenAIModels(data.data);
+              setIsLoadingModels(false);
+              return;
+            }
+          }
+        } catch {
+          /* fall through to fallback */
+        }
+        setOpenAIModels([
+          { id: "gpt-5" },
+          { id: "gpt-5-mini" },
+          { id: "gpt-5-nano" },
+          { id: "gpt-4.1" },
+          { id: "gpt-4.1-mini" },
+          { id: "gpt-4o" },
+          { id: "gpt-4o-mini" },
+          { id: "o3-mini" },
+          { id: "o1-mini" },
+          { id: "gpt-4" },
+          { id: "gpt-3.5-turbo" },
+        ]);
+        setIsLoadingModels(false);
+      })();
+    } else if (selectedProvider === "native-ollama") {
+      const baseUrl = "http://localhost:11434/v1";
+      fetchOllamaModels(baseUrl);
+    } else if (
+      selectedProvider === "custom" &&
+      formData.url &&
+      formData.apiKey
+    ) {
+      fetchOpenAIModels(formData.url, formData.apiKey);
+    } else if (selectedProvider === "openai-chatgpt") {
+      // Try fetching from API, fall back to known models
+      (async () => {
+        setIsLoadingModels(true);
+        try {
+          const tokenResult = await commands.chatgptOauthGetToken();
+          if (tokenResult.status === "ok") {
+            const resp = await fetch("https://api.openai.com/v1/models", {
+              headers: { Authorization: `Bearer ${tokenResult.data}` },
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              const uniqueModels = (data.data as { id: string }[]).filter((m, idx, arr) => arr.findIndex((x) => x.id === m.id) === idx);
+              if (uniqueModels.length > 0) {
+                setOpenAIModels(uniqueModels);
+                setIsLoadingModels(false);
+                return;
+              }
+            }
+          }
+        } catch { /* ignore */ }
+        // Fallback: Codex models available via ChatGPT subscription
+        setOpenAIModels([
+          { id: "gpt-5.4" }, { id: "gpt-5.3-codex" },
+          { id: "gpt-5.2-codex" }, { id: "gpt-5.2" }, { id: "gpt-5.1-codex-max" },
+          { id: "gpt-5.1" }, { id: "gpt-5.1-codex-mini" },
+        ]);
+        setIsLoadingModels(false);
+      })();
+    }
+  }, [selectedProvider, formData.apiKey, formData.url]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateId(formData.id)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      onSubmit({
+        ...formData,
+        id: formData.id?.trim() || "",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  return (
+    <div className="w-full space-y-3 rounded-lg bg-card p-4">
+      <div>
+        <h2 className="text-base font-semibold">
+          {defaultPreset?.id ? "edit ai provider" : "ai provider"}
+        </h2>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="space-y-1">
+          <Label htmlFor="name" className="flex items-center gap-2 text-xs">
+            name
+            {idError && (
+              <span className="text-xs text-destructive font-normal">
+                {idError}
+              </span>
+            )}
+          </Label>
+          <Input
+            id="name"
+            type="text"
+            placeholder="enter preset name"
+            value={formData.id || undefined}
+            onChange={(e) => handleIdChange(e.target.value)}
+            className={cn(
+              "font-mono h-8 text-sm",
+              idError && "border-destructive focus-visible:ring-destructive",
+            )}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            disabled={
+              Boolean(defaultPreset?.id) &&
+              settings.aiPresets.some((p) => p.id === defaultPreset?.id)
+            }
+          />
+        </div>
+
+        <div className="grid gap-2 grid-cols-4">
+          <Button
+            type="button"
+            variant={selectedProvider === "openai-chatgpt" ? "default" : "outline"}
+            className="flex h-8 items-center justify-center gap-1.5 text-xs px-3"
+            onClick={() => {
+              setSelectedProvider("openai-chatgpt");
+              setFormData({
+                ...formData,
+                provider: "openai-chatgpt",
+                url: "https://api.openai.com/v1",
+                model: "gpt-5.5",
+              });
+            }}
+          >
+            <Icons.openai className="h-3.5 w-3.5" />
+            <span>chatgpt</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant={
+              selectedProvider === "native-ollama" ? "default" : "outline"
+            }
+            className="flex h-8 items-center justify-center gap-1.5 text-xs px-3"
+            onClick={() => {
+              setSelectedProvider("native-ollama");
+              setFormData({
+                ...formData,
+                provider: "native-ollama",
+                url: "http://localhost:11434/v1",
+              });
+            }}
+          >
+            <Icons.terminal className="h-3.5 w-3.5" />
+            <span>ollama</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant={selectedProvider === "custom" ? "default" : "outline"}
+            className="flex h-8 items-center justify-center gap-1.5 text-xs px-3"
+            onClick={() => {
+              setSelectedProvider("custom");
+              setFormData({
+                ...formData,
+                provider: "custom",
+                url: "http://localhost:11434/v1",
+              });
+            }}
+          >
+            <Icons.settings className="h-3.5 w-3.5" />
+            <span>custom</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant={(selectedProvider as string) === "anthropic" ? "default" : "outline"}
+            className="flex h-8 items-center justify-center gap-1.5 text-xs px-3"
+            onClick={() => {
+              if ((selectedProvider as string) !== "anthropic") {
+                setSelectedProvider("anthropic");
+                setFormData({
+                  ...formData,
+                  provider: "anthropic",
+                  url: "",
+                  model: "claude-sonnet-4-6",
+                });
+              }
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/claude-ai.svg" alt="Claude API" className="h-3.5 w-3.5 rounded-sm" />
+            <span>claude api</span>
+          </Button>
+        </div>
+
+        {selectedProvider === "openai" && (
+          <div className="space-y-1">
+            <div className="space-y-1">
+              <Label htmlFor="apiKey" className="text-xs">api key</Label>
+              <div className="relative">
+                <Input
+                  id="apiKey"
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="sk-..."
+                  value={formData.apiKey || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, apiKey: e.target.value })
+                  }
+                  className="pr-10 h-8 text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                >
+                  {showApiKey ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="model" className="text-xs">model</Label>
+              <Select
+                value={formData.model}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, model: value })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue
+                    placeholder={
+                      isLoadingModels ? "loading models..." : "select model"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {openaiModels.length > 0 ? (
+                    openaiModels.map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.id}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-models" disabled>
+                      {isLoadingModels ? "loading..." : "no models found"}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {selectedProvider === "native-ollama" && (
+          <div className="space-y-1">
+            <div className="space-y-1">
+              <Label htmlFor="baseUrl" className="text-xs">base url</Label>
+              <Input
+                id="baseUrl"
+                type="text"
+                placeholder="http://localhost:11434"
+                value={formData.url || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, url: e.target.value })
+                }
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="model" className="text-xs">model</Label>
+              <div className="relative">
+                <Input
+                  id="model"
+                  type="text"
+                  list="ollama-models"
+                  placeholder={isLoadingModels ? "loading..." : "e.g. qwen3.5:9b"}
+                  value={formData.model || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, model: e.target.value })
+                  }
+                  className="h-8 text-sm"
+                />
+                {openaiModels.length > 0 && (
+                  <datalist id="ollama-models">
+                    {openaiModels.map((model) => (
+                      <option key={model.id} value={model.id} />
+                    ))}
+                  </datalist>
+                )}
+              </div>
+              {!isLoadingModels && openaiModels.length === 0 && (
+                <p className="text-[10px] text-muted-foreground">
+                  ollama not detected — type model name manually
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground">
+                recommended: qwen3.5:9b, glm-4.7:9b, qwen3.5:4b (tool calling). GPU required.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {selectedProvider === "custom" && (
+          <div className="space-y-1">
+            <div className="space-y-1">
+              <Label htmlFor="baseUrl" className="text-xs">base url</Label>
+              <Input
+                id="baseUrl"
+                type="text"
+                placeholder="https://api.example.com/v1"
+                value={formData.url || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, url: e.target.value })
+                }
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="apiKey" className="text-xs">api key</Label>
+              <div className="relative">
+                <Input
+                  id="apiKey"
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="your-api-key"
+                  value={formData.apiKey || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, apiKey: e.target.value })
+                  }
+                  className="pr-10 h-8 text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-2 py-1 hover:bg-transparent"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                >
+                  {showApiKey ? (
+                    <EyeOff className="h-3.5 w-3.5" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="model" className="text-xs">model</Label>
+              <div className="relative">
+                <Input
+                  id="model"
+                  type="text"
+                  list="custom-models"
+                  placeholder={isLoadingModels ? "loading..." : "type or select model"}
+                  value={formData.model || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, model: e.target.value })
+                  }
+                  className="h-8 text-sm"
+                />
+                {openaiModels.length > 0 && (
+                  <datalist id="custom-models">
+                    {openaiModels.map((model) => (
+                      <option key={model.id} value={model.id} />
+                    ))}
+                  </datalist>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedProvider === "openai-chatgpt" && (
+          <div className="space-y-1">
+            <div className="space-y-1">
+              <Label className="text-xs">chatgpt account</Label>
+              <ChatGptSignInButton />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="model" className="text-xs">model</Label>
+              <Input
+                id="model"
+                type="text"
+                list="chatgpt-models"
+                placeholder="gpt-5.5"
+                value={formData.model || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, model: e.target.value })
+                }
+                className="h-8 text-sm"
+              />
+              {openaiModels.length > 0 && (
+                <datalist id="chatgpt-models">
+                  {openaiModels.map((model) => (
+                    <option key={model.id} value={model.id} />
+                  ))}
+                </datalist>
+              )}
+            </div>
+          </div>
+        )}
+
+        {selectedProvider === "anthropic" && (
+          <div className="space-y-1">
+            {selectedProvider === "anthropic" && (
+              <div className="space-y-1 pt-1">
+                <Label htmlFor="anthropicApiKey" className="text-xs">api key</Label>
+                <div className="relative">
+                  <Input
+                    id="anthropicApiKey"
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="sk-ant-..."
+                    value={formData.apiKey || ""}
+                    onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                    className="pr-10 h-8 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-2 py-1 hover:bg-transparent"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                  >
+                    {showApiKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <Label htmlFor="model" className="text-xs">model</Label>
+              <Select
+                value={formData.model}
+                onValueChange={(value) => setFormData({ ...formData, model: value })}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="claude-fable-5">claude fable 5</SelectItem>
+                  <SelectItem value="claude-opus-4-8">claude opus 4.8</SelectItem>
+                  <SelectItem value="claude-sonnet-4-6">claude sonnet 4.5</SelectItem>
+                  <SelectItem value="claude-haiku-4-5-20251001">claude haiku 4.5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+        >
+          <span>{showAdvanced ? "▾" : "▸"}</span>
+          <span>advanced</span>
+        </button>
+
+        {showAdvanced && (
+          <div className="space-y-1.5">
+            <div className="space-y-1">
+              <Label htmlFor="maxTokens" className="text-xs">max output tokens</Label>
+              <Input
+                id="maxTokens"
+                type="number"
+                min={256}
+                max={128000}
+                step={256}
+                value={(formData as any).maxTokens ?? 4096}
+                onChange={(e) =>
+                  setFormData({ ...formData, maxTokens: parseInt(e.target.value) || 4096 } as any)
+                }
+                className="h-6 text-[10px]"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="prompt" className="text-xs">prompt</Label>
+              <Textarea
+                id="prompt"
+                value={formData.prompt || DEFAULT_PROMPT}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setFormData({ ...formData, prompt: e.target.value })
+                }
+                placeholder="enter your custom prompt here"
+                className="min-h-[60px] max-h-[100px] text-xs resize-none"
+              />
+            </div>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full h-7 text-xs"
+          disabled={
+            isLoading ||
+            Boolean(!formData.id?.length || !formData.model?.length)
+          }
+        >
+          {isLoading ? (
+            <Icons.spinner className="mr-2 h-3 w-3 animate-spin" />
+          ) : null}
+          {defaultPreset ? "save changes" : "continue"}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+interface AIPresetDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (preset: Partial<AIPreset>) => void;
+  preset?: AIPreset;
+  showLoginCta?: boolean;
+}
+
+interface AIPresetsSelectorProps {
+  recommendedPresets?: RecommendedPreset[];
+  shortcutKey?: string;
+  onPresetChange?: (preset: AIPreset) => void;
+  /** Called when user saves a preset (explicit action) — use to restart Pi deterministically */
+  onPresetSaved?: (preset: AIPreset) => void;
+  showLoginCta?: boolean;
+  /** Controlled mode: override which preset id is shown as selected */
+  controlledPresetId?: string | null;
+  /** Controlled mode: callback when user picks a preset (null = "none") */
+  onControlledSelect?: (presetId: string | null) => void;
+  /** Show a "none" option at the top of the list */
+  allowNone?: boolean;
+  /** Label shown for the none option */
+  noneLabel?: string;
+  /** Compact size variant for inline usage */
+  compact?: boolean;
+  /** Class applied to the outer selector wrapper. */
+  containerClassName?: string;
+  /** Class applied to the trigger button. */
+  triggerClassName?: string;
+  /** For tight composer UIs, show the active model instead of preset details. */
+  showModelOnly?: boolean;
+}
+
+export const AIPresetDialog = ({
+  open,
+  onOpenChange,
+  onSave,
+  preset,
+  showLoginCta = true,
+}: AIPresetDialogProps) => {
+  const handleProviderSubmit = (providerData: any) => {
+    const newPreset: Partial<AIPreset> = {
+      ...preset,
+      provider: providerData.provider,
+      url: providerData.url,      // Fixed: was providerData.baseUrl
+      model: providerData.model,  // Fixed: was providerData.modelName
+      id: providerData.id,
+      maxContextChars: providerData.maxContextChars,
+      prompt: providerData.prompt,
+    };
+
+    (newPreset as any).maxTokens = (providerData as any).maxTokens ?? 4096;
+
+    // Add apiKey for providers that require it
+    if (
+      providerData.provider === "openai" ||
+      providerData.provider === "custom" ||
+      providerData.provider === "anthropic"
+    ) {
+      (newPreset as any).apiKey = providerData.apiKey;
+    }
+
+    onSave(newPreset);
+  };
+
+  const defaultPreset = preset
+    ? {
+        id: preset.id,
+        provider: preset.provider,
+        url: preset.url,
+        model: preset.model,
+        maxContextChars: preset.maxContextChars,
+        maxTokens: (preset as any).maxTokens ?? 4096,
+        prompt: preset.prompt,
+        defaultPreset: preset.defaultPreset,
+        apiKey: preset.apiKey || null,
+      }
+    : undefined;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-md sm:max-w-lg max-h-[80vh] overflow-y-auto p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>
+            {preset ? "Edit Preset" : "Create New Preset"}
+          </DialogTitle>
+          <DialogDescription>
+            {preset
+              ? "Modify your AI preset settings here. Click save when you're done."
+              : "Configure your AI preset settings here. Click continue when you're done."}
+          </DialogDescription>
+        </DialogHeader>
+        <AIProviderConfig
+          onSubmit={handleProviderSubmit}
+          defaultPreset={defaultPreset}
+          showLoginCta={showLoginCta}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export const AIPresetsSelector = ({
+  recommendedPresets,
+  shortcutKey = "/",
+  onPresetChange,
+  onPresetSaved,
+  showLoginCta = true,
+  controlledPresetId,
+  onControlledSelect,
+  allowNone = false,
+  noneLabel = "none (use pipe defaults)",
+  compact = false,
+  containerClassName,
+  triggerClassName,
+  showModelOnly = false,
+}: AIPresetsSelectorProps) => {
+  const { settings, updateSettings } = useSettings();
+  const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPresetToEdit, setSelectedPresetToEdit] = useState<
+    AIPreset | undefined
+  >();
+
+  const isControlled = onControlledSelect !== undefined;
+  const { isEnterprise, policy: enterprisePolicy } = useEnterprisePolicy();
+  const aiPresetPolicy = enterprisePolicy.aiPresetPolicy ?? DEFAULT_ENTERPRISE_AI_PRESET_POLICY;
+  const canManageEmployeePresets = !isEnterprise || aiPresetPolicy.allow_employee_custom_presets;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const aiPresets = useMemo(() => {
+    const presets = (settings?.aiPresets || []) as AIPreset[];
+    return isEnterprise ? filterPresetsForEnterprisePolicy(presets, aiPresetPolicy) : presets;
+  }, [settings?.aiPresets, isEnterprise, aiPresetPolicy]);
+
+  const selectedPreset = useMemo(() => {
+    if (isControlled) return controlledPresetId ?? undefined;
+    // Use the first preset or default preset
+    const defaultPreset = aiPresets.find(
+      (preset) => preset.defaultPreset,
+    );
+    return defaultPreset?.id || aiPresets[0]?.id || undefined;
+  }, [aiPresets, isControlled, controlledPresetId]);
+
+  const selectedPresetData = useMemo(
+    () => aiPresets.find((p) => p.id === selectedPreset),
+    [aiPresets, selectedPreset]
+  );
+
+  useEffect(() => {
+    if (onPresetChange) {
+      onPresetChange(aiPresets.find((p) => p.id === selectedPreset) as AIPreset);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPreset, onPresetChange]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd/Ctrl + /
+      if ((e.metaKey || e.ctrlKey) && e.key === shortcutKey) {
+        e.preventDefault();
+        if (!aiPresets.length) return;
+
+        const currentIndex = selectedPreset
+          ? aiPresets.findIndex((p) => p.id === selectedPreset)
+          : -1;
+        const nextIndex = (currentIndex + 1) % aiPresets.length;
+        const nextPreset = aiPresets[nextIndex];
+
+        if (isControlled) {
+          // Controlled (e.g. chat composer): cycle the host's local selection
+          // without rewriting the user's default preset in settings.
+          onControlledSelect?.(nextPreset.id);
+        } else {
+          const updatedPresets = aiPresets.map((p) => ({
+            ...p,
+            defaultPreset: p.id === nextPreset.id,
+          }));
+          updateSettings({ aiPresets: updatedPresets });
+          onPresetSaved?.(nextPreset);
+        }
+
+        toast.success("Preset changed", {
+          description: `Switched to ${nextPreset.id} (${nextPreset.model})`,
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [aiPresets, selectedPreset, updateSettings, shortcutKey, onPresetSaved, isControlled, onControlledSelect]);
+
+  const handleSavePreset = (preset: Partial<AIPreset>) => {
+    if (!canManageEmployeePresets) {
+      toast.error("Managed by your organization", {
+        description: "Your admin controls which AI presets are available",
+      });
+      return;
+    }
+
+    if (!preset.id) {
+      toast.error("Please enter a name for this preset", {
+        description: "Name is required",
+      });
+      return;
+    }
+
+    if (!settings?.aiPresets) {
+      toast.error("Error", {
+        description: "Settings not initialized",
+      });
+      return;
+    }
+
+    // If we're editing an existing preset
+    if (selectedPresetToEdit) {
+      // If this is a copy/duplicate operation, treat it as a new preset
+      if (
+        preset.id !== selectedPresetToEdit.id ||
+        !settings.aiPresets.some((p) => p.id === preset.id)
+      ) {
+        // Check for duplicate ID
+        const existingPreset = settings.aiPresets.find(
+          (pre) => pre.id === preset.id,
+        );
+
+        if (existingPreset) {
+          toast.error("Name already exists", {
+            description: "Please choose a different name",
+          });
+          return;
+        }
+
+        // Add as new preset
+        updateSettings({
+          aiPresets: [
+            ...settings.aiPresets,
+            {
+              ...preset,
+              defaultPreset: false,
+            } as AIPreset,
+          ],
+        });
+
+        toast.success("Preset copied", {
+          description: "New preset has been created from copy",
+        });
+      } else {
+        // Normal edit operation
+        const updatedPresets = settings.aiPresets.map((p) =>
+          p.id === selectedPresetToEdit.id
+            ? ({ ...preset, defaultPreset: p.defaultPreset } as AIPreset)
+            : p,
+        );
+
+        // If editing the default preset, update the global settings as well
+        const isEditingDefaultPreset = selectedPresetToEdit.defaultPreset;
+        if (isEditingDefaultPreset) {
+          updateSettings({
+            aiPresets: updatedPresets,
+          });
+        } else {
+          updateSettings({
+            aiPresets: updatedPresets,
+          });
+        }
+
+        toast.success("Preset updated", {
+          description: "Your changes have been saved",
+        });
+      }
+    } else {
+      // Check for duplicate ID only when creating new preset
+      const existingPreset = settings.aiPresets.find(
+        (pre) => pre.id === preset.id,
+      );
+
+      if (existingPreset) {
+        toast.error("Name already exists", {
+          description: "Please choose a different name",
+        });
+        return;
+      }
+
+      // Handle first preset creation
+      if (settings.aiPresets.length === 0) {
+        const newPreset = {
+          ...preset,
+          defaultPreset: true,
+        } as AIPreset;
+
+        updateSettings({
+          aiPresets: [newPreset],
+         
+        });
+      } else {
+        // Adding a new preset
+        updateSettings({
+          aiPresets: [
+            ...settings.aiPresets,
+            {
+              ...preset,
+              defaultPreset: false,
+            } as AIPreset,
+          ],
+        });
+      }
+
+      toast.success("Preset created", {
+        description: "New preset has been added",
+      });
+    }
+
+    // Notify parent to restart Pi if the saved preset is the active/default one
+    if (onPresetSaved) {
+      const savedFull = { ...preset } as AIPreset;
+      const isDefault = selectedPresetToEdit?.defaultPreset ||
+        (!selectedPresetToEdit && settings.aiPresets.length === 0);
+      if (isDefault) {
+        onPresetSaved(savedFull);
+      }
+    }
+
+    setDialogOpen(false);
+    setSelectedPresetToEdit(undefined);
+  };
+
+  const handleDuplicatePreset = (preset: AIPreset) => {
+    if (!canManageEmployeePresets || isEnterpriseManagedPreset(preset)) {
+      toast.error("Managed by your organization", {
+        description: "Your admin controls which AI presets are available",
+      });
+      return;
+    }
+
+    const baseName = preset.id.replace(/ \d+$/, "");
+    let counter = 2;
+    let newName = `${baseName} ${counter}`;
+    while (settings.aiPresets.some((p) => p.id.toLowerCase() === newName.toLowerCase())) {
+      counter++;
+      newName = `${baseName} ${counter}`;
+    }
+    setSelectedPresetToEdit({
+      ...preset,
+      id: newName,
+      defaultPreset: false,
+    });
+    setDialogOpen(true);
+  };
+
+  const handleEditPreset = (preset: AIPreset) => {
+    if (!canManageEmployeePresets || isEnterpriseManagedPreset(preset)) {
+      toast.error("Managed by your organization", {
+        description: "Your admin controls which AI presets are available",
+      });
+      return;
+    }
+
+    setSelectedPresetToEdit(preset);
+    setDialogOpen(true);
+  };
+
+  const handleSetDefaultPreset = (preset: AIPreset) => {
+    if (!settings?.aiPresets) return;
+    if (preset.defaultPreset) return;
+    if (isEnterprise && aiPresetPolicy.lock_default_preset) {
+      toast.error("Default preset is locked", {
+        description: "Your admin controls the default AI preset",
+      });
+      return;
+    }
+
+    const updatedPresets = settings.aiPresets.map((p) => ({
+      ...p,
+      defaultPreset: p.id === preset.id,
+    }));
+
+    updateSettings({
+      aiPresets: updatedPresets,
+    });
+
+    // Restart Pi with the new default preset
+    if (onPresetSaved) {
+      onPresetSaved(preset);
+    }
+
+    toast.success("Default preset updated", {
+      description: `${preset.id} is now the default preset`,
+    });
+  };
+
+  const handleRemovePreset = (preset: AIPreset) => {
+    if (!settings?.aiPresets) return;
+    if (!canManageEmployeePresets || isEnterpriseManagedPreset(preset)) {
+      toast.error("Managed by your organization", {
+        description: "Your admin controls which AI presets are available",
+      });
+      return;
+    }
+
+    if (preset.defaultPreset) {
+      toast.error("Cannot delete default preset", {
+        description: "Please set another preset as default first",
+      });
+      return;
+    }
+
+    const updatedPresets = settings.aiPresets.filter((p) => p.id !== preset.id);
+    updateSettings({
+      aiPresets: updatedPresets,
+    });
+
+    toast.success("Preset removed", {
+      description: `${preset.id} has been removed`,
+    });
+  };
+
+  return (
+    <>
+      <div className={cn("flex flex-col w-full gap-2", containerClassName)}>
+        <div className="flex w-full items-center gap-2">
+        <Popover open={open} onOpenChange={setOpen}>
+          <TooltipProvider>
+            <Tooltip>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn(
+                    "w-full justify-between hover:bg-accent hover:text-accent-foreground",
+                    compact && "h-8 text-xs",
+                    triggerClassName
+                  )}
+                >
+                  {selectedPreset ? (
+                    showModelOnly ? (
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+                        <span
+                          className="truncate text-left font-medium"
+                          title={
+                            selectedPresetData
+                              ? `${selectedPresetData.id} (${selectedPresetData.model})`
+                              : undefined
+                          }
+                        >
+                          {selectedPresetData?.model || formatPresetName(selectedPreset)}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex w-full items-center justify-between gap-2 overflow-hidden min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-shrink overflow-hidden">
+                          <span className="font-medium truncate text-left">
+                            {formatPresetName(selectedPresetData?.id || '')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 flex-1 justify-end overflow-hidden">
+                          <span className="rounded bg-muted px-1.5 py-0.5 whitespace-nowrap shrink-0">
+                            {selectedPresetData?.provider}
+                          </span>
+                          <span className="hidden sm:block truncate min-w-0" title={selectedPresetData?.model}>
+                            {selectedPresetData?.model}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  ) : allowNone && isControlled ? (
+                    <span className="text-muted-foreground">{noneLabel}</span>
+                  ) : (
+                    "select ai preset..."
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <TooltipContent>
+                <p className="flex items-center gap-2">
+                  <span>Press</span>
+                  <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted rounded">
+                    ⌘/
+                  </kbd>
+                  <span>to cycle presets</span>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <PopoverContent
+            side="top"
+            sideOffset={6}
+            align={showModelOnly ? "end" : "center"}
+            alignOffset={showModelOnly ? -16 : 0}
+            className="min-w-[500px] w-[--radix-popover-trigger-width] p-0"
+          >
+            <Command>
+              <CommandInput placeholder="search presets..." />
+              <CommandList>
+                <CommandEmpty>no presets found.</CommandEmpty>
+                {allowNone && (
+                  <CommandGroup>
+                    <CommandItem
+                      value="__none__"
+                      onSelect={() => {
+                        if (isControlled) {
+                          onControlledSelect(null);
+                        }
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0 mr-2",
+                          !selectedPreset ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <span className="text-muted-foreground">{noneLabel}</span>
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+                {canManageEmployeePresets && recommendedPresets && recommendedPresets.length > 0 && (
+                  <CommandGroup heading="Recommended Presets">
+                    {recommendedPresets.map((preset) => (
+                      <CommandItem
+                        key={`${preset.id}-recommended`}
+                        value={`${preset.id}-recommened`}
+                        className="flex py-2"
+                      >
+                        <div className="flex w-full items-center justify-between gap-2 overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0 flex-shrink">
+                            <Check
+                              className={cn(
+                                "h-4 w-4 shrink-0",
+                                selectedPreset === preset.id
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                            <span className="font-medium truncate max-w-[30%]">
+                              {preset.id}
+                            </span>
+                            <span className="rounded bg-primary/10 text-primary px-1.5 py-0.5 text-xs font-medium shrink-0">
+                              recommended
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                            <div className="flex items-center gap-2">
+                              <span className="rounded bg-muted px-1.5 py-0.5 whitespace-nowrap">
+                                {preset.provider}
+                              </span>
+                              <span className="hidden sm:block truncate max-w-[30%]">
+                                {preset.model}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Create a full preset from the recommended preset with -copy suffix
+                                  const fullPreset = {
+                                    ...preset,
+                                    id: `${preset.id}`,
+                                    url:
+                                      preset.provider === "openai"
+                                        ? "https://api.openai.com/v1"
+                                        : preset.provider === "native-ollama"
+                                          ? "http://localhost:11434/v1"
+                                          : "",
+                                    defaultPreset: false,
+                                  } as AIPreset;
+                                  setSelectedPresetToEdit(fullPreset);
+                                  setDialogOpen(true);
+                                }}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                <CommandGroup>
+                  {aiPresets.map((preset) => (
+                    <CommandItem
+                      key={preset.id}
+                      value={preset.id}
+                      onSelect={() => {
+                        // Use preset from closure — cmdk lowercases the value
+                        // so string comparison against preset.id would fail
+                        if (isControlled) {
+                          onControlledSelect(preset.id);
+                        } else if (preset.id !== selectedPreset && !aiPresetPolicy.lock_default_preset) {
+                          const updatedPresets = (settings.aiPresets || []).map((p) => ({
+                            ...p,
+                            defaultPreset: p.id === preset.id,
+                          }));
+
+                          updateSettings({
+                            aiPresets: updatedPresets,
+                          });
+
+                          onPresetSaved?.(preset);
+
+                          toast.success("Preset selected", {
+                            description: `${preset.id} is now active`,
+                          });
+                        }
+                        setOpen(false);
+                      }}
+                      className="flex py-2"
+                    >
+                      <div className="flex w-full items-center justify-between gap-2 overflow-hidden">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Check
+                            className={cn(
+                              "h-4 w-4 shrink-0",
+                              selectedPreset === preset.id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          <span className="font-medium truncate max-w-[120px]" title={preset.id}>
+                            {formatPresetName(preset.id)}
+                          </span>
+                          {preset.defaultPreset && (
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium shrink-0">
+                              default
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded bg-muted px-1.5 py-0.5 whitespace-nowrap">
+                              {preset.provider}
+                            </span>
+                            <span className="truncate max-w-[120px]">
+                              {preset.model}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {canManageEmployeePresets && !isEnterpriseManagedPreset(preset) && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditPreset(preset);
+                                  }}
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicatePreset(preset);
+                                  }}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                              </>
+                            )}
+                            {!preset.defaultPreset && !aiPresetPolicy.lock_default_preset && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSetDefaultPreset(preset);
+                                }}
+                              >
+                                <Star className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {!preset.defaultPreset && canManageEmployeePresets && !isEnterpriseManagedPreset(preset) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemovePreset(preset);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                {canManageEmployeePresets && (
+                  <CommandGroup>
+                    <CommandItem
+                      onSelect={() => {
+                        setOpen(false);
+                        setSelectedPresetToEdit(undefined);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      create new preset
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        </div>
+      </div>
+      <AIPresetDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSavePreset}
+        preset={selectedPresetToEdit}
+        showLoginCta={showLoginCta}
+      />
+    </>
+  );
+};

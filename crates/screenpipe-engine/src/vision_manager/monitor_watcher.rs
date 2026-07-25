@@ -1,0 +1,398 @@
+//! Monitor Watcher - Polls for monitor connect/disconnect events
+
+use once_cell::sync::Lazy;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::Mutex;
+use tokio::task::JoinHandle;
+use tracing::{debug, info, warn};
+
+use screenpipe_events::PermissionKind;
+use screenpipe_screen::monitor::{list_monitors_detailed, MonitorListError};
+
+use super::manager::{VisionManager, VisionManagerStatus};
+use crate::drm_detector;
+use crate::permission_monitor;
+
+static MONITOR_WATCHER: Lazy<Mutex<Option<JoinHandle<()>>>> = Lazy::new(|| Mutex::new(None));
+
+/// Start the monitor watcher that polls for monitor changes.
+/// When `audio_manager` is provided, SCK-based (output) audio devices are also
+/// stopped/restarted alongside vision during DRM pause/resume.
+pub async fn start_monitor_watcher(
+    vision_manager: Arc<VisionManager>,
+    audio_manager: Option<screenpipe_audio::audio_manager::AudioManager>,
+) -> anyhow::Result<()> {
+    // Stop existing watcher if any
+    stop_monitor_watcher().await?;
+
+    #[cfg(target_os = "macos")]
+    info!(
+        "Starting monitor watcher (event-driven via CGDisplayRegisterReconfigurationCallback, 60s backstop poll)"
+    );
+    #[cfg(not(target_os = "macos"))]
+    info!("Starting monitor watcher (polling every 5 seconds)");
+
+    let handle = tokio::spawn(async move {
+        // Track monitors that were disconnected (for reconnection detection).
+        // Value is the human-readable display name at the time we last saw it,
+        // so the topology-changed event for a disconnect can carry a name even
+        // though the OS no longer enumerates the gone monitor.
+        let mut known_monitors: HashMap<u32, String> = HashMap::new();
+        // Track permission state to avoid log spam
+        let mut permission_denied_logged = false;
+        // Track whether we stopped monitors due to DRM
+        let mut drm_stopped = false;
+        // Track whether we stopped recording due to work-hours schedule
+        let mut schedule_stopped = false;
+        // Suppresses the topology-changed event for the next reconcile pass.
+        // Set true after DRM/schedule resume so the bulk re-add of monitors
+        // doesn't surface as a user-facing "+N displays detected" notification.
+        let mut suppress_next_topology_event = false;
+        // Warn once per recovery episode, then keep repeated retries quiet.
+        let mut recovery_retry_warned = false;
+
+        // Initialize with current monitors
+        match list_monitors_detailed().await {
+            Ok(monitors) => {
+                for monitor in &monitors {
+                    known_monitors.insert(monitor.id(), monitor.name().to_string());
+                }
+                permission_denied_logged = false;
+            }
+            Err(MonitorListError::PermissionDenied) => {
+                warn!("Screen recording permission denied. Vision capture is disabled. Grant access in System Settings > Privacy & Security > Screen Recording");
+                permission_denied_logged = true;
+                permission_monitor::report_state(
+                    PermissionKind::ScreenRecording,
+                    false,
+                    Some("list_monitors PermissionDenied (startup)".to_string()),
+                );
+            }
+            Err(e) => {
+                warn!("Failed to list monitors on startup: {}", e);
+            }
+        }
+
+        loop {
+            // ── DRM pause handling ──────────────────────────────────────────
+            // When DRM content is focused, we must:
+            // 1. Stop all monitors (release SCK capture handles)
+            // 2. NOT call list_monitors_detailed() (avoids touching SCK APIs)
+            // 3. Only poll the focused app via Accessibility APIs
+            // This ensures macOS DRM sees no active ScreenCaptureKit usage.
+            if drm_detector::drm_content_paused() {
+                if !drm_stopped {
+                    info!(
+                        "DRM content focused — stopping all vision monitors to release SCK handles"
+                    );
+                    if let Err(e) = vision_manager.stop().await {
+                        warn!("failed to stop vision manager for DRM pause: {:?}", e);
+                    }
+                    if let Some(ref am) = audio_manager {
+                        if let Err(e) = am.stop_output_devices().await {
+                            warn!("failed to stop SCK audio for DRM pause: {:?}", e);
+                        }
+                    }
+                    drm_stopped = true;
+                }
+                // Poll focused app (Accessibility API only, no SCK) to detect
+                // when user switches away from DRM content.
+                let still_drm = tokio::task::spawn_blocking(drm_detector::poll_drm_clear)
+                    .await
+                    .unwrap_or(true);
+                if still_drm {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                    continue;
+                }
+                // DRM cleared — fall through to restart below
+            }
+
+            if drm_stopped {
+                info!("DRM content no longer focused — restarting vision monitors");
+                if let Err(e) = vision_manager.start().await {
+                    warn!("failed to restart vision manager after DRM pause: {:?}", e);
+                }
+                if let Some(ref am) = audio_manager {
+                    if let Err(e) = am.start_output_devices().await {
+                        warn!("failed to restart SCK audio after DRM clear: {:?}", e);
+                    }
+                }
+                drm_stopped = false;
+                suppress_next_topology_event = true;
+                // Re-populate known_monitors after restart
+                if let Ok(monitors) = list_monitors_detailed().await {
+                    known_monitors = monitors
+                        .iter()
+                        .map(|m| (m.id(), m.name().to_string()))
+                        .collect();
+                }
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                continue;
+            }
+
+            // ── Schedule pause handling ─────────────────────────────────────
+            // When outside the work-hours schedule stop all capture so no data
+            // is recorded outside the user's defined window.
+            if crate::schedule_monitor::schedule_paused() {
+                if !schedule_stopped {
+                    info!("outside work-hours schedule — stopping all capture");
+                    if let Err(e) = vision_manager.stop().await {
+                        warn!("failed to stop vision manager for schedule pause: {:?}", e);
+                    }
+                    if let Some(ref am) = audio_manager {
+                        if let Err(e) = am.stop().await {
+                            warn!("failed to stop audio for schedule pause: {:?}", e);
+                        }
+                    }
+                    schedule_stopped = true;
+                }
+                // Check every 30 s — matches the schedule monitor's own cadence.
+                tokio::time::sleep(Duration::from_secs(30)).await;
+                continue;
+            }
+
+            if schedule_stopped {
+                info!("within work-hours schedule — resuming capture");
+                if let Err(e) = vision_manager.start().await {
+                    warn!(
+                        "failed to restart vision manager after schedule resume: {:?}",
+                        e
+                    );
+                }
+                if let Some(ref am) = audio_manager {
+                    if let Err(e) = am.start().await {
+                        warn!("failed to restart audio after schedule resume: {:?}", e);
+                    }
+                }
+                schedule_stopped = false;
+                suppress_next_topology_event = true;
+                if let Ok(monitors) = list_monitors_detailed().await {
+                    known_monitors = monitors
+                        .iter()
+                        .map(|m| (m.id(), m.name().to_string()))
+                        .collect();
+                }
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                continue;
+            }
+
+            // ── Normal monitor polling ──────────────────────────────────────
+            // If stopped (e.g. no monitors after undock/wake), retry start().
+            if vision_manager.status().await != VisionManagerStatus::Running {
+                #[cfg(target_os = "macos")]
+                {
+                    let unlock = crate::sleep_monitor::screen_unlock_notify();
+                    // Drain any permit buffered while we were Running so we don't
+                    // wake instantly on a stale signal.
+                    let _ = tokio::time::timeout(Duration::from_millis(0), unlock.notified()).await;
+                    // Race unlock against the 5s backstop.
+                    if tokio::time::timeout(Duration::from_secs(5), unlock.notified())
+                        .await
+                        .is_ok()
+                    {
+                        info!("screen unlocked — retrying VisionManager start immediately");
+                    }
+                }
+                #[cfg(not(target_os = "macos"))]
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                match vision_manager.start().await {
+                    Ok(()) => {
+                        info!("VisionManager recovered after previous start failure");
+                        recovery_retry_warned = false;
+                        if let Ok(monitors) = list_monitors_detailed().await {
+                            known_monitors = monitors
+                                .iter()
+                                .map(|m| (m.id(), m.name().to_string()))
+                                .collect();
+                        }
+                    }
+                    Err(e) => {
+                        if recovery_retry_warned {
+                            debug!(?e, "VisionManager retry still failing");
+                        } else {
+                            warn!(?e, "VisionManager retry failed; will keep retrying");
+                            recovery_retry_warned = true;
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Get currently connected monitors with detailed error info
+            let current_monitors = match list_monitors_detailed().await {
+                Ok(monitors) => {
+                    if permission_denied_logged {
+                        info!("Screen recording permission granted! Starting vision capture.");
+                        permission_denied_logged = false;
+                        permission_monitor::report_state(
+                            PermissionKind::ScreenRecording,
+                            true,
+                            None,
+                        );
+                    }
+                    monitors
+                }
+                Err(MonitorListError::PermissionDenied) => {
+                    if !permission_denied_logged {
+                        warn!("Screen recording permission denied. Vision capture is disabled. Grant access in System Settings > Privacy & Security > Screen Recording");
+                        permission_denied_logged = true;
+                        permission_monitor::report_state(
+                            PermissionKind::ScreenRecording,
+                            false,
+                            Some("list_monitors PermissionDenied (runtime)".to_string()),
+                        );
+                    }
+                    // Back off to 30s when permission is denied instead of 2s
+                    tokio::time::sleep(Duration::from_secs(30)).await;
+                    continue;
+                }
+                Err(MonitorListError::NoMonitorsFound) => {
+                    debug!("No monitors found, will retry");
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    continue;
+                }
+                Err(e) => {
+                    warn!("Failed to list monitors: {}", e);
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    continue;
+                }
+            };
+            let current_ids: HashSet<u32> = current_monitors.iter().map(|m| m.id()).collect();
+
+            // Get currently recording monitors
+            let active_ids: HashSet<u32> =
+                vision_manager.active_monitors().await.into_iter().collect();
+
+            // Empty active set on a populated known set means this is steady-state
+            // boot, not a hot-plug — suppress the notification so the user doesn't
+            // get "started recording 4 monitors" on every restart.
+            let initial_pass = active_ids.is_empty() && known_monitors.is_empty();
+            let mut added: Vec<serde_json::Value> = Vec::new();
+            let mut removed: Vec<serde_json::Value> = Vec::new();
+
+            // Detect newly connected monitors (filtered by user selection)
+            for monitor in &current_monitors {
+                let monitor_id = monitor.id();
+                if !active_ids.contains(&monitor_id) {
+                    if !vision_manager.is_monitor_allowed(monitor) {
+                        debug!(
+                            "Skipping monitor {} ({}) — not in allowed list",
+                            monitor_id,
+                            monitor.stable_id()
+                        );
+                        continue;
+                    }
+
+                    if known_monitors.contains_key(&monitor_id) {
+                        info!("Monitor {} reconnected, resuming recording", monitor_id);
+                    } else {
+                        info!("New monitor {} detected, starting recording", monitor_id);
+                    }
+                    // Keep the name fresh (and insert if first time seen) so a
+                    // later disconnect can still report a human-readable name.
+                    known_monitors.insert(monitor_id, monitor.name().to_string());
+
+                    match vision_manager.start_monitor(monitor_id).await {
+                        Ok(()) => {
+                            added.push(serde_json::json!({
+                                "id": monitor_id,
+                                "stable_id": monitor.stable_id(),
+                                "name": monitor.name(),
+                                "width": monitor.width(),
+                                "height": monitor.height(),
+                            }));
+                        }
+                        Err(e) => {
+                            warn!(
+                                "Failed to start recording on monitor {}: {:?}",
+                                monitor_id, e
+                            );
+                        }
+                    }
+                }
+            }
+
+            // Detect disconnected monitors
+            for monitor_id in &active_ids {
+                if !current_ids.contains(monitor_id) {
+                    info!("Monitor {} disconnected, stopping recording", monitor_id);
+                    match vision_manager.stop_monitor(*monitor_id).await {
+                        Ok(()) => {
+                            // Use the last-known name for this id — the OS no
+                            // longer enumerates a disconnected display, so the
+                            // name has to come from our cache or be "unknown".
+                            let name = known_monitors
+                                .get(monitor_id)
+                                .cloned()
+                                .unwrap_or_else(|| format!("display {}", monitor_id));
+                            removed.push(serde_json::json!({
+                                "id": *monitor_id,
+                                "name": name,
+                            }));
+                        }
+                        Err(e) => warn!(
+                            "Failed to stop recording on monitor {}: {:?}",
+                            monitor_id, e
+                        ),
+                    }
+                }
+            }
+
+            if suppress_next_topology_event {
+                suppress_next_topology_event = false;
+            } else if !initial_pass && (!added.is_empty() || !removed.is_empty()) {
+                let active_count = vision_manager.active_monitors().await.len();
+                let _ = screenpipe_events::send_event(
+                    "monitor_topology_changed",
+                    serde_json::json!({
+                        "added": added,
+                        "removed": removed,
+                        "active_count": active_count,
+                    }),
+                );
+            }
+
+            // Wait for the next display reconfiguration event. On macOS the
+            // CG display callback (registered in `sleep_monitor`) fires
+            // instantly on connect/disconnect/resolution changes, so polling
+            // SCK every 5s just adds steady load without adding responsiveness.
+            // Backstop:
+            //   - 60s when the callback is active (event-driven, rare wake)
+            //   -  5s when the callback failed to register (fall back to the
+            //      previous behavior so hot-plug detection doesn't silently
+            //      regress to once-a-minute)
+            #[cfg(target_os = "macos")]
+            {
+                let backstop = if crate::sleep_monitor::display_reconfig_callback_registered() {
+                    Duration::from_secs(60)
+                } else {
+                    Duration::from_secs(5)
+                };
+                let notify = crate::sleep_monitor::display_reconfig_notify();
+                tokio::select! {
+                    _ = notify.notified() => {}
+                    _ = tokio::time::sleep(backstop) => {}
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
+        }
+    });
+
+    *MONITOR_WATCHER.lock().await = Some(handle);
+
+    Ok(())
+}
+
+/// Stop the monitor watcher
+pub async fn stop_monitor_watcher() -> anyhow::Result<()> {
+    if let Some(handle) = MONITOR_WATCHER.lock().await.take() {
+        debug!("Stopping monitor watcher");
+        handle.abort();
+    }
+    Ok(())
+}

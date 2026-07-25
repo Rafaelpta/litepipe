@@ -1,0 +1,35 @@
+#
+# False-positive guard: a transient signal appears on one scan (e.g.
+# a calendar popup showed "Join with Google Meet", or a momentary AX
+# matching glitch) but doesn't persist. The Confirming state should
+# time out and NO meeting should be created.
+
+[meta]
+name = "confirming_drops_no_meeting"
+description = "Single transient in_call scan; signal does not persist; no meeting should start"
+app = "Arc"
+scan_interval_seconds = 5.0
+
+[[ticks]]
+type = "single"
+t = 0
+in_call = false
+
+# one scan briefly sees a signal
+[[ticks]]
+type = "single"
+t = 5
+in_call = true
+
+# then it's gone for the rest of the timeline
+[[ticks]]
+type = "constant"
+from = 10
+to = 600
+in_call = false
+
+[expected]
+meeting_count = 0
+final_state = "Idle"
+flap_count_max = 0
+early_end_max = 0

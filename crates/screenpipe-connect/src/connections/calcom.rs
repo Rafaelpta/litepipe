@@ -1,0 +1,91 @@
+use super::{Category, Integration, IntegrationDef, ProxyAuth, ProxyConfig};
+use crate::oauth::{self, OAuthConfig};
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
+use screenpipe_secrets::SecretStore;
+use serde_json::{Map, Value};
+
+// To activate OAuth: register a Cal.com OAuth client at https://developer.cal.com/
+// Set redirect URI to http://localhost:3030/connections/oauth/callback
+// Then replace the client_id below with the registered value.
+static OAUTH: OAuthConfig = OAuthConfig {
+    auth_url: "https://app.cal.com/auth/oauth2/authorize",
+    client_id: "e9e319206428a99bfcb2207e51f827c96c1ed24821458a8633356e80632575dd",
+    // Cal.com migrated their scope naming: legacy `READ_BOOKING` /
+    // `READ_PROFILE` are no longer accepted on new OAuth clients
+    // (server rejects with "Requested scope exceeds the client's
+    // registered scopes"). Modern names use the `RESOURCE_VERB`
+    // pattern per https://cal.com/docs/api-reference/v2/oauth.
+    //
+    // The four scopes here match the ones enabled on the production
+    // OAuth client: event types, bookings, availability, profile.
+    // Note: "view availability" in the dashboard maps to
+    // `SCHEDULE_READ`, not `AVAILABILITY_READ` — Cal.com's scope
+    // catalog uses "schedule" as the resource name.
+    extra_auth_params: &[(
+        "scope",
+        "BOOKING_READ PROFILE_READ EVENT_TYPE_READ SCHEDULE_READ",
+    )],
+    redirect_uri_override: None,
+};
+
+static DEF: IntegrationDef = IntegrationDef {
+    id: "calcom",
+    name: "Cal.com",
+    icon: "calcom",
+    category: Category::Productivity,
+    description: "Access Cal.com bookings and scheduling. Connected via OAuth — use GET https://api.cal.com/v2/... with Authorization: Bearer <access_token> and cal-api-version: 2024-08-13 header.",
+    fields: &[],
+};
+
+pub struct CalCom;
+
+#[async_trait]
+impl Integration for CalCom {
+    fn def(&self) -> &'static IntegrationDef {
+        &DEF
+    }
+
+    fn oauth_config(&self) -> Option<&'static OAuthConfig> {
+        Some(&OAUTH)
+    }
+
+    fn proxy_config(&self) -> Option<&'static ProxyConfig> {
+        static CFG: ProxyConfig = ProxyConfig {
+            base_url: "https://api.cal.com/v2",
+            auth: ProxyAuth::Bearer {
+                credential_key: "api_key",
+            },
+            extra_headers: &[],
+        };
+        Some(&CFG)
+    }
+
+    async fn test(
+        &self,
+        client: &reqwest::Client,
+        _creds: &Map<String, Value>,
+        secret_store: Option<&SecretStore>,
+    ) -> Result<String> {
+        let token = oauth::read_oauth_token_instance(secret_store, "calcom", None)
+            .await
+            .ok_or_else(|| anyhow!("not connected — use 'Connect with Cal.com' button"))?;
+        let resp: Value = client
+            .get("https://api.cal.com/v2/me")
+            .bearer_auth(&token)
+            .header("cal-api-version", "2024-08-13")
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        let data = &resp["data"];
+        let name = data["name"]
+            .as_str()
+            .or_else(|| data["email"].as_str())
+            .or_else(|| data["username"].as_str())
+            .unwrap_or("unknown");
+        Ok(format!("connected as {}", name))
+    }
+}

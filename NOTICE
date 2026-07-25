@@ -1,0 +1,22 @@
+litepipe
+
+This project is a fork of Screenpipe (https://github.com/mediar-ai/screenpipe),
+taken from the last commit published under the MIT license (June 2026).
+
+Original work Copyright (c) 2024-2026 louis030195 and the Screenpipe
+contributors, licensed under the MIT license. The original copyright and
+permission notice are preserved in LICENSE.md, as the license requires.
+
+Modifications for litepipe Copyright (c) 2026 the litepipe contributors,
+also licensed under the MIT license.
+
+litepipe is an independent project. It is not affiliated with, sponsored by,
+or endorsed by Screenpipe or Mediar, Inc. "Screenpipe" is referenced only to
+credit the origin of the code, as the MIT license requires and as honesty
+demands.
+
+Summary of the nature of the modifications (see git history for detail):
+removal of telemetry, error reporting, auto update, accounts, subscriptions,
+cloud sync, the hosted AI provider, the pipe store, and third party OAuth
+integrations; changed defaults so that data retention is on and analytics are
+off; renamed the user facing product to litepipe.

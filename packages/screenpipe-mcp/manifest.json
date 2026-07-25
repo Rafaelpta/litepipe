@@ -1,0 +1,65 @@
+{
+  "manifest_version": "0.3",
+  "name": "screenpipe",
+  "display_name": "Screenpipe",
+  "version": "0.0.0-injected-from-package-json",
+  "description": "Search your screen recordings and audio transcriptions with AI",
+  "long_description": "Screenpipe is a 24/7 screen and audio recorder that lets you search everything you've seen or heard. This extension connects Claude to your local screenpipe instance, enabling AI-powered search through your digital memory.",
+  "author": {
+    "name": "screenpipe",
+    "url": "https://screenpi.pe"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/screenpipe/screenpipe"
+  },
+  "homepage": "https://screenpi.pe",
+  "documentation": "https://github.com/screenpipe/screenpipe/tree/main/packages/screenpipe-mcp",
+  "support": "https://github.com/screenpipe/screenpipe/issues",
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "search-content",
+      "description": "Search through recorded screen content, audio transcriptions, and UI elements with speaker filtering"
+    },
+    {
+      "name": "export-video",
+      "description": "Export screen recordings as an MP4 for a time range — with synced audio by default (pass fps for a silent timelapse)"
+    },
+    {
+      "name": "list-meetings",
+      "description": "List detected meetings with duration, app, and attendees"
+    },
+    {
+      "name": "activity-summary",
+      "description": "Lightweight compressed activity overview for a time range (apps, recent texts, audio summary)"
+    },
+    {
+      "name": "search-elements",
+      "description": "Search structured UI elements (accessibility tree nodes and OCR text blocks)"
+    },
+    {
+      "name": "frame-context",
+      "description": "Get accessibility text, parsed tree nodes, and extracted URLs for a specific frame"
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "keywords": ["screen-recording", "ocr", "audio-transcription", "automation", "memory", "search"],
+  "privacy_policies": [
+    "https://github.com/screenpipe/screenpipe/tree/main/packages/screenpipe-mcp#privacy-policy",
+    "https://screenpi.pe/privacy"
+  ]
+}

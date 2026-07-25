@@ -1,0 +1,41 @@
+#
+# Local pre-commit guard. Mirror of what runs in CI but only on STAGED files,
+# so the loop is fast (under a few seconds for typical commits). CI is still
+# the source of truth — these hooks just catch obvious failures before push.
+#
+# Install:
+#   bunx lefthook install
+#
+# Bypass for one commit (use sparingly):
+#   LEFTHOOK=0 git commit ...
+
+pre-commit:
+  parallel: true
+  commands:
+    rust-fmt:
+      glob: "*.rs"
+      run: cargo fmt --check -- {staged_files}
+
+    rust-clippy:
+      # Only run clippy on the crates that have at least one staged .rs file.
+      # Cargo discovers the workspace, so the grep keeps it scoped instead of
+      # rebuilding the whole tree on every commit.
+      glob: "crates/*/**/*.rs"
+      run: |
+        crates=$(echo "{staged_files}" | tr ' ' '\n' \
+          | grep -oE 'crates/[^/]+' | sort -u | sed 's|crates/||')
+        for c in $crates; do
+          cargo clippy -p "screenpipe-$c" --all-targets -- -W clippy::all
+        done
+
+    biome:
+      glob: "apps/screenpipe-app-tauri/**/*.{ts,tsx,js,jsx}"
+      run: bunx --bun @biomejs/biome check --no-errors-on-unmatched {staged_files}
+
+    typecheck:
+      # No way to typecheck only staged files reliably with project references —
+      # tsc --noEmit on the whole project is fast enough (~5s) once the build
+      # incremental cache is warm.
+      glob: "apps/screenpipe-app-tauri/**/*.{ts,tsx}"
+      root: "apps/screenpipe-app-tauri"
+      run: bunx tsc --noEmit

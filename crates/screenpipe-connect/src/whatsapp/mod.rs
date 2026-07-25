@@ -1,0 +1,639 @@
+//! WhatsApp integration via Baileys (WhatsApp Web multi-device protocol).
+//!
+//! Manages a bun child process running the Baileys gateway script.
+//! Bun is used for both installing npm packages and running the gateway.
+
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use std::process::Stdio;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::{Child, Command};
+use tokio::sync::Mutex;
+use tracing::{debug, error, info, warn};
+
+const GATEWAY_JS: &str = include_str!("gateway.mjs");
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum GatewayEvent {
+    Qr {
+        data: String,
+    },
+    Connected {
+        name: String,
+        phone: String,
+    },
+    Disconnected {
+        reason: String,
+    },
+    Error {
+        message: String,
+    },
+    Http {
+        port: u16,
+    },
+    SendResult {
+        id: String,
+        success: bool,
+        error: Option<String>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WhatsAppStatus {
+    Disconnected,
+    WaitingForQr,
+    QrReady { qr: String },
+    Connected { name: String, phone: String },
+    Error { message: String },
+}
+
+pub struct WhatsAppGateway {
+    screenpipe_dir: PathBuf,
+    status: Arc<Mutex<WhatsAppStatus>>,
+    child: Arc<Mutex<Option<Child>>>,
+    http_port: Arc<Mutex<Option<u16>>>,
+    /// Incremented each time start_pairing is called. The watchdog checks
+    /// this to know if it's been superseded by a newer start_pairing call.
+    generation: Arc<std::sync::atomic::AtomicU64>,
+    /// Whether auto-restart is enabled (set to true after successful pairing).
+    auto_restart: Arc<AtomicBool>,
+    /// Cached bun path for watchdog restarts.
+    bun_path: Arc<Mutex<String>>,
+}
+
+impl WhatsAppGateway {
+    pub fn new(screenpipe_dir: PathBuf) -> Self {
+        Self {
+            screenpipe_dir,
+            status: Arc::new(Mutex::new(WhatsAppStatus::Disconnected)),
+            child: Arc::new(Mutex::new(None)),
+            http_port: Arc::new(Mutex::new(None)),
+            generation: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            auto_restart: Arc::new(AtomicBool::new(false)),
+            bun_path: Arc::new(Mutex::new(String::new())),
+        }
+    }
+
+    /// Get the gateway HTTP port (Pi curls this directly to send messages).
+    pub async fn http_port(&self) -> Option<u16> {
+        *self.http_port.lock().await
+    }
+
+    pub async fn status(&self) -> WhatsAppStatus {
+        self.status.lock().await.clone()
+    }
+
+    /// Start the Baileys gateway process for QR pairing.
+    ///
+    /// `bun_hint` is advisory — if it's an absolute path to an existing binary,
+    /// we use it; otherwise we fall back to the bundled sidecar + common install
+    /// locations + PATH (see `resolve_bun_path`). This makes the frontend's life
+    /// easy (it can just pass `"bun"`) and still works on fresh Macs where bun
+    /// isn't on the user's PATH.
+    pub async fn start_pairing(&self, bun_hint: &str) -> Result<()> {
+        let bun_path = resolve_bun_path(Some(bun_hint))?;
+
+        // Bump generation so any existing watchdog exits on its next check
+        let gen = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
+
+        // Stop any existing process
+        self.stop_process().await;
+
+        // Cache resolved bun path for watchdog restarts
+        *self.bun_path.lock().await = bun_path.clone();
+
+        self.ensure_deps(&bun_path).await?;
+        self.spawn_gateway(&bun_path).await?;
+
+        // Enable auto-restart now that we've successfully started
+        self.auto_restart.store(true, Ordering::SeqCst);
+
+        // Spawn watchdog that restarts the gateway if it dies unexpectedly.
+        // It will exit if generation changes (meaning start_pairing was called again).
+        self.spawn_watchdog(gen);
+
+        Ok(())
+    }
+
+    /// Install baileys + pino if needed, write gateway script to disk.
+    async fn ensure_deps(&self, bun_path: &str) -> Result<()> {
+        let session_dir = self.screenpipe_dir.join("whatsapp-session");
+        std::fs::create_dir_all(&session_dir)?;
+
+        let script_path = self.screenpipe_dir.join("whatsapp-gateway.mjs");
+        std::fs::write(&script_path, GATEWAY_JS)
+            .context("failed to write whatsapp gateway script")?;
+
+        let node_modules = self
+            .screenpipe_dir
+            .join("node_modules")
+            .join("@whiskeysockets");
+        if !node_modules.exists() {
+            info!("installing @whiskeysockets/baileys, pino, and ws...");
+            let mut install_cmd = Command::new(bun_path);
+            install_cmd
+                .args(["add", "@whiskeysockets/baileys", "pino", "ws"])
+                .current_dir(&self.screenpipe_dir)
+                .stdout(Stdio::null())
+                .stderr(Stdio::piped());
+            #[cfg(windows)]
+            install_cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+            let install = install_cmd.spawn()?.wait().await?;
+            if !install.success() {
+                anyhow::bail!("failed to install @whiskeysockets/baileys");
+            }
+        }
+        Ok(())
+    }
+
+    /// Spawn the bun gateway process, wire up stdout/stderr readers.
+    async fn spawn_gateway(&self, bun_path: &str) -> Result<()> {
+        let session_dir = self.screenpipe_dir.join("whatsapp-session");
+        let script_path = self.screenpipe_dir.join("whatsapp-gateway.mjs");
+
+        let mut gateway_cmd = Command::new(bun_path);
+        gateway_cmd
+            .arg(script_path.to_str().unwrap())
+            .env("WHATSAPP_SESSION_DIR", session_dir.to_str().unwrap())
+            .stdin(Stdio::piped()) // keep stdin open so gateway doesn't self-terminate
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .kill_on_drop(true);
+        #[cfg(windows)]
+        gateway_cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        let mut child = gateway_cmd
+            .spawn()
+            .context("failed to spawn whatsapp gateway")?;
+
+        // Take stdin handle and hold it — dropping it would close the pipe and kill the gateway.
+        // We store it alongside the child so it lives as long as the child does.
+        let _stdin = child.stdin.take().expect("stdin piped");
+
+        let stdout = child.stdout.take().expect("stdout piped");
+        let stderr = child.stderr.take().expect("stderr piped");
+
+        {
+            let mut lock = self.child.lock().await;
+            *lock = Some(child);
+        }
+
+        *self.status.lock().await = WhatsAppStatus::WaitingForQr;
+        *self.http_port.lock().await = None;
+
+        // Read stdout events
+        let status = self.status.clone();
+        let http_port = self.http_port.clone();
+        let auto_restart = self.auto_restart.clone();
+        tokio::spawn(async move {
+            let reader = BufReader::new(stdout);
+            let mut lines = reader.lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                // Skip non-JSON lines silently (Bun console.log debug output,
+                // multi-line pretty-printed objects, etc.) — only try to parse
+                // lines that look like JSON events.
+                let trimmed = line.trim_start();
+                if !trimmed.starts_with('{') {
+                    debug!("whatsapp gateway stdout: {}", line);
+                    continue;
+                }
+                match serde_json::from_str::<GatewayEvent>(trimmed) {
+                    Ok(GatewayEvent::Qr { data }) => {
+                        info!("whatsapp: qr code received");
+                        *status.lock().await = WhatsAppStatus::QrReady { qr: data };
+                    }
+                    Ok(GatewayEvent::Connected { name, phone }) => {
+                        info!("whatsapp: connected as {}", name);
+                        *status.lock().await = WhatsAppStatus::Connected { name, phone };
+                    }
+                    Ok(GatewayEvent::Disconnected { reason }) => {
+                        warn!("whatsapp: disconnected — {}", reason);
+                        if reason == "logged_out" {
+                            // User logged out — don't auto-restart
+                            auto_restart.store(false, Ordering::SeqCst);
+                            *status.lock().await = WhatsAppStatus::Disconnected;
+                        }
+                    }
+                    Ok(GatewayEvent::Error { message }) => {
+                        error!("whatsapp gateway error: {}", message);
+                        *status.lock().await = WhatsAppStatus::Error { message };
+                    }
+                    Ok(GatewayEvent::Http { port }) => {
+                        info!("whatsapp: gateway HTTP on port {}", port);
+                        *http_port.lock().await = Some(port);
+                    }
+                    Ok(GatewayEvent::SendResult { .. }) => {
+                        // send results are logged but not tracked in status
+                    }
+                    Err(e) => {
+                        debug!("whatsapp gateway unparseable line: {} ({})", line, e);
+                    }
+                }
+            }
+            // stdout closed = process died
+            info!("whatsapp: gateway stdout closed (process exited)");
+        });
+
+        // Hold stdin handle in a background task so it stays open for the lifetime of the process
+        tokio::spawn(async move {
+            // Just hold the handle. When stop_process() kills the child, this task
+            // will end because the pipe will break.
+            let _keep_alive = _stdin;
+            // Block forever — stdin handle stays open, keeping the gateway alive.
+            // When stop_process() kills the child, this task becomes inert.
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+            }
+        });
+
+        // Log stderr
+        tokio::spawn(async move {
+            let reader = BufReader::new(stderr);
+            let mut lines = reader.lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                // Only WARN for actual errors. Bun prints noisy warnings
+                // (e.g. "ws.WebSocket 'upgrade' event is not implemented")
+                // and info messages to stderr that aren't actionable.
+                let lower = line.to_lowercase();
+                if lower.contains("error") || lower.contains("fatal") || lower.contains("panic") {
+                    warn!("whatsapp gateway stderr: {}", line);
+                } else {
+                    debug!("whatsapp gateway stderr: {}", line);
+                }
+            }
+        });
+
+        Ok(())
+    }
+
+    /// Watchdog: monitors the child process and restarts it if it dies unexpectedly.
+    /// Exits if generation changes (a newer start_pairing superseded this one).
+    fn spawn_watchdog(&self, my_generation: u64) {
+        let child = self.child.clone();
+        let status = self.status.clone();
+        let http_port = self.http_port.clone();
+        let auto_restart = self.auto_restart.clone();
+        let generation = self.generation.clone();
+        let screenpipe_dir = self.screenpipe_dir.clone();
+        let bun_path = self.bun_path.clone();
+
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+
+                // Exit if we've been superseded by a newer start_pairing call
+                if generation.load(Ordering::SeqCst) != my_generation {
+                    info!("whatsapp: watchdog exiting (superseded by newer generation)");
+                    return;
+                }
+
+                // Check if process is still alive
+                let is_dead = {
+                    let mut lock = child.lock().await;
+                    if let Some(ref mut c) = *lock {
+                        // try_wait returns Ok(Some(status)) if exited, Ok(None) if still running
+                        match c.try_wait() {
+                            Ok(Some(exit_status)) => {
+                                info!("whatsapp: gateway exited with {}", exit_status);
+                                true
+                            }
+                            Ok(None) => false, // still running
+                            Err(e) => {
+                                warn!("whatsapp: failed to check child status: {}", e);
+                                true
+                            }
+                        }
+                    } else {
+                        true // no child at all
+                    }
+                };
+
+                if !is_dead {
+                    continue;
+                }
+
+                // Process is dead — should we restart?
+                if !auto_restart.load(Ordering::SeqCst) {
+                    info!(
+                        "whatsapp: gateway exited and auto-restart is disabled, watchdog stopping"
+                    );
+                    *status.lock().await = WhatsAppStatus::Disconnected;
+                    *http_port.lock().await = None;
+                    return;
+                }
+
+                // Only restart if session files exist (user hasn't logged out)
+                let has_session = screenpipe_dir
+                    .join("whatsapp-session")
+                    .join("creds.json")
+                    .exists();
+                if !has_session {
+                    info!("whatsapp: no session on disk, watchdog stopping");
+                    auto_restart.store(false, Ordering::SeqCst);
+                    *status.lock().await = WhatsAppStatus::Disconnected;
+                    *http_port.lock().await = None;
+                    return;
+                }
+
+                // Clear dead child
+                {
+                    let mut lock = child.lock().await;
+                    *lock = None;
+                }
+                *http_port.lock().await = None;
+
+                // Restart with backoff
+                warn!("whatsapp: gateway died unexpectedly, restarting in 5s...");
+                *status.lock().await = WhatsAppStatus::Error {
+                    message: "gateway crashed, restarting...".to_string(),
+                };
+
+                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+
+                // Re-check generation after backoff — may have been superseded
+                if generation.load(Ordering::SeqCst) != my_generation {
+                    info!("whatsapp: watchdog exiting after backoff (superseded)");
+                    return;
+                }
+
+                // Re-spawn
+                let session_dir = screenpipe_dir.join("whatsapp-session");
+                let script_path = screenpipe_dir.join("whatsapp-gateway.mjs");
+                let bun = bun_path.lock().await.clone();
+
+                let mut respawn_cmd = Command::new(&bun);
+                respawn_cmd
+                    .arg(script_path.to_str().unwrap())
+                    .env("WHATSAPP_SESSION_DIR", session_dir.to_str().unwrap())
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .kill_on_drop(true);
+                #[cfg(windows)]
+                respawn_cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+                match respawn_cmd.spawn() {
+                    Ok(mut new_child) => {
+                        let stdin_handle = new_child.stdin.take().expect("stdin piped");
+                        let stdout = new_child.stdout.take().expect("stdout piped");
+                        let stderr = new_child.stderr.take().expect("stderr piped");
+
+                        {
+                            let mut lock = child.lock().await;
+                            *lock = Some(new_child);
+                        }
+                        *status.lock().await = WhatsAppStatus::WaitingForQr;
+
+                        // Wire up stdout reader
+                        let s = status.clone();
+                        let hp = http_port.clone();
+                        let ar = auto_restart.clone();
+                        tokio::spawn(async move {
+                            let reader = BufReader::new(stdout);
+                            let mut lines = reader.lines();
+                            while let Ok(Some(line)) = lines.next_line().await {
+                                // Skip non-JSON lines silently (see comment above).
+                                let trimmed = line.trim_start();
+                                if !trimmed.starts_with('{') {
+                                    debug!("whatsapp gateway stdout: {}", line);
+                                    continue;
+                                }
+                                match serde_json::from_str::<GatewayEvent>(trimmed) {
+                                    Ok(GatewayEvent::Qr { data }) => {
+                                        info!("whatsapp: qr code received");
+                                        *s.lock().await = WhatsAppStatus::QrReady { qr: data };
+                                    }
+                                    Ok(GatewayEvent::Connected { name, phone }) => {
+                                        info!("whatsapp: connected as {}", name);
+                                        *s.lock().await = WhatsAppStatus::Connected { name, phone };
+                                    }
+                                    Ok(GatewayEvent::Disconnected { reason }) => {
+                                        warn!("whatsapp: disconnected — {}", reason);
+                                        if reason == "logged_out" {
+                                            ar.store(false, Ordering::SeqCst);
+                                            *s.lock().await = WhatsAppStatus::Disconnected;
+                                        }
+                                    }
+                                    Ok(GatewayEvent::Error { message }) => {
+                                        error!("whatsapp gateway error: {}", message);
+                                        *s.lock().await = WhatsAppStatus::Error { message };
+                                    }
+                                    Ok(GatewayEvent::Http { port }) => {
+                                        info!("whatsapp: gateway HTTP on port {}", port);
+                                        *hp.lock().await = Some(port);
+                                    }
+                                    Ok(GatewayEvent::SendResult { .. }) => {}
+                                    Err(e) => {
+                                        debug!(
+                                            "whatsapp gateway unparseable line: {} ({})",
+                                            line, e
+                                        );
+                                    }
+                                }
+                            }
+                        });
+
+                        // Hold stdin
+                        tokio::spawn(async move {
+                            let _keep = stdin_handle;
+                            // Block forever — stdin handle stays open, keeping the gateway alive.
+                            // When stop_process() kills the child, this task becomes inert.
+                            loop {
+                                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+                            }
+                        });
+
+                        // Log stderr
+                        tokio::spawn(async move {
+                            let reader = BufReader::new(stderr);
+                            let mut lines = reader.lines();
+                            while let Ok(Some(line)) = lines.next_line().await {
+                                // Only WARN for actual errors. Bun prints noisy warnings
+                                // (e.g. "ws.WebSocket 'upgrade' event is not implemented")
+                                // and info messages to stderr that aren't actionable.
+                                let lower = line.to_lowercase();
+                                if lower.contains("error")
+                                    || lower.contains("fatal")
+                                    || lower.contains("panic")
+                                {
+                                    warn!("whatsapp gateway stderr: {}", line);
+                                } else {
+                                    debug!("whatsapp gateway stderr: {}", line);
+                                }
+                            }
+                        });
+
+                        info!("whatsapp: gateway restarted successfully");
+                    }
+                    Err(e) => {
+                        error!("whatsapp: failed to restart gateway: {}", e);
+                        *status.lock().await = WhatsAppStatus::Error {
+                            message: format!("restart failed: {}", e),
+                        };
+                        // Will retry on next watchdog cycle
+                    }
+                }
+            }
+        });
+    }
+
+    /// Kill the child process without disabling auto-restart or signaling the watchdog.
+    async fn stop_process(&self) {
+        let mut lock = self.child.lock().await;
+        if let Some(mut child) = lock.take() {
+            let _ = child.kill().await;
+        }
+        *self.http_port.lock().await = None;
+    }
+
+    /// Stop the gateway process, disable auto-restart, and stop the watchdog.
+    pub async fn stop(&self) {
+        self.auto_restart.store(false, Ordering::SeqCst);
+        // Bump generation so watchdog exits on its next check
+        self.generation.fetch_add(1, Ordering::SeqCst);
+        self.stop_process().await;
+        *self.status.lock().await = WhatsAppStatus::Disconnected;
+    }
+
+    /// Disconnect and wipe session.
+    pub async fn logout(&self) {
+        self.stop().await;
+        let session_dir = self.screenpipe_dir.join("whatsapp-session");
+        let _ = std::fs::remove_dir_all(&session_dir);
+    }
+
+    /// Check if there's an existing session (previously paired).
+    pub fn has_session(&self) -> bool {
+        self.screenpipe_dir
+            .join("whatsapp-session")
+            .join("creds.json")
+            .exists()
+    }
+}
+
+/// Resolve the `bun` executable used by the WhatsApp gateway subprocess.
+///
+/// Resolution order (first match wins):
+///   1. `hint` if it's an absolute path to an existing file. Allows callers
+///      (or advanced users) to force a specific binary.
+///   2. Bundled sidecar + common install locations via
+///      `screenpipe_core::agents::pi::find_bun_executable` — this is the
+///      common case on macOS/Windows where Tauri ships bun next to the app
+///      binary, or the user installed bun via the official installer.
+///   3. `which bun` / `where bun` PATH lookup — last resort, works when the
+///      user explicitly added bun to their shell PATH.
+///
+/// Returns a friendly error when bun can't be located anywhere, pointing the
+/// user at `https://bun.sh/install`. Prevents the cryptic
+/// "No such file or directory (os error 2)" that plain `Command::new("bun")`
+/// surfaces when the binary isn't on PATH.
+pub fn resolve_bun_path(hint: Option<&str>) -> Result<String> {
+    if let Some(h) = hint {
+        let trimmed = h.trim();
+        let is_placeholder = trimmed.is_empty()
+            || trimmed.eq_ignore_ascii_case("bun")
+            || trimmed.eq_ignore_ascii_case("bun.exe");
+        if !is_placeholder {
+            let p = std::path::Path::new(trimmed);
+            if p.is_absolute() && p.exists() {
+                return Ok(trimmed.to_string());
+            }
+        }
+    }
+
+    if let Some(p) = screenpipe_core::agents::pi::find_bun_executable() {
+        return Ok(p);
+    }
+
+    if let Some(p) = which_bun() {
+        return Ok(p);
+    }
+
+    anyhow::bail!(
+        "bun binary not found. screenpipe normally ships bun bundled inside the \
+         app. If you're running from source or the bundled binary is missing, \
+         install bun from https://bun.sh/install and restart the app."
+    )
+}
+
+/// Find bun executable on PATH. Prefer `resolve_bun_path` for end-to-end
+/// resolution — this is the PATH-only fallback.
+pub fn which_bun() -> Option<String> {
+    which_executable("bun")
+}
+
+fn which_executable(name: &str) -> Option<String> {
+    let (cmd_name, args) = if cfg!(windows) {
+        ("where", vec![name.to_string()])
+    } else {
+        ("which", vec![name.to_string()])
+    };
+    let mut cmd = std::process::Command::new(cmd_name);
+    cmd.args(&args);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    cmd.output().ok().and_then(|o| {
+        if o.status.success() {
+            String::from_utf8(o.stdout)
+                .ok()
+                .map(|s| s.lines().next().unwrap_or("").trim().to_string())
+        } else {
+            None
+        }
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// An absolute hint pointing at an existing file is returned verbatim —
+    /// this is the escape hatch for users who want to force a specific bun.
+    #[test]
+    fn hint_with_real_absolute_path_is_honored() {
+        // current_exe always exists and is absolute — it's not bun, but the
+        // resolver doesn't execute it, only checks that it exists.
+        let exe = std::env::current_exe().unwrap();
+        let got = resolve_bun_path(Some(exe.to_str().unwrap())).unwrap();
+        assert_eq!(got, exe.to_str().unwrap());
+    }
+
+    /// Placeholder hints ("bun", "bun.exe", "", "  ") should NOT match and
+    /// must fall through to the real resolver. We can't assert the fallback
+    /// path without poking the environment, so we just assert that the
+    /// placeholder is never echoed back.
+    #[test]
+    fn placeholder_hints_dont_short_circuit() {
+        for placeholder in [Some(""), Some("bun"), Some("BUN.EXE"), Some("  "), None] {
+            match resolve_bun_path(placeholder) {
+                Ok(path) => {
+                    // Whatever we got back, it must NOT be the literal placeholder.
+                    assert_ne!(path.as_str(), "bun");
+                    assert_ne!(path.as_str().to_lowercase(), "bun.exe");
+                    assert_ne!(path.trim(), "");
+                }
+                Err(_) => {
+                    // Acceptable — bun genuinely isn't installed anywhere on
+                    // this machine. The contract is "don't lie", not "always
+                    // succeed".
+                }
+            }
+        }
+    }
+
+    /// Relative or non-existent hint paths are treated as placeholders so
+    /// we don't hand the spawner a path that will fail with "os error 2".
+    #[test]
+    fn nonexistent_hint_path_is_ignored() {
+        let bogus = "/tmp/definitely-not-a-real-bun-binary-xyz";
+        if let Ok(path) = resolve_bun_path(Some(bogus)) {
+            assert_ne!(path, bogus);
+        }
+    }
+}

@@ -1,0 +1,57 @@
+#
+# Regression test for 4e784f620 (#2536): user minimizes Zoom or shares
+# screen during a call. Zoom's controls move out of the AX tree on
+# macOS. The 30s native-app ending timeout would expire and falsely
+# end the meeting — fix was to extend the audio-output check from
+# browser-only to all apps.
+
+[meta]
+name = "native_zoom_minimized_with_audio"
+description = "Zoom call, user minimizes (AX controls disappear); audio flowing"
+app = "zoom.us"
+scan_interval_seconds = 5.0
+
+[[ticks]]
+type = "single"
+t = 0
+in_call = false
+
+# call starts; controls visible for 1 min
+[[ticks]]
+type = "constant"
+from = 5
+to = 60
+in_call = true
+
+# user minimizes Zoom — controls hidden for 4 min
+[[ticks]]
+type = "constant"
+from = 65
+to = 300
+in_call = false
+
+# user un-minimizes for the last minute
+[[ticks]]
+type = "constant"
+from = 305
+to = 360
+in_call = true
+
+# user hangs up at 360s
+[[ticks]]
+type = "constant"
+from = 365
+to = 600
+in_call = false
+
+[[audio_ranges]]
+from = 5
+to = 360
+
+[expected]
+true_hangup_t_seconds = 360
+meeting_count = 1
+final_state = "Idle"
+flap_count_max = 200
+end_latency_seconds_max = 60
+early_end_max = 0

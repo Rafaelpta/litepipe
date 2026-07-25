@@ -1,0 +1,30 @@
+[package]
+name = "screenpipe-meeting-eval"
+version = { workspace = true }
+authors = { workspace = true }
+description = "Meeting-detection state-machine eval harness (scenario replay, precision/recall/flap metrics)"
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+anyhow = "1.0.86"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+clap = { version = "4.3", features = ["derive"] }
+
+# The whole point of this crate: drive `advance_state` from the prod
+# meeting detector against scripted scan traces. We pull
+# screenpipe-engine for `meeting_detector::{advance_state, MeetingState,
+# ScanResult, StateAction}` — same precedent as screenpipe-audio-eval,
+# which pulls all of screenpipe-audio to drive the diarization chain.
+screenpipe-engine = { path = "../screenpipe-engine" }
+
+[[bin]]
+name = "screenpipe-eval-meeting-state"
+path = "src/bin/eval_state.rs"
+
+[[bin]]
+name = "screenpipe-eval-meeting-replay-trace"
+path = "src/bin/replay_trace.rs"

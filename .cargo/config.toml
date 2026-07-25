@@ -1,0 +1,24 @@
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-Wl,--allow-multiple-definition"]
+
+# Force M1 target for all ARM64 macOS builds
+# This prevents whisper.cpp from using i8mm instructions that only M2+ chips have
+[target.aarch64-apple-darwin]
+rustflags = [
+    "-C", "target-cpu=apple-m1",
+    "-C", "link-arg=-framework",
+    "-C", "link-arg=Accelerate",
+    "-l", "c++",
+]
+
+[target.x86_64-apple-darwin]
+rustflags = "-lc++ -l framework=Accelerate"
+
+[env]
+# Use prebuilt NASM objects on Windows (no NASM install needed in CI): https://aws.github.io/aws-lc-rs/requirements/windows.html#prebuilt-nasm-objects
+AWS_LC_SYS_PREBUILT_NASM = "1"
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+
+# Faster builds - use more threads for codegen
+[build]
+jobs = 16  # Parallel compilation jobs (adjust to your CPU cores)

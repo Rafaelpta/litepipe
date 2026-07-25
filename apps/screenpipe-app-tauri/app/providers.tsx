@@ -1,0 +1,153 @@
+// app/providers.tsx
+"use client";
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
+import { useEffect, useState, Suspense } from "react";
+import { ChangelogDialogProvider } from "@/lib/hooks/use-changelog-dialog";
+import { SettingsProvider } from "@/lib/hooks/use-settings";
+import { ThemeProvider } from "@/components/theme-provider";
+import { PermissionMonitorProvider } from "@/lib/hooks/use-permission-monitor";
+import { forwardRef } from "react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { commands } from "@/lib/utils/tauri";
+import { useUpdateListener } from "@/components/update-banner";
+import { DeeplinkHandler } from "@/components/deeplink-handler";
+import { usePathname } from "next/navigation";
+
+/// Global mount point for the updater event listener. Lives here (not in
+/// per-page hooks) so the listener is registered for the lifetime of the
+/// app — the `update-available` event fires once when the bundle download
+/// completes, and if the listener wasn't mounted at that moment the banner
+/// would never appear. The hook also hydrates from `get_pending_update` on
+/// mount so a late-mounting webview still picks up an event it missed.
+function UpdateListenerMount() {
+  useUpdateListener();
+  return null;
+}
+
+export const Providers = forwardRef<
+  HTMLDivElement,
+  { children: React.ReactNode }
+>(({ children }, ref) => {
+  // Gate children rendering until after first effect. The Next.js static
+  // export prerenders the whole tree at build time, and several boot-path
+  // components (settings via createDefaultSettingsObject → platform(),
+  // Date.now() initializers in chat-sidebar's useMinuteTick, etc.)
+  // produce different output at build time vs first client render. The
+  // resulting mismatch surfaces as React #419 (hydration recovery), and
+  // React's fallback "re-render the entire root on the client" path then
+  // trips React #185 (max update depth) deep in the message list — the
+  // symptom users see is the "something went wrong" boundary on every
+  // first launch after auto-update. mounted=false on the initial render
+  // matches the static prerender (both produce no children), so hydration
+  // succeeds; the post-mount effect flips mounted=true and the real tree
+  // renders client-only without a hydration step.
+  const [mounted, setMounted] = useState(false);
+  // The deep-link handler (which turns the screenpipe:// login callback into a
+  // loadUser call) MUST stay mounted outside the entitlement gate. Otherwise the
+  // "sign in required" screen unmounts it and the login token is dropped, so
+  // sign-in can never complete and the user is locked out for good.
+  const pathname = usePathname();
+  const isOverlay = pathname === "/shortcut-reminder";
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Hook console to write to disk — batched to avoid IPC-per-log CPU drain
+  useEffect(() => {
+    const origLog = console.log;
+    const origError = console.error;
+    const origWarn = console.warn;
+    const origDebug = console.debug;
+
+    let buffer: { level: string; message: string }[] = [];
+    let flushTimer: ReturnType<typeof setTimeout> | null = null;
+    const MAX_BUFFER = 100;
+    const FLUSH_INTERVAL_MS = 2000;
+
+    function flush() {
+      if (buffer.length === 0) return;
+      const entries = buffer;
+      buffer = [];
+      commands.writeBrowserLogs(entries).catch(() => {});
+    }
+
+    function enqueue(level: string, args: unknown[]) {
+      const message = args
+        .map((a) => (typeof a === "object" ? JSON.stringify(a) : String(a)))
+        .join(" ");
+      buffer.push({ level, message });
+      if (buffer.length >= MAX_BUFFER) {
+        if (flushTimer) clearTimeout(flushTimer);
+        flushTimer = null;
+        flush();
+      } else if (!flushTimer) {
+        flushTimer = setTimeout(() => {
+          flushTimer = null;
+          flush();
+        }, FLUSH_INTERVAL_MS);
+      }
+    }
+
+    console.log = (...args) => {
+      origLog(...args);
+      enqueue("info", args);
+    };
+    console.error = (...args) => {
+      origError(...args);
+      enqueue("error", args);
+    };
+    console.warn = (...args) => {
+      origWarn(...args);
+      enqueue("warn", args);
+    };
+    console.debug = (...args) => {
+      origDebug(...args);
+      enqueue("debug", args);
+    };
+
+    return () => {
+      console.log = origLog;
+      console.error = origError;
+      console.warn = origWarn;
+      console.debug = origDebug;
+      if (flushTimer) clearTimeout(flushTimer);
+      flush(); // drain remaining logs on unmount
+    };
+  }, []);
+
+  // litepipe: no telemetry. PostHog is intentionally never initialized, so every
+  // posthog.capture()/identify() call in the tree is a silent no-op and nothing
+  // ever leaves the machine. Do not add an init call back here.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      posthog.opt_out_capturing();
+    }
+  }, []);
+
+  return (
+    <Suspense>
+    <NuqsAdapter>
+      <SettingsProvider>
+        <ThemeProvider defaultTheme="system" storageKey="screenpipe-ui-theme">
+          <ChangelogDialogProvider>
+            <PermissionMonitorProvider>
+              <UpdateListenerMount />
+              <PostHogProvider client={posthog}>
+                {mounted ? (
+                  <>
+                    {!isOverlay && <DeeplinkHandler />}
+                    {children}
+                  </>
+                ) : null}
+              </PostHogProvider>
+            </PermissionMonitorProvider>
+          </ChangelogDialogProvider>
+        </ThemeProvider>
+      </SettingsProvider>
+    </NuqsAdapter>
+    </Suspense>
+  );
+});
+
+Providers.displayName = "Providers";

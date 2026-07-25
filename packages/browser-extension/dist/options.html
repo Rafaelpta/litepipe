@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Screenpipe Browser Bridge — Settings</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      }
+      body {
+        max-width: 560px;
+        margin: 32px auto;
+        padding: 0 20px;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .subtitle {
+        color: #888;
+        font-size: 13px;
+        margin: 0 0 24px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+      label {
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .help {
+        font-size: 12px;
+        color: #888;
+      }
+      input[type="text"],
+      input[type="password"] {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        background: transparent;
+        color: inherit;
+      }
+      @media (prefers-color-scheme: dark) {
+        input[type="text"],
+        input[type="password"] {
+          border-color: #444;
+        }
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      button {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 7px 14px;
+        border: 1px solid #bbb;
+        background: #f6f6f6;
+        cursor: pointer;
+      }
+      button[hidden] {
+        display: none;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+      button:hover {
+        background: #eee;
+      }
+      button.primary {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+      }
+      button.primary:hover {
+        background: #222;
+      }
+      @media (prefers-color-scheme: dark) {
+        button {
+          background: #1a1a1a;
+          border-color: #444;
+          color: inherit;
+        }
+        button:hover {
+          background: #2a2a2a;
+        }
+        button.primary {
+          background: #fff;
+          color: #000;
+        }
+        button.primary:hover {
+          background: #ddd;
+        }
+      }
+      #status {
+        margin-top: 18px;
+        font-size: 13px;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        min-height: 1.5em;
+      }
+      #status[data-state="idle"] {
+        color: #888;
+      }
+      #status[data-state="saving"] {
+        color: #555;
+      }
+      #status[data-state="pairing"],
+      #status[data-state="ok"] {
+        background: rgba(128, 128, 128, 0.08);
+        border-color: rgba(128, 128, 128, 0.4);
+        color: inherit;
+      }
+      #status[data-state="auth_required"],
+      #status[data-state="server_down"],
+      #status[data-state="denied"],
+      #status[data-state="error"] {
+        background: rgba(128, 128, 128, 0.06);
+        border-color: rgba(128, 128, 128, 0.4);
+        color: inherit;
+      }
+      .panel {
+        border: 1px solid #ccc;
+        padding: 14px;
+        margin: 18px 0;
+      }
+      @media (prefers-color-scheme: dark) {
+        .panel {
+          border-color: #444;
+        }
+      }
+      #pair-details {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #888;
+      }
+      #pair-details summary {
+        cursor: pointer;
+      }
+      #pair-code {
+        margin-top: 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      #manual-setup[hidden],
+      #pair-details[hidden] {
+        display: none;
+      }
+      footer {
+        margin-top: 32px;
+        font-size: 12px;
+        color: #888;
+      }
+      footer a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Screenpipe Browser Bridge</h1>
+    <p class="subtitle">
+      Lets the screenpipe app use your open browser tabs when an agent needs web
+      context. Your data stays local.
+    </p>
+
+    <div class="panel">
+      <div class="field">
+        <label id="connection-title">connect screenpipe</label>
+        <span id="connection-help" class="help">
+          click connect, then approve the request in the screenpipe desktop app.
+          no API token copy/paste needed.
+        </span>
+      </div>
+
+      <div class="actions">
+        <button id="connect" class="primary" type="button">Connect to Screenpipe</button>
+        <button id="advanced-toggle" type="button">Manual setup</button>
+      </div>
+      <details id="pair-details" hidden>
+        <summary>verify request</summary>
+        <div id="pair-code"></div>
+      </details>
+    </div>
+
+    <div id="manual-setup" hidden>
+      <div class="field">
+        <label for="token">API token</label>
+        <input id="token" type="password" placeholder="paste your screenpipe API token" autocomplete="off" spellcheck="false" />
+        <span class="help">
+          Advanced only. In screenpipe: Settings → Privacy → API Authentication
+          → reveal and copy the key. Or run <code>screenpipe auth token</code>.
+        </span>
+      </div>
+
+      <div class="field">
+        <label for="baseUrl">screenpipe server URL</label>
+        <input id="baseUrl" type="text" value="http://127.0.0.1:3030" spellcheck="false" />
+        <span class="help">
+          Default is <code>http://127.0.0.1:3030</code>. Only change this if you
+          run screenpipe on a different host or port.
+        </span>
+      </div>
+
+      <div class="actions">
+        <button id="save" class="primary" type="button">Save &amp; test</button>
+        <button id="test" type="button">Test connection</button>
+      </div>
+    </div>
+
+    <div id="status" data-state="idle"></div>
+
+    <footer>
+      <a href="https://screenpi.pe" target="_blank" rel="noopener noreferrer">screenpi.pe</a>
+      · <a href="https://github.com/screenpipe/screenpipe" target="_blank" rel="noopener noreferrer">source</a>
+    </footer>
+
+    <script src="options.js" type="module"></script>
+  </body>
+</html>

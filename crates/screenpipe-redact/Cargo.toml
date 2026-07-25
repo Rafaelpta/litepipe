@@ -1,0 +1,135 @@
+[package]
+name = "screenpipe-redact"
+version.workspace = true
+authors.workspace = true
+description = "Async PII redaction reconciliation pipeline (off the capture hot path) for screenpipe — covers OCR, accessibility, audio transcripts, clipboard. See issue #3185."
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+# Re-exports & shared deps
+aho-corasick = "1"
+anyhow = "1"
+async-trait = "0.1"
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5"
+image = "0.25"
+moka = { version = "0.12", features = ["future"] }
+once_cell = { workspace = true }
+regex = "1"
+reqwest = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+sha3 = "0.10"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "chrono"] }
+thiserror = "1"
+# Tinfoil enclave attestation: AMD SEV-SNP attestation + Sigstore code-
+# provenance verification + TLS cert pinning for the privacy-filter PII
+# redaction service. See adapters/tinfoil.rs for the threat model
+# (without this a compromised CA can still observe unredacted text in
+# transit even though the enclave itself is honest).
+tinfoil = { git = "https://github.com/tinfoilsh/tinfoil-rs", rev = "82143d767b540195dea265df0b01c4b4fc93c424" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
+tempfile = "3"
+image = "0.25"
+
+[[example]]
+name = "v45_phase3_smoke"
+path = "examples/v45_phase3_smoke.rs"
+required-features = ["onnx-cpu"]
+
+# Optional model adapters. Off by default so the crate builds without
+# any heavy ML deps. Picks the platform-appropriate accelerator.
+#
+# Two independent backends:
+#   - `onnx-*` for the IMAGE PII path (rfdetr_v8, ONNX Runtime via ort)
+#   - `opf-text` for the TEXT PII path (OPF v3 in pure-Rust candle, via
+#     the local `opf-rs` crate at ../../../opf-rs)
+[features]
+default = []
+
+# Enable the ONNX-based image redactor (rfdetr) AND the v45 phase 3
+# text redactor (xlm-roberta-base BIO token classifier). CPU baseline.
+onnx-cpu = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:serde_json", "ort/download-binaries"]
+# Mac: CoreML execution provider (uses Metal + ANE where available).
+onnx-coreml = ["onnx-cpu", "ort/coreml"]
+# Windows: DirectML EP (any DX12-capable GPU, no CUDA toolkit).
+onnx-directml = ["onnx-cpu", "ort/directml"]
+
+# Enable the candle-based OPF text redactor via the opf-rs crate. Off
+# by default; opt-in for local dev / packaged builds that ship the
+# 2.8 GB checkpoint. Mac builds get Metal acceleration through opf-rs's
+# default `metal` feature.
+opf-text = ["dep:opf"]
+
+# Mac: rfdetr image PII via mlx-rs (Apple Silicon-only, ~6× faster
+# than CoreML EP for this model). Picks up the same HF model file as
+# `onnx-coreml` but converts to safetensors at first run via
+# `screenpipe-rfdetr-mlx`. Mutually compatible with onnx-* — the
+# engine prefers MLX on Mac when both are present.
+mlx-mac = ["dep:screenpipe-rfdetr-mlx"]
+
+[dependencies.ort]
+version = "=2.0.0-rc.10"
+features = ["ndarray"]
+optional = true
+
+[dependencies.ndarray]
+version = "0.16"
+optional = true
+
+# HuggingFace fast tokenizers, used by the ONNX text adapter to load
+# the v45 phase 3 tokenizer.json. ~200 KB compiled, no extra runtime
+# deps beyond what onnxruntime already pulls in. Pinned major version.
+[dependencies.tokenizers]
+version = "0.21"
+default-features = false
+features = ["onig"]
+optional = true
+
+# Used by the ONNX text adapter to parse `config.json` (the id2label
+# mapping for the 27 BIO tags). Workspace already pulls serde_json
+# transitively; declare explicitly so the dep graph is honest.
+[dependencies.serde_json]
+version = "1"
+optional = true
+
+# OPF text redactor (pure-Rust candle port; same model as the v3
+# fine-tune on HF). Pinned to a commit so reproducible across CI
+# runners — bump the rev together with the model checkpoint version
+# whenever opf-rs ships a meaningful change.
+#
+# `default-features = false` drops opf-rs's `metal` default, which
+# transitively pulls in `objc2` and breaks Linux/Windows release
+# builds (`objc2` is Apple-only). The Metal backend is re-enabled
+# below in a target-conditional entry so Mac builds still get GPU
+# acceleration.
+[dependencies.opf]
+git = "https://github.com/screenpipe/opf-rs"
+rev = "e725ad5e8a89ae46e4cb38022a26e746c37329b6"
+optional = true
+default-features = false
+
+# Re-enable the `metal` feature only on Apple targets. Cargo merges
+# target-conditional dep entries into the base entry above, so this
+# is purely additive — Linux/Windows still see `default-features =
+# false` and stay clear of objc2.
+[target.'cfg(target_os = "macos")'.dependencies.opf]
+git = "https://github.com/screenpipe/opf-rs"
+rev = "e725ad5e8a89ae46e4cb38022a26e746c37329b6"
+optional = true
+features = ["metal"]
+
+# MLX-based rfdetr runtime — Apple-Silicon-only (mlx-rs links against
+# Metal Performance Shaders Graph, which is unavailable on Intel
+# macOS). Cargo target_arch gate keeps the dep out of x86_64 macOS,
+# Linux, and Windows builds entirely.
+[target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies.screenpipe-rfdetr-mlx]
+path = "../screenpipe-rfdetr-mlx"
+optional = true

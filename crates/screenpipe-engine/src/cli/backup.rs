@@ -1,0 +1,90 @@
+use screenpipe_core::paths;
+use std::path::PathBuf;
+
+use super::BackupCommand;
+
+pub async fn handle_backup_command(
+    subcommand: &BackupCommand,
+    data_dir: &Option<String>,
+) -> anyhow::Result<()> {
+    let base_dir = data_dir
+        .as_ref()
+        .map(PathBuf::from)
+        .unwrap_or_else(paths::default_screenpipe_data_dir);
+    let db_path = base_dir.join("data").join("db.sqlite");
+
+    if !db_path.exists() {
+        anyhow::bail!("database not found at {}", db_path.display());
+    }
+
+    match subcommand {
+        BackupCommand::Checkpoint => {
+            eprintln!("flushing WAL to main database file...");
+
+            let db =
+                screenpipe_db::DatabaseManager::new(&db_path.to_string_lossy(), Default::default())
+                    .await?;
+
+            let (busy, log_pages, checkpointed) = db.wal_checkpoint().await?;
+
+            if busy != 0 {
+                eprintln!("warning: checkpoint was busy (another process holds the database)");
+                eprintln!("  wal pages: {}, checkpointed: {}", log_pages, checkpointed);
+                std::process::exit(1);
+            }
+
+            eprintln!(
+                "checkpoint complete: {}/{} pages flushed",
+                checkpointed, log_pages
+            );
+            eprintln!("database file is now safe to copy: {}", db_path.display());
+        }
+        BackupCommand::Export { output } => {
+            let dest = output.clone().unwrap_or_else(|| {
+                base_dir
+                    .join("backup.sqlite")
+                    .to_string_lossy()
+                    .into_owned()
+            });
+
+            if std::path::Path::new(&dest).exists() {
+                anyhow::bail!("destination already exists: {}", dest);
+            }
+
+            eprintln!("creating atomic backup...");
+            eprintln!("  source: {}", db_path.display());
+            eprintln!("  dest:   {}", dest);
+
+            let db =
+                screenpipe_db::DatabaseManager::new(&db_path.to_string_lossy(), Default::default())
+                    .await?;
+
+            db.backup_to(&dest).await.inspect_err(|_e| {
+                let _ = std::fs::remove_file(&dest);
+            })?;
+
+            let size = std::fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
+            let size_human = format_bytes(size);
+
+            eprintln!("backup complete: {} ({})", dest, size_human);
+        }
+    }
+
+    Ok(())
+}
+
+fn format_bytes(bytes: u64) -> String {
+    const KB: u64 = 1024;
+    const MB: u64 = KB * 1024;
+    const GB: u64 = MB * 1024;
+
+    if bytes >= GB {
+        format!("{:.1} GB", bytes as f64 / GB as f64)
+    } else if bytes >= MB {
+        format!("{:.1} MB", bytes as f64 / MB as f64)
+    } else if bytes >= KB {
+        format!("{:.1} KB", bytes as f64 / KB as f64)
+    } else {
+        format!("{} B", bytes)
+    }
+}
