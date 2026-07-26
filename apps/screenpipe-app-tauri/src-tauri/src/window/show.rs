@@ -1562,20 +1562,26 @@ impl ShowRewindWindow {
                     return ShowRewindWindow::Home { page: None }.show(app);
                 }
 
-                // Onboarding hangs from the notch: a transparent, borderless
-                // window anchored to the top-center of the primary display. The
-                // black rounded panel itself is drawn by the frontend, so the
-                // native window carries no chrome, background, or shadow.
-                let window_width = 520.0_f64;
+                // Onboarding hangs FLUSH from the notch: a transparent, borderless
+                // window whose top edge sits exactly at the physical top of the
+                // screen. The black rounded panel itself is drawn by the frontend.
+                //
+                // A plain borderless window at the default level gets pushed below
+                // the menu bar by AppKit's constrainFrameRect:toScreen:. To glue it
+                // to the notch we raise it above the menu bar (level 1002) and place
+                // it against the FULL NSScreen frame — mirroring the shortcut-reminder
+                // panel above. We swizzle NSWindow -> RawNSPanel (never to_panel(),
+                // which SIGSEGVs on window.close()).
+                let window_width = 460.0_f64;
                 let window_height = 640.0_f64;
 
-                let (pos_x, pos_y) = if let Ok(Some(monitor)) = app.primary_monitor() {
+                let pos_x = if let Ok(Some(monitor)) = app.primary_monitor() {
                     let logical: tauri::LogicalSize<f64> =
                         monitor.size().to_logical(monitor.scale_factor());
                     let w = window_width.min(logical.width);
-                    (((logical.width - w) / 2.0).max(0.0), 0.0)
+                    ((logical.width - w) / 2.0).max(0.0)
                 } else {
-                    (200.0, 0.0)
+                    200.0
                 };
 
                 let builder = WebviewWindow::builder(
@@ -1583,19 +1589,76 @@ impl ShowRewindWindow {
                     self.id().label(),
                     WebviewUrl::App("/onboarding".into()),
                 )
-                .title(self.id().title())
+                .title("")
                 .inner_size(window_width, window_height)
-                .position(pos_x, pos_y)
+                .position(pos_x, 0.0)
                 .resizable(false)
                 .minimizable(false)
                 .maximizable(false)
                 .decorations(false)
                 .transparent(true)
                 .shadow(false)
+                .always_on_top(true)
                 .accept_first_mouse(true)
                 .visible_on_all_workspaces(true)
-                .focused(true);
+                .visible(false); // shown after native panel setup below
                 let window = super::finalize_webview_window(builder.build()?);
+
+                #[cfg(target_os = "macos")]
+                {
+                    let window_clone = window.clone();
+                    let w = window_width;
+                    run_on_main_thread_safe(app, move || {
+                        use objc::{msg_send, sel, sel_impl};
+                        use tauri_nspanel::cocoa::appkit::NSScreen;
+                        use tauri_nspanel::cocoa::base::{id, nil};
+                        use tauri_nspanel::cocoa::foundation::{NSArray, NSPoint, NSRect};
+                        use tauri_nspanel::objc_foundation::INSObject;
+                        use tauri_nspanel::raw_nspanel::object_setClass;
+                        if let Ok(ns_win) = window_clone.ns_window() {
+                            let ns_win = ns_win as id;
+                            unsafe {
+                                // Swizzle NSWindow -> NSPanel for non-activating,
+                                // above-menu-bar behavior.
+                                let nspanel_class: id = msg_send![
+                                    tauri_nspanel::raw_nspanel::RawNSPanel::class(),
+                                    class
+                                ];
+                                object_setClass(ns_win, nspanel_class);
+
+                                // Level 1002 escapes AppKit's below-menu-bar constraint.
+                                let _: () = msg_send![ns_win, setLevel: 1002_i64];
+                                // NSNonactivatingPanelMask (128) — don't steal focus.
+                                let current: i32 = msg_send![ns_win, styleMask];
+                                let _: () = msg_send![ns_win, setStyleMask: current | 128];
+                                // CanJoinAllSpaces (1) + FullScreenAuxiliary (256)
+                                let _: () = msg_send![ns_win, setCollectionBehavior: 257_u64];
+                                let _: () = msg_send![ns_win, setHidesOnDeactivate: false];
+
+                                // Pin the top edge to the physical top, centered under
+                                // the notch. NSScreen frame is bottom-left origin and
+                                // INCLUDES the menu-bar/notch strip (never visibleFrame).
+                                let screens: id = NSScreen::screens(nil);
+                                if NSArray::count(screens) > 0 {
+                                    let screen: id = NSArray::objectAtIndex(screens, 0);
+                                    let frame: NSRect = NSScreen::frame(screen);
+                                    let x = frame.origin.x + (frame.size.width - w) / 2.0;
+                                    let top_y = frame.origin.y + frame.size.height;
+                                    let top_left = NSPoint { x, y: top_y };
+                                    let _: () = msg_send![ns_win, setFrameTopLeftPoint: top_left];
+                                }
+
+                                let _: () = msg_send![ns_win, orderFrontRegardless];
+                                let _: () = msg_send![ns_win, makeKeyWindow];
+                            }
+                        }
+                    });
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    let _ = window.show();
+                    window.set_focus().ok();
+                }
 
                 window
             }
