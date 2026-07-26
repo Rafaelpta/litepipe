@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Monitor, Mic, Keyboard, Globe, Check, ArrowRight } from "lucide-react";
+import { Monitor, Mic, Keyboard, Globe, Settings, X } from "lucide-react";
 import { commands } from "@/lib/utils/tauri";
 import { requestPermissionWithFlow } from "@/lib/utils/permission-flow";
 import { usePlatform } from "@/lib/hooks/use-platform";
@@ -207,55 +207,57 @@ export default function PermissionsStep({
 
   return (
     <motion.div
-      className="w-full flex flex-col items-center justify-center min-h-[440px]"
+      className="w-full flex flex-col items-center text-[#f2f4f2]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* progress dots — shows how short this is */}
-      <div className="flex items-center gap-1.5 mb-8">
-        {activePermissions.map((p) => (
-          <span
-            key={p.id}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              isDone(p)
-                ? "w-1.5 bg-foreground"
-                : p.id === current.id
-                ? "w-5 bg-foreground"
-                : "w-1.5 bg-foreground/20"
-            }`}
-          />
-        ))}
+      {/* chrome: progress dashes + gear/close, like the notch panel */}
+      <div className="w-full flex items-center h-6 mb-9">
+        <div className="flex gap-1.5 mx-auto pl-10">
+          {activePermissions.map((p) => (
+            <span
+              key={p.id}
+              className={`h-1 w-5 rounded-full transition-all duration-300 ${
+                isDone(p) || p.id === current.id
+                  ? "bg-[#f2f4f2]"
+                  : "bg-white/20"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2.5 text-[#6b706e]">
+          <Settings className="w-3 h-3" strokeWidth={2} />
+          <button
+            onClick={() => {
+              hasAdvancedRef.current = true;
+              handleNextSlide();
+            }}
+            aria-label="skip setup"
+            className="hover:text-[#f2f4f2] transition-colors"
+          >
+            <X className="w-3 h-3" strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div
           key={current.id}
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -14 }}
+          exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.25 }}
-          className="flex flex-col items-center text-center w-full max-w-sm px-6"
+          className="flex flex-col items-center text-center px-6 max-w-[380px]"
         >
-          {/* icon well — turns green the instant it's granted */}
-          <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-300 ${
-              currentGranted
-                ? "bg-emerald-500/15 text-emerald-500"
-                : "bg-muted text-muted-foreground"
+          <h1
+            className={`text-base font-semibold mb-1.5 transition-colors ${
+              currentGranted ? "text-emerald-400" : "text-[#f2f4f2]"
             }`}
           >
-            {currentGranted ? (
-              <Check className="w-7 h-7" strokeWidth={2.5} />
-            ) : (
-              current.icon
-            )}
-          </div>
-
-          <h1 className="font-mono text-lg font-bold text-foreground mb-2">
             {currentGranted ? "Granted." : current.title}
           </h1>
-          <p className="font-mono text-[11px] text-muted-foreground leading-relaxed mb-6 max-w-[290px]">
+          <p className="text-[12.5px] text-[#9aa0a0] leading-relaxed mb-5 max-w-[320px]">
             {current.why}
           </p>
 
@@ -264,14 +266,13 @@ export default function PermissionsStep({
               <button
                 onClick={() => handleGrant(current)}
                 disabled={requesting}
-                className="inline-flex items-center gap-2 bg-foreground text-background rounded-full px-6 py-2.5 font-mono text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="rounded-full bg-[#f2f2f2] text-[#141414] text-[13px] font-semibold px-7 py-2 transition hover:brightness-105 active:scale-[0.97] disabled:opacity-60"
               >
                 {current.action}
-                <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
               </button>
 
               {current.dragHint && (
-                <p className="font-mono text-[10px] text-muted-foreground/60 mt-3">
+                <p className="text-[10.5px] text-[#6b706e] mt-3">
                   drag litepipe into the list when Settings opens
                 </p>
               )}
@@ -279,7 +280,7 @@ export default function PermissionsStep({
               {current.skippable && (
                 <button
                   onClick={() => handleSkip(current)}
-                  className="font-mono text-[10px] text-muted-foreground/50 hover:text-foreground transition-colors mt-4"
+                  className="text-[11px] text-[#6b706e] hover:text-[#f2f4f2] transition-colors mt-3"
                 >
                   skip for now
                 </button>
@@ -289,7 +290,7 @@ export default function PermissionsStep({
         </motion.div>
       </AnimatePresence>
 
-      {/* global escape hatch if a grant refuses to register */}
+      {/* escape hatch if a grant refuses to register */}
       {showEscape && !currentGranted && (
         <motion.button
           initial={{ opacity: 0 }}
@@ -298,9 +299,9 @@ export default function PermissionsStep({
             hasAdvancedRef.current = true;
             handleNextSlide();
           }}
-          className="mt-8 font-mono text-[10px] text-muted-foreground/40 hover:text-foreground transition-colors"
+          className="mt-8 text-[10px] text-[#6b706e]/70 hover:text-[#f2f4f2] transition-colors"
         >
-          continue without all permissions →
+          continue without all permissions
         </motion.button>
       )}
     </motion.div>

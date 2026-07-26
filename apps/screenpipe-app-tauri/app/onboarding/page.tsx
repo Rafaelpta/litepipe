@@ -101,16 +101,16 @@ export default function OnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="w-6 h-6 border border-foreground border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="w-6 h-6 border border-white/70 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden bg-background">
+    <div className="flex flex-col w-full h-screen overflow-hidden bg-black">
       {/* Drag region */}
-      <div className="w-full bg-background p-3" data-tauri-drag-region />
+      <div className="w-full bg-black p-3" data-tauri-drag-region />
 
       {/* Content */}
       <div className="flex-1 flex items-center justify-center p-6 overflow-auto">
