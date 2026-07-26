@@ -1,0 +1,236 @@
+<title>litepipe UI mockup</title>
+<style>
+  :root{
+    /* Ottic warm stone palette */
+    --fg:oklch(0.985 0.002 75);            /* warm white */
+    --fg-dim:oklch(0.709 0.01 56);         /* stone 400 */
+    --fg-faint:oklch(0.553 0.013 58);      /* stone 500 */
+    --ink:oklch(0.147 0.004 49);           /* warm near black */
+    --black:#050505;                        /* notch panels: solid black, no glass */
+    --hair:oklch(1 0.002 75 / 0.10);
+    --btn:oklch(0.97 0.001 75);            /* off white pill */
+    --btn-ink:oklch(0.216 0.006 56);
+    --live:oklch(0.72 0.15 155);           /* success green, semantic only */
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:var(--font);color:oklch(0.30 0.006 56);
+    min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:80px;position:relative;overflow-x:hidden;
+    background:linear-gradient(160deg,oklch(0.95 0.006 80),oklch(0.90 0.008 70));
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:26px 22px 0;position:relative;z-index:1}
+  .pagehead{display:flex;align-items:center;gap:12px;margin:6px 2px 20px;flex-wrap:wrap}
+  .pagehead h1{font-size:15px;font-weight:600;margin:0;color:oklch(0.30 0.006 56);letter-spacing:.2px}
+  .pagehead .tag{font-size:11px;color:oklch(0.45 0.008 58);background:oklch(1 0.002 75 / .6);border:1px solid var(--hair);border-radius:999px;padding:3px 10px}
+  .note{font-size:12.5px;color:oklch(0.44 0.008 58);margin:0 2px 24px;max-width:780px;line-height:1.55}
+  .note b{color:oklch(0.28 0.006 56)}
+  .label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:oklch(0.48 0.01 60);font-weight:600;margin:26px 0 10px 4px}
+
+  /* fake screen strip to stage the notch on */
+  .screen{position:relative;border-radius:14px;height:300px;overflow:hidden;
+    background:
+      radial-gradient(28px 28px at 18% 30%, oklch(0.25 0.01 50) 46%, transparent 50%),
+      radial-gradient(24px 24px at 44% 64%, oklch(0.25 0.01 50) 46%, transparent 50%),
+      radial-gradient(26px 26px at 72% 26%, oklch(0.25 0.01 50) 46%, transparent 50%),
+      radial-gradient(22px 22px at 88% 68%, oklch(0.25 0.01 50) 46%, transparent 50%),
+      linear-gradient(160deg,oklch(0.96 0.006 80),oklch(0.91 0.008 70));
+    box-shadow:inset 0 0 0 1px oklch(0.147 0.004 49 / .08)}
+  .menubar{position:absolute;top:0;left:0;right:0;height:26px;display:flex;align-items:center;padding:0 12px;font-size:11.5px;color:oklch(0.35 0.006 56)}
+
+  /* collapsed notch: solid black pill hanging from the top edge */
+  .pill{position:absolute;top:0;left:50%;transform:translateX(-50%);background:var(--black);
+    border-radius:0 0 14px 14px;padding:7px 16px 9px;display:flex;align-items:center;gap:9px;cursor:pointer;
+    box-shadow:0 8px 24px oklch(0 0 0 / .35)}
+  .pill b{font-size:12.5px;font-weight:600;color:var(--fg)}
+  .pill small{font-size:11.5px;color:var(--fg-faint)}
+  .dotlive{width:6px;height:6px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 oklch(0.72 0.15 155 / .55);animation:pulse 1.9s infinite;flex:0 0 auto}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 oklch(0.72 0.15 155 / .5)}70%{box-shadow:0 0 0 6px oklch(0.72 0.15 155 / 0)}100%{box-shadow:0 0 0 0 oklch(0.72 0.15 155 / 0)}}
+
+  /* expanded notch: companion panel
+     width 320, radius 12 continuous, dual shadow, solid black, no glass
+     header 14x16, dividers inset 16, sections at 16, gaps 12/16, footer 12x16 */
+  .drop{position:absolute;top:6px;left:50%;transform:translateX(-50%) translateY(-8px);width:320px;background:var(--black);
+    border-radius:12px;box-shadow:0 10px 20px oklch(0 0 0 / .5), 0 2px 4px oklch(0 0 0 / .3);
+    opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+  .drop.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  /* header: dot 8 with glow, name 14 semibold, state 12 medium, close circle 20 */
+  .drop .top{display:flex;align-items:center;gap:8px;padding:14px 16px}
+  .drop .top .statedot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 4px oklch(0.72 0.15 155 / .6);flex:0 0 auto}
+  .drop .top b{font-size:14px;font-weight:600;color:var(--fg)}
+  .drop .top .spacer{flex:1}
+  .drop .top .state{font-size:12px;font-weight:500;color:var(--fg-faint)}
+  .iconbtn{width:20px;height:20px;border:none;border-radius:50%;background:oklch(1 0.002 75 / .08);color:var(--fg-faint);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .iconbtn:hover{background:oklch(1 0.002 75 / .14);color:var(--fg-dim)}
+  .hr{height:1px;background:oklch(1 0.002 75 / .10);margin:0 16px}
+  /* copy: 12 medium, top padding 16 */
+  .drop .copy{padding:16px 16px 0;font-size:12px;font-weight:500;color:var(--fg-dim)}
+  /* model picker row: label 13 medium, segmented radius 6 outer 5 inner, options 11 medium 5x10 */
+  .mrow{display:flex;align-items:center;padding:16px 16px 0;margin-top:-4px}
+  .mrow>span{font-size:13px;font-weight:500;color:var(--fg-dim)}
+  .mrow .spacer{flex:1}
+  .seg{display:flex;background:oklch(1 0.002 75 / .06);border:.5px solid var(--hair);border-radius:6px}
+  .seg button{border:none;background:none;font-family:inherit;font-size:11px;font-weight:500;color:var(--fg-faint);padding:5px 10px;border-radius:5px;cursor:pointer}
+  .seg button.sel{background:oklch(1 0.002 75 / .10);color:var(--fg)}
+  /* feedback card: 10x12 padding, radius 8, faint fill and stroke, 12 semibold plus 10 */
+  .dmcard{display:flex;align-items:center;gap:8px;margin:16px 16px 0;padding:10px 12px;border-radius:8px;background:oklch(1 0.002 75 / .06);border:.5px solid var(--hair);cursor:pointer;text-align:left;width:calc(100% - 32px);font-family:inherit}
+  .dmcard .ic{color:var(--fg-dim);flex:0 0 auto;display:flex}
+  .dmcard b{display:block;font-size:12px;font-weight:600;color:var(--fg-dim)}
+  .dmcard small{display:block;font-size:10px;color:var(--fg-faint);margin-top:2px}
+  .dmcard:hover{background:oklch(1 0.002 75 / .09)}
+  /* footer: 12x16, 12 medium with 11px icons */
+  .drop .ft{display:flex;align-items:center;padding:12px 16px;gap:14px}
+  .drop .ft button{border:none;background:none;font-family:inherit;font-size:12px;font-weight:500;color:var(--fg-faint);cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0}
+  .drop .ft button:hover{color:var(--fg-dim)}
+  .drop .ft .spacer{flex:1}
+  .gap12h{height:12px}.gap16h{height:16px}
+
+  /* onboarding in the notch: one permission at a time */
+  .ob{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:480px;background:var(--black);
+    border-radius:22px;padding:16px 18px 22px;box-shadow:0 24px 60px oklch(0 0 0 / .45)}
+  .ob .chrome{display:flex;align-items:center;margin-bottom:14px}
+  .dashes{display:flex;gap:5px;margin:0 auto;padding-left:52px}
+  .dashes i{width:20px;height:4px;border-radius:2px;background:oklch(1 0.002 75 / .16);transition:.25s}
+  .dashes i.on{background:var(--btn)}
+  .ob .chrome .btns{display:flex;gap:8px}
+  .ob h3{font-size:14.5px;font-weight:700;color:var(--fg);text-align:center;margin:0 0 5px}
+  .ob p{font-size:12px;color:var(--fg-faint);text-align:center;margin:0 0 14px}
+  .ob .go{display:block;margin:0 auto;border:none;border-radius:999px;background:var(--btn);color:var(--btn-ink);
+    font-family:inherit;font-size:13px;font-weight:600;padding:7px 22px;cursor:pointer;transition:transform .1s,background .15s}
+  .ob .go:hover{background:oklch(1 0.002 75)}
+  .ob .go:active{transform:scale(.97)}
+
+  /* Timeline window, minimal change from the current app */
+  .win{border-radius:16px;overflow:hidden;background:oklch(0.20 0.006 56 / 0.55);
+    -webkit-backdrop-filter:blur(34px) saturate(1.7);backdrop-filter:blur(34px) saturate(1.7);
+    border:1px solid var(--hair);color:var(--fg);box-shadow:0 30px 70px oklch(0.147 0.004 49 / .34)}
+  .win .bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--hair)}
+  .traffic{display:flex;gap:7px}.traffic i{width:11px;height:11px;border-radius:50%}
+  .traffic i:nth-child(1){background:#ff5f57}.traffic i:nth-child(2){background:#febc2e}.traffic i:nth-child(3){background:#28c840}
+  .win .bar b{color:var(--fg);font-size:12.5px;font-weight:600;margin-left:4px}
+  .win .bar .spacer{flex:1}
+  .win .bar .when{color:var(--fg-dim);font-size:11.5px}
+  .frame{aspect-ratio:16/9;background:linear-gradient(135deg,oklch(0.93 0.008 75),oklch(0.86 0.01 70));position:relative;display:flex;align-items:center;justify-content:center}
+  .frame .stamp{position:absolute;bottom:10px;left:12px;background:oklch(0.147 0.004 49 / .55);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px}
+  .frame .mock{width:78%;height:70%;border-radius:8px;background:#fff;box-shadow:0 6px 18px oklch(0.147 0.004 49 / .12);padding:10px;display:flex;flex-direction:column;gap:6px}
+  .frame .mock .l{height:8px;border-radius:4px;background:oklch(0.90 0.006 75)}.frame .mock .l.s{width:40%}.frame .mock .l.m{width:70%}.frame .mock .l.b{width:90%}
+  .scrub{padding:12px 14px;border-top:1px solid var(--hair)}
+  .track{display:flex;gap:4px;align-items:center;overflow:hidden}
+  .thumb{width:44px;height:28px;border-radius:5px;background:linear-gradient(135deg,oklch(0.82 0.01 70),oklch(0.74 0.012 65));flex:0 0 auto;opacity:.6}
+  .thumb.cur{outline:2px solid var(--fg);opacity:1;transform:scaleY(1.15)}
+  .axis{display:flex;justify-content:space-between;color:var(--fg-faint);font-size:10.5px;margin-top:8px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  @media(max-width:960px){.grid2{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="pagehead">
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 15c2.2 0 2.2-6 4.4-6s2.2 8 4.4 8 2.2-10 4.4-10S17.4 13 19.6 13H22" fill="none" stroke="oklch(0.30 0.006 56)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1>litepipe UI mockup</h1>
+    <span class="tag">notch first &middot; solid black &middot; Ottic palette</span>
+  </div>
+  <p class="note">The notch is <b>solid black</b>. Clicking the pill expands the <b>companion panel</b> (320px, radius 12, dual shadow). <b>Onboarding lives in the notch</b>: one permission at a time, progress dashes on top, gear and close on the right, bold title, gray hint, one pill button. Some panel elements are placeholders to be reworded or removed later. Green only ever means recording or granted. No emoji anywhere in the UI.</p>
+
+  <p class="label">1 &middot; the notch, click the pill to expand</p>
+  <div class="screen">
+    <div class="menubar">Help</div>
+    <div class="pill" id="pill" onclick="toggleDrop()">
+      <svg width="15" height="15" viewBox="0 0 24 24"><path d="M2 15c2.2 0 2.2-6 4.4-6s2.2 8 4.4 8 2.2-10 4.4-10S17.4 13 19.6 13H22" fill="none" stroke="oklch(0.985 0.002 75)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>litepipe</b><small>recording</small><span class="dotlive"></span>
+    </div>
+    <div class="drop" id="drop">
+      <div class="top">
+        <span class="statedot"></span><b>litepipe</b>
+        <span class="spacer"></span>
+        <span class="state">Active</span>
+        <button class="iconbtn" title="close" onclick="event.stopPropagation();toggleDrop()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="hr"></div>
+      <div class="copy">Hold Control+Option to talk.</div>
+      <div class="mrow">
+        <span>Model</span>
+        <span class="spacer"></span>
+        <span class="seg"><button class="sel">Sonnet</button><button>Opus</button></span>
+      </div>
+      <button class="dmcard">
+        <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"/></svg></span>
+        <span><b>Got feedback? DM me</b><small>Bugs, ideas, anything. I read every message.</small></span>
+      </button>
+      <div class="gap12h"></div>
+      <div class="hr"></div>
+      <div class="ft">
+        <button><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>Quit litepipe</button>
+        <span class="spacer"></span>
+        <button><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg>Watch Onboarding Again</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="label">2 &middot; onboarding, lives in the notch, one permission at a time</p>
+  <div class="screen">
+    <div class="menubar">Help</div>
+    <div class="ob" id="ob">
+      <div class="chrome">
+        <div class="dashes" id="dashes"><i class="on"></i><i></i><i></i></div>
+        <span style="flex:1"></span>
+        <div class="btns">
+          <button class="iconbtn" title="settings"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+          <button class="iconbtn" title="close"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+      </div>
+      <h3 id="obtitle">I need microphone permissions.</h3>
+      <p id="obsub">Click Allow when macOS asks.</p>
+      <button class="go" id="obgo" onclick="obNext()">Allow</button>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:26px">
+    <div>
+      <p class="label" style="margin-top:0">3 &middot; main window, Timeline</p>
+      <div class="win">
+        <div class="bar">
+          <div class="traffic"><i></i><i></i><i></i></div>
+          <b>litepipe</b><span class="spacer"></span><span class="when">today &middot; 14:32</span>
+        </div>
+        <div class="frame">
+          <div class="mock"><div class="l s"></div><div class="l b"></div><div class="l m"></div><div class="l b"></div><div class="l s"></div><div class="l m"></div></div>
+          <div class="stamp">Chrome &middot; mail.google.com &middot; 14:32:07</div>
+        </div>
+        <div class="scrub">
+          <div class="track"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb cur"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+          <div class="axis"><span>09:00</span><span>12:00</span><span>now</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="label" style="margin-top:0">notes</p>
+      <p class="note" style="margin-bottom:10px">Onboarding sequence: <b>microphone, accessibility, screen recording</b>, each opening the matching System Settings pane beside the notch. The final step turns the panel into the recording pill.</p>
+      <p class="note" style="margin-bottom:10px">The expanded panel reuses the existing nspanel machinery. The data folder shortcut opens the local data directory in Finder.</p>
+      <p class="note">Buttons stay Ottic off white; green only ever means recording or granted. No emoji anywhere in the UI.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleDrop(){
+    const d=document.getElementById('drop'), p=document.getElementById('pill');
+    const open=d.classList.toggle('open');
+    p.style.opacity=open?0:1; p.style.pointerEvents=open?'none':'auto';
+  }
+  const obSteps=[
+    {t:"I need microphone permissions.", s:"Click Allow when macOS asks.", b:"Allow"},
+    {t:"I need accessibility permissions.", s:"Drag me into the Accessibility list.", b:"Open"},
+    {t:"I need screen recording permissions.", s:"Drag me into the Screen Recording list.", b:"Open"},
+    {t:"All set. Recording.", s:"I live in your notch now. Click me any time to rewind.", b:"Start over"}
+  ];
+  let obIdx=0;
+  function obNext(){
+    obIdx=(obIdx+1)%obSteps.length;
+    const st=obSteps[obIdx];
+    document.getElementById('obtitle').textContent=st.t;
+    document.getElementById('obsub').textContent=st.s;
+    document.getElementById('obgo').textContent=st.b;
+    document.querySelectorAll('#dashes i').forEach((el,i)=>el.classList.toggle('on', i<=Math.min(obIdx,2)));
+  }
+</script>
