@@ -207,7 +207,7 @@ export default function PermissionsStep({
 
   return (
     <motion.div
-      className="w-full flex flex-col items-center text-[#f2f4f2]"
+      className="w-full flex flex-col items-center text-[#f2f4f2] px-5 pt-3 pb-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}

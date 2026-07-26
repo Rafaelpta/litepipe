@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Loader } from "lucide-react";
 import { Button } from "../ui/button";
-import posthog from "posthog-js";
+// litepipe is local-only with no telemetry; keep the capture call sites but
+// route them to a no-op so no events leave the machine.
+const posthog = { capture: (..._args: unknown[]) => {} };
 import { commands } from "@/lib/utils/tauri";
 import { openPermissionSettingsWithFlow } from "@/lib/utils/permission-flow";
 import { motion, AnimatePresence } from "framer-motion";

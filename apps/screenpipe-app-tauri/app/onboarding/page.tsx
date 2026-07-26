@@ -54,9 +54,11 @@ export default function OnboardingPage() {
     init();
   }, []);
 
-  // Set window size when slide changes
+  // The onboarding window is a fixed, transparent panel hanging from the notch
+  // (sized in Rust). We no longer resize per slide; the black panel sizes to its
+  // own content within the transparent window.
   useEffect(() => {
-    setWindowSizeForSlide(currentSlide);
+    void setWindowSizeForSlide;
     setIsVisible(true);
   }, [currentSlide]);
 
@@ -101,31 +103,35 @@ export default function OnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="w-6 h-6 border border-white/70 border-t-transparent rounded-full animate-spin" />
+      <div
+        className="w-full h-screen flex justify-center overflow-hidden"
+        style={{ background: "transparent" }}
+      >
+        <div className="dark bg-black w-[500px] rounded-b-[22px] self-start flex items-center justify-center py-16">
+          <div className="w-6 h-6 border border-white/70 border-t-transparent rounded-full animate-spin" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden bg-black">
-      {/* Drag region */}
-      <div className="w-full bg-black p-3" data-tauri-drag-region />
-
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center p-6 overflow-auto">
-        <div
-          className={`w-full max-w-lg mx-auto transition-opacity duration-300 ${
-            isVisible ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          {currentSlide === "permissions" && (
-            <PermissionsStep handleNextSlide={handleNextSlide} />
-          )}
-          {currentSlide === "engine" && (
-            <EngineStartup handleNextSlide={handleNextSlide} />
-          )}
-        </div>
+    <div
+      className="w-full h-screen flex justify-center overflow-hidden"
+      style={{ background: "transparent" }}
+    >
+      {/* The black panel hangs from the notch: flat top, rounded bottom. It
+          sizes to its content; the surrounding window is transparent. */}
+      <div
+        className={`dark bg-black w-[500px] self-start rounded-b-[22px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.5)] transition-opacity duration-300 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {currentSlide === "permissions" && (
+          <PermissionsStep handleNextSlide={handleNextSlide} />
+        )}
+        {currentSlide === "engine" && (
+          <EngineStartup handleNextSlide={handleNextSlide} />
+        )}
       </div>
     </div>
   );

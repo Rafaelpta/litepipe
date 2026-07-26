@@ -1562,24 +1562,39 @@ impl ShowRewindWindow {
                     return ShowRewindWindow::Home { page: None }.show(app);
                 }
 
-                // Clamp onboarding window size to primary monitor to prevent min > max panic
-                let (width, height) = if let Ok(Some(monitor)) = app.primary_monitor() {
+                // Onboarding hangs from the notch: a transparent, borderless
+                // window anchored to the top-center of the primary display. The
+                // black rounded panel itself is drawn by the frontend, so the
+                // native window carries no chrome, background, or shadow.
+                let window_width = 520.0_f64;
+                let window_height = 640.0_f64;
+
+                let (pos_x, pos_y) = if let Ok(Some(monitor)) = app.primary_monitor() {
                     let logical: tauri::LogicalSize<f64> =
                         monitor.size().to_logical(monitor.scale_factor());
-                    (500.0_f64.min(logical.width), 560.0_f64.min(logical.height))
+                    let w = window_width.min(logical.width);
+                    (((logical.width - w) / 2.0).max(0.0), 0.0)
                 } else {
-                    (500.0, 560.0)
+                    (200.0, 0.0)
                 };
-                let min = self.id().min_size().unwrap_or((0.0, 0.0));
-                let clamped_min = (min.0.min(width), min.1.min(height));
-                let builder = self
-                    .window_builder(app, "/onboarding")
-                    .visible_on_all_workspaces(true)
-                    .min_inner_size(clamped_min.0, clamped_min.1)
-                    .inner_size(width, height)
-                    .minimizable(false)
-                    .maximizable(false)
-                    .focused(true);
+
+                let builder = WebviewWindow::builder(
+                    app,
+                    self.id().label(),
+                    WebviewUrl::App("/onboarding".into()),
+                )
+                .title(self.id().title())
+                .inner_size(window_width, window_height)
+                .position(pos_x, pos_y)
+                .resizable(false)
+                .minimizable(false)
+                .maximizable(false)
+                .decorations(false)
+                .transparent(true)
+                .shadow(false)
+                .accept_first_mouse(true)
+                .visible_on_all_workspaces(true)
+                .focused(true);
                 let window = super::finalize_webview_window(builder.build()?);
 
                 window
