@@ -117,10 +117,16 @@ final class EngineController: ObservableObject {
         }
     }
 
-    // Audible feedback on pause/resume, using macOS system sounds (not third-party
-    // assets). Swap for custom original sounds later if desired.
+    // Audible feedback on pause/resume, using litepipe's own bundled sounds
+    // (original tones — not third-party assets). Falls back to a system sound.
     private func playCue(paused: Bool) {
-        NSSound(named: NSSound.Name(paused ? "Tink" : "Pop"))?.play()
+        let name = paused ? "stop" : "play"
+        if let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: "sounds"),
+           let sound = NSSound(contentsOf: url, byReference: true) {
+            sound.play()
+        } else {
+            NSSound(named: NSSound.Name(paused ? "Tink" : "Pop"))?.play()
+        }
     }
 
     // MARK: - Responsibility (TCC inheritance)

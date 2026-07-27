@@ -23,6 +23,12 @@ else
   echo "note: Resources/screenpipe not found - app will use dev fallback (~/projects/litepipe/target/release/screenpipe)"
 fi
 
+# Bundle litepipe's own UI sounds (original tones).
+if [ -d "Resources/sounds" ]; then
+  mkdir -p "$APP/Contents/Resources/sounds"
+  cp Resources/sounds/*.wav "$APP/Contents/Resources/sounds/" 2>/dev/null && echo "bundled sounds"
+fi
+
 # Sign with a stable local identity if present (so TCC grants persist across
 # rebuilds); fall back to ad-hoc otherwise. Replace with an Ottic Developer ID
 # for real white-label distribution.
