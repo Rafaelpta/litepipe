@@ -21,7 +21,9 @@ final class NotchCompanionController {
     // and expanded — so there is no window-resize animation to fight the content
     // spring (that fight was the "green dot mid-screen" / laggy feel).
     private let panelW: CGFloat = 510
-    private let expH: CGFloat = 244
+    // Taller than the card so the whole card (plus a small buffer) sits inside the
+    // collapse rect; otherwise hovering the bottom of the card reads as "outside".
+    private let expH: CGFloat = 290
 
     func show() {
         if let panel { panel.orderFrontRegardless(); return }
