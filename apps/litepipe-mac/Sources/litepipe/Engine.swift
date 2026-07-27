@@ -20,6 +20,8 @@ final class EngineController: ObservableObject {
 
     private var pid: pid_t?
     private var healthTimer: Timer?
+    private var hotkeyMonitor: Any?
+    private var chordActive = false
     private let port = 3030
     // litepipe's own data dir (avoids colliding with a screenpipe install).
     private let dataDir = FileManager.default.homeDirectoryForCurrentUser
@@ -74,6 +76,7 @@ final class EngineController: ObservableObject {
             pid = newpid
             status = .starting
             startHealthPolling()
+            startHotkey()
         } else {
             status = .error("spawn failed (\(rc))")
         }
@@ -88,12 +91,37 @@ final class EngineController: ObservableObject {
 
     func togglePause() {
         switch status {
-        case .recording, .starting: stop(markPaused: true)
-        case .paused, .stopped, .error: start()
+        case .recording, .starting: stop(markPaused: true); playCue(paused: true)
+        case .paused, .stopped, .error: start(); playCue(paused: false)
         }
     }
 
     func openDataFolder() { NSWorkspace.shared.open(dataDir) }
+
+    // MARK: - Global shortcut (option+control toggles context awareness)
+
+    // A global .flagsChanged monitor toggles pause/resume when control+option are
+    // pressed together (needs Accessibility, which litepipe already has). Debounced
+    // so holding the chord fires once.
+    private func startHotkey() {
+        guard hotkeyMonitor == nil else { return }
+        hotkeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] e in
+            guard let self else { return }
+            let both = e.modifierFlags.contains(.control) && e.modifierFlags.contains(.option)
+            if both, !self.chordActive {
+                self.chordActive = true
+                DispatchQueue.main.async { self.togglePause() }
+            } else if !both {
+                self.chordActive = false
+            }
+        }
+    }
+
+    // Audible feedback on pause/resume, using macOS system sounds (not third-party
+    // assets). Swap for custom original sounds later if desired.
+    private func playCue(paused: Bool) {
+        NSSound(named: NSSound.Name(paused ? "Tink" : "Pop"))?.play()
+    }
 
     // MARK: - Responsibility (TCC inheritance)
 

@@ -68,7 +68,7 @@ final class TimelineModel: ObservableObject {
     @Published var day: Date = Calendar.current.startOfDay(for: Date())
     @Published var monitor: Int = 1
     @Published var index: Int = 0
-    @Published var showOCR: Bool = false
+    @Published var showOCR: Bool = true
 
     private let dbPath: String
     init(dbPath: String) { self.dbPath = dbPath }
