@@ -1,3 +1,4 @@
 .build/
 *.app
 .DS_Store
+Resources/screenpipe

@@ -14,7 +14,12 @@ final class CompanionModel: ObservableObject {
 final class NotchCompanionController {
     private var panel: NSPanel?
     private let model = CompanionModel()
+    private let engine: EngineController
     private var hoverTimer: Timer?
+
+    init(engine: EngineController) {
+        self.engine = engine
+    }
 
     // The window is a FIXED size (the expanded footprint), anchored flush at the
     // top-center, and never resizes. Only the SwiftUI content animates between idle
@@ -32,7 +37,7 @@ final class NotchCompanionController {
         container.wantsLayer = true
         container.layer?.backgroundColor = .clear
 
-        let hosting = NSHostingView(rootView: CompanionView(model: model))
+        let hosting = NSHostingView(rootView: CompanionView(model: model, engine: engine))
         hosting.translatesAutoresizingMaskIntoConstraints = false
         hosting.wantsLayer = true
         hosting.layer?.backgroundColor = .clear
@@ -127,9 +132,29 @@ final class NotchCompanionController {
 
 struct CompanionView: View {
     @ObservedObject var model: CompanionModel
+    @ObservedObject var engine: EngineController
 
     // Accent used for the Upgrade pill (a color, easily re-themed later).
     private let accent = Color(red: 0.29, green: 0.55, blue: 0.98)
+
+    // Recording status label/color derived from the live engine state.
+    private var statusLabel: String {
+        switch engine.status {
+        case .recording: return "Recording"
+        case .starting: return "Starting"
+        case .paused: return "Paused"
+        case .stopped: return "Stopped"
+        case .error: return "Error"
+        }
+    }
+    private var statusColor: Color {
+        switch engine.status {
+        case .recording: return DS.Colors.live
+        case .starting: return DS.Colors.faint
+        case .paused, .stopped: return DS.Colors.faint
+        case .error: return Color(red: 0.90, green: 0.45, blue: 0.40)
+        }
+    }
 
     // Real notch geometry from macOS, so the idle bar aligns exactly with the notch
     // and expanded content clears it (no overlap). Falls back if there's no notch.
@@ -215,14 +240,16 @@ struct CompanionView: View {
             tab("Search", icon: "magnifyingglass", active: false)
             Spacer()
             HStack(spacing: 5) {
-                Circle().fill(DS.Colors.live).frame(width: 6, height: 6)
-                    .shadow(color: DS.Colors.live.opacity(0.7), radius: 3)
-                Text("Recording")
+                Circle().fill(statusColor).frame(width: 6, height: 6)
+                    .shadow(color: statusColor.opacity(0.7), radius: 3)
+                Text(statusLabel)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(DS.Colors.fg)
             }
             .padding(.horizontal, 10).padding(.vertical, 5)
             .background(Capsule().fill(Color.white.opacity(0.08)))
+            .contentShape(Capsule())
+            .onTapGesture { engine.togglePause() } // pause / resume capture
             Image(systemName: "gearshape.fill")
                 .font(.system(size: 13))
                 .foregroundColor(DS.Colors.faint)
@@ -259,6 +286,8 @@ struct CompanionView: View {
                 RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06))
                     .frame(width: 30, height: 30)
                     .overlay(Image(systemName: "folder.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))
+                    .contentShape(Rectangle())
+                    .onTapGesture { engine.openDataFolder() } // open ~/.screenpipe
                 RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06))
                     .frame(width: 30, height: 30)
                     .overlay(Image(systemName: "internaldrive.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))

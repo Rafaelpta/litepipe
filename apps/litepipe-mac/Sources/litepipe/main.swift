@@ -9,13 +9,15 @@ final class NotchPanel: NSPanel {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NSPanel?
     private let dragHelper = DragHelperController()
-    private let companion = NotchCompanionController()
+    private let engine = EngineController()
+    private lazy var companion = NotchCompanionController(engine: engine)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no Dock icon; lives in the notch
 
-        // If onboarding is already complete, go straight to the notch companion.
+        // If onboarding is already complete, start the engine and show the companion.
         if UserDefaults.standard.bool(forKey: "onboarding.complete.v1") {
+            engine.start()
             companion.show()
         } else {
             showOnboarding()
@@ -34,10 +36,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Onboarding finished -> tear it down and bring up the persistent companion.
         nc.addObserver(forName: .litepipeOnboardingDone, object: nil, queue: .main) { [weak self] _ in
-            self?.dragHelper.hide()
-            self?.panel?.orderOut(nil)
-            self?.panel = nil
-            self?.companion.show()
+            guard let self else { return }
+            self.dragHelper.hide()
+            self.panel?.orderOut(nil)
+            self.panel = nil
+            self.engine.start()
+            self.companion.show()
         }
     }
 

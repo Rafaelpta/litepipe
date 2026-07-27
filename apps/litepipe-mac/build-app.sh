@@ -14,6 +14,15 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp ".build/$CONFIG/litepipe" "$APP/Contents/MacOS/litepipe"
 chmod +x "$APP/Contents/MacOS/litepipe"
 
+# Bundle the capture engine binary if present (built separately, see Engine.swift).
+if [ -f "Resources/screenpipe" ]; then
+  cp "Resources/screenpipe" "$APP/Contents/Resources/screenpipe"
+  chmod +x "$APP/Contents/Resources/screenpipe"
+  echo "bundled engine: Resources/screenpipe"
+else
+  echo "note: Resources/screenpipe not found - app will use dev fallback (~/projects/litepipe/target/release/screenpipe)"
+fi
+
 # Ad-hoc sign so TCC associates grants with a stable identity.
 codesign --force --deep --sign - "$APP" 2>/dev/null || true
 
