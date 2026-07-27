@@ -24,5 +24,7 @@
     <string>litepipe records your screen locally so you can rewind your day.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>litepipe captures what you say alongside your screen, processed locally.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>litepipe reads the URL of your active browser tab so your history knows the page, not just the pixels.</string>
 </dict>
 </plist>

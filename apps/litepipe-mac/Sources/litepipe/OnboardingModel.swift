@@ -89,6 +89,13 @@ final class OnboardingModel: ObservableObject {
         maybeFinish()
     }
 
+    // Screen Recording only applies after a relaunch; persist progress and restart.
+    func restart() {
+        defaults.set(true, forKey: kStarted)
+        hideHelper()
+        Permissions.relaunchApp()
+    }
+
     func close() { NotificationCenter.default.post(name: .litepipeClose, object: nil) }
 
     // Hand off from onboarding to the persistent notch companion.

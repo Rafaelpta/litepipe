@@ -94,7 +94,7 @@ struct OnboardingView: View {
                 .lineSpacing(2)
                 .frame(maxWidth: 300)
                 .padding(.bottom, 22)
-            pill("Set up access") { model.beginPermissions() }
+            pill("Let's start") { model.beginPermissions() }
         }
     }
 
@@ -122,6 +122,17 @@ struct OnboardingView: View {
                         .font(.system(size: 10.5))
                         .foregroundColor(DS.Colors.faint)
                         .padding(.top, 12)
+                }
+                if p.needsRestart {
+                    // macOS only applies Screen Recording after a relaunch.
+                    Button(action: { model.restart() }) {
+                        Text("enabled it? restart to apply")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(DS.Colors.fg)
+                            .underline()
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 12)
                 }
                 if p.skippable {
                     Button(action: { model.skip(p) }) {
