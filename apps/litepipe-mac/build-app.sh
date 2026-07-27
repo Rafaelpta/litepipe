@@ -29,6 +29,13 @@ if [ -d "Resources/sounds" ]; then
   cp Resources/sounds/*.wav "$APP/Contents/Resources/sounds/" 2>/dev/null && echo "bundled sounds"
 fi
 
+# Bundle the self-contained ffmpeg/ffprobe so capture works without Homebrew.
+if [ -d "Resources/bin" ]; then
+  mkdir -p "$APP/Contents/Resources/bin"
+  cp Resources/bin/ffmpeg Resources/bin/ffprobe "$APP/Contents/Resources/bin/" 2>/dev/null
+  chmod +x "$APP/Contents/Resources/bin/"* 2>/dev/null && echo "bundled ffmpeg/ffprobe"
+fi
+
 # Ship the third-party attribution notice alongside the app (MIT requires it).
 [ -f "THIRD_PARTY_NOTICES.md" ] && cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/THIRD_PARTY_NOTICES.md"
 

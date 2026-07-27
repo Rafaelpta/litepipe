@@ -46,8 +46,15 @@ final class EngineController: ObservableObject {
         intentionalStop = false
         try? FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
 
+        // Prefer the bundled, self-contained ffmpeg/ffprobe (so capture works on
+        // machines without Homebrew); fall back to Homebrew/system in dev.
         var env = ProcessInfo.processInfo.environment
-        env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + (env["PATH"] ?? "/usr/bin:/bin")
+        var pathParts: [String] = []
+        if let bin = Bundle.main.resourceURL?.appendingPathComponent("bin", isDirectory: true).path {
+            pathParts.append(bin)
+        }
+        pathParts += ["/opt/homebrew/bin", "/usr/local/bin", env["PATH"] ?? "/usr/bin:/bin"]
+        env["PATH"] = pathParts.joined(separator: ":")
         let envArr = env.map { "\($0.key)=\($0.value)" }
         // audio ON: the engine captures mic + transcribes (ASR/AI built into the binary)
         let args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path]
