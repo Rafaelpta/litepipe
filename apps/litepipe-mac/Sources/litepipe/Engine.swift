@@ -20,6 +20,8 @@ final class EngineController: ObservableObject {
 
     private var pid: pid_t?
     private var healthTimer: Timer?
+    private var procSource: DispatchSourceProcess?
+    private var intentionalStop = false
     private var hotkeyMonitor: Any?
     private var chordActive = false
     private let port = 3030
@@ -41,6 +43,7 @@ final class EngineController: ObservableObject {
     func start() {
         guard pid == nil else { return }
         guard let bin = enginePath else { status = .error("engine not found"); return }
+        intentionalStop = false
         try? FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
 
         var env = ProcessInfo.processInfo.environment
@@ -75,6 +78,7 @@ final class EngineController: ObservableObject {
         if rc == 0 {
             pid = newpid
             status = .starting
+            watchProcess(newpid)
             startHealthPolling()
             startHotkey()
         } else {
@@ -83,10 +87,31 @@ final class EngineController: ObservableObject {
     }
 
     func stop(markPaused: Bool = false) {
+        intentionalStop = true
+        procSource?.cancel(); procSource = nil
         healthTimer?.invalidate(); healthTimer = nil
         if let p = pid { kill(p, SIGTERM) }
         pid = nil
         status = markPaused ? .paused : .stopped
+    }
+
+    // Detect an unexpected engine exit (crash) and auto-restart, unless we stopped
+    // it on purpose (pause/quit).
+    private func watchProcess(_ p: pid_t) {
+        procSource?.cancel()
+        let src = DispatchSource.makeProcessSource(identifier: p, eventMask: .exit, queue: .main)
+        src.setEventHandler { [weak self] in
+            guard let self else { return }
+            self.procSource?.cancel(); self.procSource = nil
+            self.pid = nil
+            self.healthTimer?.invalidate(); self.healthTimer = nil
+            if !self.intentionalStop {
+                self.status = .starting
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.start() }
+            }
+        }
+        src.resume()
+        procSource = src
     }
 
     func togglePause() {

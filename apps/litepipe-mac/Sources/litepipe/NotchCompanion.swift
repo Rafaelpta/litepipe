@@ -11,6 +11,13 @@ final class CompanionModel: ObservableObject {
     @Published var expanded = false
 }
 
+// The screen that physically has the notch (safeAreaInsets.top > 0), so the
+// companion lands on it even with multiple monitors. Falls back sensibly.
+func litepipeNotchScreen() -> NSScreen? {
+    for s in NSScreen.screens where s.safeAreaInsets.top > 0 { return s }
+    return NSScreen.main ?? NSScreen.screens.last
+}
+
 final class NotchCompanionController {
     private var panel: NSPanel?
     private let model = CompanionModel()
@@ -120,7 +127,7 @@ final class NotchCompanionController {
     // Narrow trigger zone hugging the notch (so it only expands when you approach
     // the notch, not anywhere across the top of the screen).
     private func triggerRect() -> NSRect? {
-        guard let screen = NSScreen.screens.first else { return nil }
+        guard let screen = litepipeNotchScreen() else { return nil }
         let f = screen.frame
         let w: CGFloat = 230, h: CGFloat = 40
         let x = f.origin.x + (f.width - w) / 2
@@ -128,7 +135,7 @@ final class NotchCompanionController {
     }
 
     private func expandedRect() -> NSRect? {
-        guard let screen = NSScreen.screens.first else { return nil }
+        guard let screen = litepipeNotchScreen() else { return nil }
         let f = screen.frame
         let x = f.origin.x + (f.width - panelW) / 2
         return NSRect(x: x, y: f.origin.y + f.height - expH, width: panelW, height: expH)
@@ -166,7 +173,7 @@ struct CompanionView: View {
     // Real notch geometry from macOS, so the idle bar aligns exactly with the notch
     // and expanded content clears it (no overlap). Falls back if there's no notch.
     private var notch: (w: CGFloat, h: CGFloat) {
-        guard let s = NSScreen.screens.first else { return (200, 32) }
+        guard let s = litepipeNotchScreen() else { return (200, 32) }
         let h = s.safeAreaInsets.top
         var w: CGFloat = 200
         if let l = s.auxiliaryTopLeftArea, let r = s.auxiliaryTopRightArea {
