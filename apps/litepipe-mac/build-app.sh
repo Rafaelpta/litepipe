@@ -23,11 +23,14 @@ else
   echo "note: Resources/screenpipe not found - app will use dev fallback (~/projects/litepipe/target/release/screenpipe)"
 fi
 
-# Bundle litepipe's own UI sounds (original tones).
+# Bundle UI sounds.
 if [ -d "Resources/sounds" ]; then
   mkdir -p "$APP/Contents/Resources/sounds"
   cp Resources/sounds/*.wav "$APP/Contents/Resources/sounds/" 2>/dev/null && echo "bundled sounds"
 fi
+
+# Ship the third-party attribution notice alongside the app (MIT requires it).
+[ -f "THIRD_PARTY_NOTICES.md" ] && cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/THIRD_PARTY_NOTICES.md"
 
 # Sign with a stable local identity if present (so TCC grants persist across
 # rebuilds); fall back to ad-hoc otherwise. Replace with an Ottic Developer ID
