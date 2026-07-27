@@ -29,7 +29,7 @@ final class NotchCompanionController {
     private let panelW: CGFloat = 510
     // Taller than the card so the whole card (plus a small buffer) sits inside the
     // collapse rect; otherwise hovering the bottom of the card reads as "outside".
-    private let expH: CGFloat = 290
+    private let expH: CGFloat = 250
 
     func show() {
         if let panel { panel.orderFrontRegardless(); return }
@@ -143,13 +143,14 @@ struct CompanionView: View {
     // Accent used for the Upgrade pill (a color, easily re-themed later).
     private let accent = Color(red: 0.29, green: 0.55, blue: 0.98)
 
-    // Recording status label/color derived from the live engine state.
+    // Status label/color derived from the live engine state. "Context awareness"
+    // reads gentler than "recording".
     private var statusLabel: String {
         switch engine.status {
-        case .recording: return "Recording"
+        case .recording: return "Context awareness"
         case .starting: return "Starting"
         case .paused: return "Paused"
-        case .stopped: return "Stopped"
+        case .stopped: return "Off"
         case .error: return "Error"
         }
     }
@@ -241,121 +242,112 @@ struct CompanionView: View {
     // MARK: - Top bar
 
     private var topBar: some View {
-        HStack(spacing: 6) {
-            tab("Timeline", icon: "clock", active: true)
-            tab("Search", icon: "magnifyingglass", active: false)
+        HStack(spacing: 8) {
+            WaveShape()
+                .stroke(DS.Colors.fg, style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+                .frame(width: 20, height: 10)
+            Text("litepipe").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
+            Text("Local memory of your work").font(.system(size: 11)).foregroundColor(DS.Colors.faint)
             Spacer()
-            HStack(spacing: 5) {
-                Circle().fill(statusColor).frame(width: 6, height: 6)
-                    .shadow(color: statusColor.opacity(0.7), radius: 3)
-                Text(statusLabel)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(DS.Colors.fg)
-            }
-            .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(Capsule().fill(Color.white.opacity(0.08)))
-            .contentShape(Capsule())
-            .onTapGesture { engine.togglePause() } // pause / resume capture
-            Image(systemName: "gearshape.fill")
-                .font(.system(size: 13))
-                .foregroundColor(DS.Colors.faint)
-                .padding(.leading, 2)
         }
     }
 
-    private func tab(_ title: String, icon: String, active: Bool) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 10))
-            Text(title).font(.system(size: 12, weight: .medium))
-        }
-        .foregroundColor(active ? DS.Colors.fg : DS.Colors.faint)
-        .padding(.horizontal, 10).padding(.vertical, 5)
-        .background(Capsule().fill(active ? Color.white.opacity(0.10) : .clear))
-    }
-
-    // MARK: - Left column (timeline + storage)
+    // MARK: - Left column (context awareness + pause/resume)
 
     private var leftColumn: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Timeline").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
-                Text("Rewind your screen.").font(.system(size: 11.5)).foregroundColor(DS.Colors.faint)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { onOpenTimeline() }
-            RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.06))
-                .frame(width: 46, height: 46)
-                .overlay(Image(systemName: "clock.arrow.circlepath").font(.system(size: 18)).foregroundColor(DS.Colors.dim))
-                .contentShape(Rectangle())
-                .onTapGesture { onOpenTimeline() } // open the timeline window
-
-            Spacer(minLength: 6)
-
-            Text("Storage").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06))
-                    .frame(width: 30, height: 30)
-                    .overlay(Image(systemName: "folder.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))
-                    .contentShape(Rectangle())
-                    .onTapGesture { engine.openDataFolder() } // open ~/.screenpipe
-                RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06))
-                    .frame(width: 30, height: 30)
-                    .overlay(Image(systemName: "internaldrive.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))
-                Spacer()
-            }
-            .padding(8)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.03)))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        ContextControl(engine: engine)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Right column (shortcuts + open app)
+    // MARK: - Right column (actions)
 
     private var rightColumn: some View {
         VStack(alignment: .leading, spacing: 9) {
-            HStack(spacing: 5) {
-                Image(systemName: "command").font(.system(size: 10)).foregroundColor(DS.Colors.faint)
-                Text("Shortcuts").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
-            }
-            shortcut("Timeline", caps: ["⌃", "space"])
-            shortcut("Search", caps: ["⌘", "⇧ F"])
-            shortcut("Snapshot", caps: ["⌘", "⇧ 4"])
-            shortcut("Pause", caps: ["⌃", "⌥ P"])
-
-            Spacer(minLength: 6)
-
-            HStack(spacing: 8) {
-                Spacer()
-                HStack(spacing: 5) {
-                    Image(systemName: "macwindow").font(.system(size: 9)).foregroundColor(DS.Colors.dim)
-                    Text("Open litepipe").font(.system(size: 11.5, weight: .medium)).foregroundColor(DS.Colors.fg)
-                }
-                .padding(.horizontal, 10).padding(.vertical, 6)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
-                .contentShape(RoundedRectangle(cornerRadius: 8))
-                .onTapGesture { onOpenTimeline() }
-
-                Circle().fill(Color.white.opacity(0.06)).frame(width: 26, height: 26)
-                    .overlay(Image(systemName: "info").font(.system(size: 10, weight: .semibold)).foregroundColor(DS.Colors.faint))
-            }
+            ActionRow(icon: "clock.arrow.circlepath", label: "Open timeline", trailing: "arrow.up.right") { onOpenTimeline() }
+            ActionRow(icon: "folder", label: "Open data folder", trailing: "arrow.up.right") { engine.openDataFolder() }
+            ActionRow(icon: "gearshape", label: "Settings", trailing: "chevron.right") { /* TODO: settings */ }
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
 
-    private func shortcut(_ label: String, caps: [String]) -> some View {
-        HStack(spacing: 5) {
-            Text(label).font(.system(size: 12)).foregroundColor(DS.Colors.dim)
-            Spacer(minLength: 6)
-            ForEach(caps.indices, id: \.self) { i in keycap(caps[i]) }
+// Context awareness status + pause/resume. Green dot when on; a big, plain button
+// toggles Pause / Resume; the ⌥⌃ shortcut is shown beneath.
+private struct ContextControl: View {
+    @ObservedObject var engine: EngineController
+    @State private var hover = false
+
+    var body: some View {
+        let paused = engine.status == .paused
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 6) {
+                Circle().fill(paused ? DS.Colors.faint : DS.Colors.live)
+                    .frame(width: 7, height: 7)
+                    .shadow(color: (paused ? Color.clear : DS.Colors.live).opacity(0.7), radius: 3)
+                Text("Context aware").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
+                if paused {
+                    Text("· paused").font(.system(size: 11)).foregroundColor(DS.Colors.faint)
+                }
+            }
+
+            Button(action: { engine.togglePause() }) {
+                HStack(spacing: 7) {
+                    Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .semibold))
+                    Text(paused ? "Resume" : "Pause").font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundColor(paused ? DS.Colors.live : DS.Colors.fg)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(hover ? 0.13 : 0.07)))
+                .contentShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+            .onHover { hover = $0 }
+
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 5) {
+                    Image(systemName: "command").font(.system(size: 10)).foregroundColor(DS.Colors.faint)
+                    Text("Shortcuts").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
+                }
+                HStack(spacing: 6) {
+                    Text("Pause / resume").font(.system(size: 12)).foregroundColor(DS.Colors.dim)
+                    Spacer(minLength: 6)
+                    keycap("⌥"); keycap("⌃")
+                }
+            }
         }
     }
 
     private func keycap(_ s: String) -> some View {
-        Text(s)
-            .font(.system(size: 10, weight: .medium))
-            .foregroundColor(DS.Colors.dim)
-            .padding(.horizontal, 6).padding(.vertical, 3)
+        Text(s).font(.system(size: 10, weight: .medium)).foregroundColor(DS.Colors.dim)
+            .frame(minWidth: 18).padding(.horizontal, 5).padding(.vertical, 3)
             .background(RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.08)))
+    }
+}
+
+// A full-width action button with a leading icon and a hover highlight.
+private struct ActionRow: View {
+    let icon: String
+    let label: String
+    var trailing: String = "chevron.right"
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon).font(.system(size: 13)).foregroundColor(DS.Colors.dim).frame(width: 18)
+                Text(label).font(.system(size: 12.5, weight: .medium)).foregroundColor(DS.Colors.fg)
+                Spacer()
+                Image(systemName: trailing).font(.system(size: 10, weight: .semibold)).foregroundColor(DS.Colors.faint)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 11)
+            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(hover ? 0.11 : 0.05)))
+            .contentShape(RoundedRectangle(cornerRadius: 9))
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
     }
 }
 
