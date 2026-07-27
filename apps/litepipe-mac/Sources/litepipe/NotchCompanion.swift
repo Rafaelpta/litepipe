@@ -156,7 +156,7 @@ struct CompanionView: View {
                 .allowsHitTesting(false)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(.spring(response: 0.42, dampingFraction: 0.74), value: model.expanded)
+        .animation(.spring(response: 0.6, dampingFraction: 0.82), value: model.expanded)
     }
 
     // At rest: the notch itself made a bit wider and dropped a little. The bar spans
