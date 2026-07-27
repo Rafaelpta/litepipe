@@ -23,6 +23,7 @@ final class NotchCompanionController {
     private let model = CompanionModel()
     private let engine: EngineController
     private lazy var timeline = TimelineController(dataDir: engine.dataFolder)
+    private lazy var settings = SettingsController(engine: engine)
     private var hoverTimer: Timer?
 
     init(engine: EngineController) {
@@ -48,7 +49,8 @@ final class NotchCompanionController {
         let hosting = NSHostingView(rootView: CompanionView(
             model: model,
             engine: engine,
-            onOpenTimeline: { [weak self] in self?.timeline.show() }
+            onOpenTimeline: { [weak self] in self?.timeline.show() },
+            onOpenSettings: { [weak self] in self?.settings.show() }
         ))
         hosting.translatesAutoresizingMaskIntoConstraints = false
         hosting.wantsLayer = true
@@ -146,6 +148,7 @@ struct CompanionView: View {
     @ObservedObject var model: CompanionModel
     @ObservedObject var engine: EngineController
     let onOpenTimeline: () -> Void
+    let onOpenSettings: () -> Void
 
     // Accent used for the Upgrade pill (a color, easily re-themed later).
     private let accent = Color(red: 0.29, green: 0.55, blue: 0.98)
@@ -272,7 +275,7 @@ struct CompanionView: View {
         VStack(alignment: .leading, spacing: 9) {
             ActionRow(icon: "clock.arrow.circlepath", label: "Open timeline", trailing: "arrow.up.right") { onOpenTimeline() }
             ActionRow(icon: "folder", label: "Open data folder", trailing: "arrow.up.right") { engine.openDataFolder() }
-            ActionRow(icon: "gearshape", label: "Settings", trailing: "chevron.right") { /* TODO: settings */ }
+            ActionRow(icon: "gearshape", label: "Settings", trailing: "arrow.up.right") { onOpenSettings() }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

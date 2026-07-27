@@ -56,8 +56,11 @@ final class EngineController: ObservableObject {
         pathParts += ["/opt/homebrew/bin", "/usr/local/bin", env["PATH"] ?? "/usr/bin:/bin"]
         env["PATH"] = pathParts.joined(separator: ":")
         let envArr = env.map { "\($0.key)=\($0.value)" }
-        // audio ON: the engine captures mic + transcribes (ASR/AI built into the binary)
-        let args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path]
+        // audio ON by default (mic + system, transcribed); the Settings toggle can
+        // disable it, persisted in UserDefaults.
+        let audioOn = (UserDefaults.standard.object(forKey: "capture.audio") as? Bool) ?? true
+        var args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path]
+        if !audioOn { args.append("--disable-audio") }
 
         var attr: posix_spawnattr_t?
         posix_spawnattr_init(&attr)
@@ -129,6 +132,12 @@ final class EngineController: ObservableObject {
     }
 
     func openDataFolder() { NSWorkspace.shared.open(dataDir) }
+
+    // Stop and start again (e.g. after changing the audio setting).
+    func restart() {
+        stop()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.start() }
+    }
 
     // MARK: - Global shortcut (option+control toggles context awareness)
 
