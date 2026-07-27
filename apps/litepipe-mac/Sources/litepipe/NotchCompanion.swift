@@ -96,13 +96,13 @@ final class NotchCompanionController {
     private func expand() {
         guard !model.expanded else { return }
         panel?.ignoresMouseEvents = false // become interactive while open
-        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) { model.expanded = true }
+        model.expanded = true // the view animates via .animation(value:)
     }
 
     private func collapse() {
         guard model.expanded else { return }
         panel?.ignoresMouseEvents = true
-        withAnimation(.spring(response: 0.30, dampingFraction: 0.86)) { model.expanded = false }
+        model.expanded = false
     }
 
     // Narrow trigger zone hugging the notch (so it only expands when you approach
@@ -129,32 +129,63 @@ struct CompanionView: View {
     // Accent used for the Upgrade pill (a color, easily re-themed later).
     private let accent = Color(red: 0.29, green: 0.55, blue: 0.98)
 
-    var body: some View {
-        ZStack(alignment: .top) {
-            if model.expanded {
-                expanded.transition(.move(edge: .top).combined(with: .opacity))
-            } else {
-                idle.transition(.opacity)
-            }
+    // Real notch geometry from macOS, so the idle bar aligns exactly with the notch
+    // and expanded content clears it (no overlap). Falls back if there's no notch.
+    private var notch: (w: CGFloat, h: CGFloat) {
+        guard let s = NSScreen.screens.first else { return (200, 32) }
+        let h = s.safeAreaInsets.top
+        var w: CGFloat = 200
+        if let l = s.auxiliaryTopLeftArea, let r = s.auxiliaryTopRightArea {
+            w = s.frame.width - l.width - r.width
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        return (w, h > 0 ? h : 32)
     }
 
-    // At rest: a subtle recording dot tucked just under the notch (pinned to the
-    // TOP so it hugs the notch, not the bottom of the fixed window).
+    var body: some View {
+        // Both states live in the hierarchy; we crossfade + scale between them so
+        // the panel appears to GROW out of the notch (dynamic-island feel) rather
+        // than slide down. One spring drives the whole morph.
+        ZStack(alignment: .top) {
+            expanded
+                .opacity(model.expanded ? 1 : 0)
+                .scaleEffect(model.expanded ? 1 : 0.55, anchor: .top)
+                .allowsHitTesting(model.expanded)
+            idle
+                .opacity(model.expanded ? 0 : 1)
+                .scaleEffect(model.expanded ? 1.4 : 1, anchor: .top)
+                .allowsHitTesting(false)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .animation(.spring(response: 0.42, dampingFraction: 0.74), value: model.expanded)
+    }
+
+    // At rest: the notch itself made a bit wider and dropped a little. The bar spans
+    // from the very top (screen edge) so its concave top fillets merge into the menu
+    // bar (invisible) and only the rounded, scooped bottom shows below the notch.
+    // The litepipe wave sits centered in that visible drop.
     private var idle: some View {
-        Circle()
-            .fill(DS.Colors.live)
-            .frame(width: 6, height: 6)
-            .shadow(color: DS.Colors.live.opacity(0.7), radius: 3)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, 30)
+        let n = notch
+        let ext: CGFloat = 55      // how much wider than the notch, each side
+        let drop: CGFloat = 0      // no drop at all: bar stays within the notch height
+        return ZStack {
+            NotchBarShape(topRadius: 10, bottomRadius: 11).fill(Color.black)
+            // Logo beside the notch (a centered logo would sit behind it at this height).
+            HStack {
+                Spacer()
+                WaveShape()
+                    .stroke(Color.white, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+                    .frame(width: 18, height: 7)
+                    .padding(.trailing, 24)
+            }
+        }
+        .frame(width: n.w + ext * 2, height: n.h + drop)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     // Wide two-column landscape panel, faithful to the reference dropdown's layout.
     private var expanded: some View {
         VStack(spacing: 0) {
-            Color.clear.frame(height: 30) // sit below the notch line
+            Color.clear.frame(height: notch.h) // sit below the notch line
 
             topBar
                 .padding(.horizontal, 14)
@@ -278,5 +309,27 @@ struct CompanionView: View {
             .foregroundColor(DS.Colors.dim)
             .padding(.horizontal, 6).padding(.vertical, 3)
             .background(RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.08)))
+    }
+}
+
+// The macOS notch profile: full-width flat top, small CONCAVE fillets where the
+// black meets the light band (the "scoop"), and generously rounded CONVEX bottom
+// corners. Used for the idle tab so it reads as an extension of the notch.
+struct NotchBarShape: Shape {
+    var topRadius: CGFloat = 9
+    var bottomRadius: CGFloat = 17
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let w = r.width, h = r.height, tr = topRadius, br = bottomRadius
+        p.move(to: CGPoint(x: 0, y: 0))
+        p.addQuadCurve(to: CGPoint(x: tr, y: tr), control: CGPoint(x: tr, y: 0))          // left concave fillet
+        p.addLine(to: CGPoint(x: tr, y: h - br))
+        p.addQuadCurve(to: CGPoint(x: tr + br, y: h), control: CGPoint(x: tr, y: h))       // bottom-left convex
+        p.addLine(to: CGPoint(x: w - tr - br, y: h))
+        p.addQuadCurve(to: CGPoint(x: w - tr, y: h - br), control: CGPoint(x: w - tr, y: h)) // bottom-right convex
+        p.addLine(to: CGPoint(x: w - tr, y: tr))
+        p.addQuadCurve(to: CGPoint(x: w, y: 0), control: CGPoint(x: w - tr, y: 0))          // right concave fillet
+        p.closeSubpath()
+        return p
     }
 }
