@@ -30,3 +30,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## FFmpeg — https://ffmpeg.org
+
+This app bundles FFmpeg (ffmpeg/ffprobe) for media processing. FFmpeg is
+licensed under the LGPL v2.1+ (some builds, the GPL). See
+https://ffmpeg.org/legal.html. TODO before public release: confirm the exact
+license of the bundled build and include the corresponding license text (and,
+for LGPL, keep FFmpeg as a separable/replaceable component).
