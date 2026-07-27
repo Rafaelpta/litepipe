@@ -23,7 +23,16 @@ else
   echo "note: Resources/screenpipe not found - app will use dev fallback (~/projects/litepipe/target/release/screenpipe)"
 fi
 
-# Ad-hoc sign so TCC associates grants with a stable identity.
-codesign --force --deep --sign - "$APP" 2>/dev/null || true
+# Sign with a stable local identity if present (so TCC grants persist across
+# rebuilds); fall back to ad-hoc otherwise. Replace with an Ottic Developer ID
+# for real white-label distribution.
+SIGN_ID="litepipe-dev"
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "$SIGN_ID"; then
+  codesign --force --deep --sign "$SIGN_ID" "$APP"
+  echo "signed with: $SIGN_ID (stable)"
+else
+  codesign --force --deep --sign - "$APP" 2>/dev/null || true
+  echo "signed ad-hoc (no stable identity found)"
+fi
 
 echo "built ./$APP"
