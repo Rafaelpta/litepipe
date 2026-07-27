@@ -211,14 +211,18 @@ struct CompanionView: View {
 
     private var topBar: some View {
         HStack(spacing: 6) {
-            tab("Home", icon: "house.fill", active: true)
-            tab("Agents", icon: "sparkles", active: false)
+            tab("Timeline", icon: "clock", active: true)
+            tab("Search", icon: "magnifyingglass", active: false)
             Spacer()
-            Text("Upgrade to Pro")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 11).padding(.vertical, 5)
-                .background(Capsule().fill(accent))
+            HStack(spacing: 5) {
+                Circle().fill(DS.Colors.live).frame(width: 6, height: 6)
+                    .shadow(color: DS.Colors.live.opacity(0.7), radius: 3)
+                Text("Recording")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(DS.Colors.fg)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Capsule().fill(Color.white.opacity(0.08)))
             Image(systemName: "gearshape.fill")
                 .font(.system(size: 13))
                 .foregroundColor(DS.Colors.faint)
@@ -236,28 +240,28 @@ struct CompanionView: View {
         .background(Capsule().fill(active ? Color.white.opacity(0.10) : .clear))
     }
 
-    // MARK: - Left column (skills + integrations)
+    // MARK: - Left column (timeline + storage)
 
     private var leftColumn: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Add skills").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
-                Text("Extend what it can do.").font(.system(size: 11.5)).foregroundColor(DS.Colors.faint)
+                Text("Timeline").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
+                Text("Rewind your screen.").font(.system(size: 11.5)).foregroundColor(DS.Colors.faint)
             }
             RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.06))
                 .frame(width: 46, height: 46)
-                .overlay(Image(systemName: "plus").font(.system(size: 17, weight: .medium)).foregroundColor(DS.Colors.dim))
+                .overlay(Image(systemName: "clock.arrow.circlepath").font(.system(size: 18)).foregroundColor(DS.Colors.dim))
 
             Spacer(minLength: 6)
 
-            Text("Active integrations").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
+            Text("Storage").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06))
                     .frame(width: 30, height: 30)
-                    .overlay(Image(systemName: "envelope.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))
+                    .overlay(Image(systemName: "folder.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))
                 RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.06))
                     .frame(width: 30, height: 30)
-                    .overlay(Image(systemName: "plus").font(.system(size: 12, weight: .medium)).foregroundColor(DS.Colors.faint))
+                    .overlay(Image(systemName: "internaldrive.fill").font(.system(size: 12)).foregroundColor(DS.Colors.dim))
                 Spacer()
             }
             .padding(8)
@@ -266,7 +270,7 @@ struct CompanionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Right column (shortcuts + undock)
+    // MARK: - Right column (shortcuts + open app)
 
     private var rightColumn: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -274,18 +278,18 @@ struct CompanionView: View {
                 Image(systemName: "command").font(.system(size: 10)).foregroundColor(DS.Colors.faint)
                 Text("Shortcuts").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
             }
-            shortcut("Talk", caps: ["⌃ control", "⌥ option"])
-            shortcut("Text", caps: ["⌃ control", "2×"])
-            shortcut("Dictate", caps: ["fn", "⌃ control"])
-            shortcut("Hands-free", caps: ["fn", "⌃ control", "2×"])
+            shortcut("Timeline", caps: ["⌃", "space"])
+            shortcut("Search", caps: ["⌘", "⇧ F"])
+            shortcut("Snapshot", caps: ["⌘", "⇧ 4"])
+            shortcut("Pause", caps: ["⌃", "⌥ P"])
 
             Spacer(minLength: 6)
 
             HStack(spacing: 8) {
                 Spacer()
                 HStack(spacing: 5) {
-                    Image(systemName: "play.fill").font(.system(size: 8)).foregroundColor(DS.Colors.live)
-                    Text("Undock Cursor").font(.system(size: 11.5, weight: .medium)).foregroundColor(DS.Colors.fg)
+                    Image(systemName: "macwindow").font(.system(size: 9)).foregroundColor(DS.Colors.dim)
+                    Text("Open litepipe").font(.system(size: 11.5, weight: .medium)).foregroundColor(DS.Colors.fg)
                 }
                 .padding(.horizontal, 10).padding(.vertical, 6)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
