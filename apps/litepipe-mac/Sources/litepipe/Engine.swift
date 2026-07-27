@@ -44,7 +44,8 @@ final class EngineController: ObservableObject {
         var env = ProcessInfo.processInfo.environment
         env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + (env["PATH"] ?? "/usr/bin:/bin")
         let envArr = env.map { "\($0.key)=\($0.value)" }
-        let args = [bin.path, "record", "--port", "\(port)", "--disable-audio", "--data-dir", dataDir.path]
+        // audio ON: the engine captures mic + transcribes (ASR/AI built into the binary)
+        let args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path]
 
         var attr: posix_spawnattr_t?
         posix_spawnattr_init(&attr)

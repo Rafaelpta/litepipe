@@ -7,7 +7,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "litepipe",
-            path: "Sources/litepipe"
+            path: "Sources/litepipe",
+            linkerSettings: [
+                .linkedLibrary("sqlite3") // read the engine's ~/.litepipe/db.sqlite
+            ]
         )
     ]
 )

@@ -15,6 +15,7 @@ final class NotchCompanionController {
     private var panel: NSPanel?
     private let model = CompanionModel()
     private let engine: EngineController
+    private lazy var timeline = TimelineController(dataDir: engine.dataFolder)
     private var hoverTimer: Timer?
 
     init(engine: EngineController) {
@@ -37,7 +38,11 @@ final class NotchCompanionController {
         container.wantsLayer = true
         container.layer?.backgroundColor = .clear
 
-        let hosting = NSHostingView(rootView: CompanionView(model: model, engine: engine))
+        let hosting = NSHostingView(rootView: CompanionView(
+            model: model,
+            engine: engine,
+            onOpenTimeline: { [weak self] in self?.timeline.show() }
+        ))
         hosting.translatesAutoresizingMaskIntoConstraints = false
         hosting.wantsLayer = true
         hosting.layer?.backgroundColor = .clear
@@ -133,6 +138,7 @@ final class NotchCompanionController {
 struct CompanionView: View {
     @ObservedObject var model: CompanionModel
     @ObservedObject var engine: EngineController
+    let onOpenTimeline: () -> Void
 
     // Accent used for the Upgrade pill (a color, easily re-themed later).
     private let accent = Color(red: 0.29, green: 0.55, blue: 0.98)
@@ -275,9 +281,13 @@ struct CompanionView: View {
                 Text("Timeline").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
                 Text("Rewind your screen.").font(.system(size: 11.5)).foregroundColor(DS.Colors.faint)
             }
+            .contentShape(Rectangle())
+            .onTapGesture { onOpenTimeline() }
             RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.06))
                 .frame(width: 46, height: 46)
                 .overlay(Image(systemName: "clock.arrow.circlepath").font(.system(size: 18)).foregroundColor(DS.Colors.dim))
+                .contentShape(Rectangle())
+                .onTapGesture { onOpenTimeline() } // open the timeline window
 
             Spacer(minLength: 6)
 
@@ -322,6 +332,8 @@ struct CompanionView: View {
                 }
                 .padding(.horizontal, 10).padding(.vertical, 6)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
+                .contentShape(RoundedRectangle(cornerRadius: 8))
+                .onTapGesture { onOpenTimeline() }
 
                 Circle().fill(Color.white.opacity(0.06)).frame(width: 26, height: 26)
                     .overlay(Image(systemName: "info").font(.system(size: 10, weight: .semibold)).foregroundColor(DS.Colors.faint))
