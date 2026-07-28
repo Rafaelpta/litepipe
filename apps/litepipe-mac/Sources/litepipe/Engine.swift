@@ -122,8 +122,10 @@ final class EngineController: ObservableObject {
         // VoiceProcessingIO on the mic: automatic gain + echo cancellation (what
         // Zoom/Meet use). Without it the MacBook mic records so quietly that the
         // engine's silence gates discard real speech before transcription.
+        // The engine inherits upstream PostHog and Sentry clients that are ON
+        // unless this flag is passed; litepipe promises loopback only.
         var args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path,
-                    "-a", sttEngine, "--macos-input-vpio-enabled"]
+                    "-a", sttEngine, "--macos-input-vpio-enabled", "--disable-telemetry"]
         if !audioOn { args.append("--disable-audio") }
 
         var attr: posix_spawnattr_t?
