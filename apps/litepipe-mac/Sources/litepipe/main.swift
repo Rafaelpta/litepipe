@@ -13,6 +13,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var companion = NotchCompanionController(engine: engine)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Two copies (e.g. the installed app plus a dev build opened via
+        // Spotlight) fight over the engine port, data dir and log. Keep only
+        // the first instance; hand focus to it and quit.
+        let others = NSRunningApplication.runningApplications(
+            withBundleIdentifier: Bundle.main.bundleIdentifier ?? "ai.ottic.litepipe"
+        ).filter { $0 != NSRunningApplication.current }
+        if !others.isEmpty {
+            others.first?.activate()
+            NSApp.terminate(nil)
+            return
+        }
+
         NSApp.setActivationPolicy(.regular) // Dock icon so the app is visible and quittable
 
         // Never trust the sticky "complete" flag alone: permissions can be revoked
