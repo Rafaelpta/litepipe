@@ -25,6 +25,8 @@ final class NotchCompanionController {
     private lazy var timeline = TimelineController(dataDir: engine.dataFolder)
     private lazy var settings = SettingsController(engine: engine)
     private var hoverTimer: Timer?
+    private lazy var meetings = MeetingWatcher(engine: engine)
+    private lazy var meetingPrompt = MeetingPromptController(watcher: meetings)
 
     init(engine: EngineController) {
         self.engine = engine
@@ -61,6 +63,7 @@ final class NotchCompanionController {
         let hosting = NSHostingView(rootView: CompanionView(
             model: model,
             engine: engine,
+            meetings: meetings,
             onOpenTimeline: { [weak self] in self?.timeline.show() },
             onOpenSettings: { [weak self] in self?.settings.show() }
         ))
@@ -95,6 +98,8 @@ final class NotchCompanionController {
         if let r = expandedRect() { p.setFrame(r, display: false) }
         p.orderFrontRegardless()
         startHoverTracking()
+        _ = meetingPrompt // wire the banner to the watcher
+        meetings.start()
     }
 
     func hide() {
@@ -159,6 +164,7 @@ final class NotchCompanionController {
 struct CompanionView: View {
     @ObservedObject var model: CompanionModel
     @ObservedObject var engine: EngineController
+    @ObservedObject var meetings: MeetingWatcher
     let onOpenTimeline: () -> Void
     let onOpenSettings: () -> Void
 
@@ -277,8 +283,24 @@ struct CompanionView: View {
     // MARK: - Left column (context awareness + pause/resume)
 
     private var leftColumn: some View {
-        ContextControl(engine: engine)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 10) {
+            ContextControl(engine: engine)
+            if meetings.transcribing {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.orange).frame(width: 7, height: 7)
+                        .shadow(color: Color.orange.opacity(0.7), radius: 3)
+                    Text("Transcribing meeting")
+                        .font(.system(size: 12, weight: .medium)).foregroundColor(DS.Colors.fg)
+                    Spacer(minLength: 6)
+                    Button(action: { meetings.stopTranscribing() }) {
+                        Text("Stop").font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(DS.Colors.dim).underline()
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Right column (actions)
@@ -287,6 +309,7 @@ struct CompanionView: View {
         VStack(alignment: .leading, spacing: 9) {
             ActionRow(icon: "clock.arrow.circlepath", label: "Open timeline", trailing: "arrow.up.right") { onOpenTimeline() }
             ActionRow(icon: "folder", label: "Open data folder", trailing: "arrow.up.right") { engine.openDataFolder() }
+            ActionRow(icon: "text.bubble", label: "Last transcript", trailing: "arrow.up.right") { meetings.exportLastTranscript() }
             ActionRow(icon: "gearshape", label: "Settings", trailing: "arrow.up.right") { onOpenSettings() }
             Spacer(minLength: 0)
         }

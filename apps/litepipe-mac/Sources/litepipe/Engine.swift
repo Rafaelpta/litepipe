@@ -79,11 +79,19 @@ final class EngineController: ObservableObject {
         pathParts += ["/opt/homebrew/bin", "/usr/local/bin", env["PATH"] ?? "/usr/bin:/bin"]
         env["PATH"] = pathParts.joined(separator: ":")
         env["SCREENPIPE_API_KEY"] = apiKey // lets the app drive the control endpoints
+        // Beta diagnosability: the meeting detector only tells its story at debug level.
+        env["SCREENPIPE_LOG"] = "screenpipe_engine::meeting_detector=debug"
         let envArr = env.map { "\($0.key)=\($0.value)" }
         // audio ON by default (mic + system, transcribed); the Settings toggle can
         // disable it, persisted in UserDefaults.
         let audioOn = (UserDefaults.standard.object(forKey: "capture.audio") as? Bool) ?? true
-        var args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path]
+        // The engine's hardware-tier default picks whisper-tiny on 16GB Macs;
+        // meeting transcription needs the large turbo model (downloads ~870MB on
+        // first use; transcription is silent until the download finishes).
+        let sttEngine = UserDefaults.standard.string(forKey: "transcription.engine")
+            ?? "whisper-large-v3-turbo-quantized"
+        var args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path,
+                    "-a", sttEngine]
         if !audioOn { args.append("--disable-audio") }
 
         var attr: posix_spawnattr_t?
@@ -326,8 +334,8 @@ final class EngineController: ObservableObject {
         }
     }
 
-    private func engineAPI(_ path: String, method: String, body: [String: Any]?,
-                           done: @escaping (Any?) -> Void) {
+    func engineAPI(_ path: String, method: String, body: [String: Any]?,
+                   done: @escaping (Any?) -> Void) {
         guard let url = URL(string: "http://127.0.0.1:\(port)/\(path)") else { done(nil); return }
         var req = URLRequest(url: url)
         req.httpMethod = method
