@@ -347,6 +347,12 @@ private struct ContextControl: View {
             Button(action: {
                 // Swallow clicks inherited from the hover that opened the panel.
                 guard Date().timeIntervalSince(model.expandedAt) > 0.5 else { return }
+                // A confirmed meeting outranks the pause button too; the meeting
+                // row's Stop is the way to end it.
+                if engine.hotkeyBlocked?() == true {
+                    litepipeLog("pause button ignored: meeting transcription active")
+                    return
+                }
                 engine.togglePause(source: "pause-button")
             }) {
                 HStack(spacing: 7) {
