@@ -119,6 +119,7 @@ final class MeetingWatcher: ObservableObject {
     func startTranscribing() {
         guard !transcribing else { return }
         transcribing = true
+        litepipeLog("meeting: start requested app=\(suspectedAppName ?? "?")")
         engine.engineAPI("meetings/start", method: "POST",
                          body: ["app": suspectedAppName ?? "meeting"]) { [weak self] json in
             guard let self else { return }
@@ -136,6 +137,7 @@ final class MeetingWatcher: ObservableObject {
     func stopTranscribing() {
         guard transcribing else { return }
         transcribing = false
+        litepipeLog("meeting: stop id=\(meetingId.map(String.init) ?? "?")")
         let id = meetingId
         engine.engineAPI("meetings/stop", method: "POST", body: [:]) { _ in }
         // Full-context quality pass once the last chunks have landed, then turn

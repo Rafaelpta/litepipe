@@ -15,6 +15,25 @@ enum EngineStatus: Equatable {
     case error(String)
 }
 
+// Append-only flight recorder (~/.litepipe/app.log): every engine start, stop,
+// exit status and gate action lands here so a dead engine explains itself.
+func litepipeLog(_ message: String) {
+    let dir = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent(".litepipe", isDirectory: true)
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    let url = dir.appendingPathComponent("app.log")
+    let fmt = DateFormatter()
+    fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+    let line = "\(fmt.string(from: Date())) \(message)\n"
+    if let h = try? FileHandle(forWritingTo: url) {
+        h.seekToEndOfFile()
+        h.write(line.data(using: .utf8)!)
+        try? h.close()
+    } else {
+        try? line.write(to: url, atomically: true, encoding: .utf8)
+    }
+}
+
 final class EngineController: ObservableObject {
     @Published private(set) var status: EngineStatus = .stopped
 
@@ -62,9 +81,14 @@ final class EngineController: ObservableObject {
         // it without the grant means a system dialog per spawn. Refuse instead.
         guard Permissions.isGranted(.screen) else {
             status = .error("screen recording permission required")
+            litepipeLog("start refused: screen permission missing")
             return
         }
-        guard let bin = enginePath else { status = .error("engine not found"); return }
+        guard let bin = enginePath else {
+            status = .error("engine not found")
+            litepipeLog("start refused: engine binary not found")
+            return
+        }
         intentionalStop = false
         micGateInMeeting = nil // re-apply the mic gate on the fresh engine
         try? FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
@@ -120,20 +144,25 @@ final class EngineController: ObservableObject {
         if rc == 0 {
             pid = newpid
             status = .starting
+            litepipeLog("engine spawned pid=\(newpid) attempt=\(restartAttempts)")
             watchProcess(newpid)
             startHealthPolling()
             startHotkey()
         } else {
             status = .error("spawn failed (\(rc))")
+            litepipeLog("spawn failed rc=\(rc)")
         }
     }
 
-    func stop(markPaused: Bool = false) {
+    func stop(markPaused: Bool = false, source: String = "app") {
         intentionalStop = true
         restartWork?.cancel(); restartWork = nil
         procSource?.cancel(); procSource = nil
         healthTimer?.invalidate(); healthTimer = nil
-        if let p = pid { kill(p, SIGTERM) }
+        if let p = pid {
+            kill(p, SIGTERM)
+            litepipeLog("engine stopped pid=\(p) paused=\(markPaused) source=\(source)")
+        }
         pid = nil
         micGateInMeeting = nil
         status = markPaused ? .paused : .stopped
@@ -149,6 +178,11 @@ final class EngineController: ObservableObject {
             self.procSource?.cancel(); self.procSource = nil
             self.pid = nil
             self.healthTimer?.invalidate(); self.healthTimer = nil
+            var st: Int32 = 0
+            waitpid(p, &st, WNOHANG) // reap; expose why it died
+            let sig = st & 0x7f
+            let code = (st >> 8) & 0xff
+            litepipeLog("engine exited pid=\(p) code=\(code) signal=\(sig) intentional=\(self.intentionalStop)")
             if !self.intentionalStop {
                 guard Permissions.isGranted(.screen) else {
                     self.status = .error("screen recording permission missing")
@@ -170,10 +204,11 @@ final class EngineController: ObservableObject {
         procSource = src
     }
 
-    func togglePause() {
+    func togglePause(source: String = "ui") {
+        litepipeLog("togglePause source=\(source) status=\(status)")
         switch status {
         case .recording, .starting:
-            stop(markPaused: true); playCue(paused: true)
+            stop(markPaused: true, source: source); playCue(paused: true)
         case .paused, .stopped, .error:
             start()
             if case .error = status { return } // start refused (no permission): no cue
@@ -213,7 +248,7 @@ final class EngineController: ObservableObject {
             } else if !both, self.chordActive {
                 self.chordActive = false
                 if !self.chordDirty {
-                    DispatchQueue.main.async { self.togglePause() }
+                    DispatchQueue.main.async { self.togglePause(source: "hotkey") }
                 }
             }
         }
@@ -328,6 +363,7 @@ final class EngineController: ObservableObject {
                 self.engineAPI(action, method: "POST", body: ["device_name": name]) { _ in group.leave() }
             }
             group.notify(queue: .main) {
+                litepipeLog("mic gate: \(inMeeting ? "resumed" : "paused") \(toChange.count) input(s)")
                 self.micGateInMeeting = inMeeting
                 self.micGateBusy = false
             }
