@@ -156,7 +156,7 @@ struct OnboardingView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(DS.Colors.live)
                 .padding(.bottom, 6)
-            Text("I'm recording now and I live in your notch. Click me any time to rewind.")
+            Text("I'm gathering your memories as you work, and I live in your notch.")
                 .font(.system(size: 12.5))
                 .foregroundColor(DS.Colors.dim)
                 .multilineTextAlignment(.center)

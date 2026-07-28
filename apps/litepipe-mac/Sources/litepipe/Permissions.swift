@@ -16,7 +16,7 @@ enum Permission: String, CaseIterable {
         switch self {
         case .screen: return "I need screen share"
         case .accessibility: return "I need accessibility permissions"
-        case .microphone: return "Can I hear you too?"
+        case .microphone: return "I need microphone permissions"
         case .browser: return "What were you reading?"
         }
     }
@@ -28,7 +28,7 @@ enum Permission: String, CaseIterable {
         case .accessibility:
             return "To turn what's on screen into searchable text. Processed locally."
         case .microphone:
-            return "To capture what you say alongside your screen. Skip if you only want screen."
+            return "This will allow me to transcribe your meetings."
         case .browser:
             return "To read the URL of your active browser tab, so your history knows the page, not just the pixels. Skip if you'd rather not."
         }
@@ -38,7 +38,7 @@ enum Permission: String, CaseIterable {
         switch self {
         case .screen: return "Grant screen recording"
         case .accessibility: return "Grant accessibility"
-        case .microphone: return "Allow microphone"
+        case .microphone: return "Grant microphone"
         case .browser: return "Allow browser access"
         }
     }
