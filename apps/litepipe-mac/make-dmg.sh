@@ -21,12 +21,20 @@ BG="Resources/dmg-background.png"
 
 rm -f "$DMG" litepipe-rw.dmg
 
+# Any mounted litepipe volume (a previously opened release DMG) would steal the
+# mountpoint AND match the Finder disk query below, sending the layout to a
+# read-only volume. Clear them all so the build volume gets the exact name.
+for v in /Volumes/${VOL}*; do
+  [ -d "$v" ] && hdiutil detach "$v" -force >/dev/null 2>&1 || true
+done
+
 # Blank read-write image; contents are copied in while it is mounted.
 hdiutil create -size 250m -volname "$VOL" -fs HFS+ litepipe-rw.dmg >/dev/null
 ATTACH_OUT="$(hdiutil attach litepipe-rw.dmg -noautoopen)"
 DEV="$(echo "$ATTACH_OUT" | awk '/^\/dev\// {print $1; exit}')"
 MOUNT="$(echo "$ATTACH_OUT" | grep -o '/Volumes/.*$' | head -1)"
 [ -d "$MOUNT" ] || { echo "mount failed"; exit 1; }
+[ "$MOUNT" = "/Volumes/$VOL" ] || { echo "mountpoint conflict: $MOUNT (eject other litepipe volumes)"; hdiutil detach "$DEV" >/dev/null 2>&1; exit 1; }
 
 osascript -e "tell application \"Finder\" to duplicate (POSIX file \"$PWD/$APP\" as alias) to (POSIX file \"$MOUNT\" as alias)" >/dev/null
 ln -s /Applications "$MOUNT/Applications"
@@ -62,6 +70,14 @@ tell application "Finder"
     close
     open
     delay 1
+    -- Read the layout back: if this errors the build must fail rather than
+    -- ship a DMG with a default window.
+    if icon size of (icon view options of container window) is not 100 then
+      error "layout not applied (icon size)"
+    end if
+    if item 1 of (get position of item "$APP" of container window) is not 165 then
+      error "layout not applied (app position)"
+    end if
     close
   end tell
 end tell
