@@ -58,6 +58,9 @@ final class EngineController: ObservableObject {
     private var hotkeyMonitor: Any?
     private var chordActive = false
     private var chordDirty = false
+    // While a confirmed meeting is being transcribed the hotkey is ignored:
+    // stray chord taps kept pausing capture mid meeting. Set by the companion.
+    var hotkeyBlocked: (() -> Bool)?
     private let port = 3030
     // litepipe's own data dir (avoids colliding with a screenpipe install).
     private let dataDir = FileManager.default.homeDirectoryForCurrentUser
@@ -248,7 +251,13 @@ final class EngineController: ObservableObject {
             } else if !both, self.chordActive {
                 self.chordActive = false
                 if !self.chordDirty {
-                    DispatchQueue.main.async { self.togglePause(source: "hotkey") }
+                    DispatchQueue.main.async {
+                        if self.hotkeyBlocked?() == true {
+                            litepipeLog("hotkey ignored: meeting transcription active")
+                            return
+                        }
+                        self.togglePause(source: "hotkey")
+                    }
                 }
             }
         }

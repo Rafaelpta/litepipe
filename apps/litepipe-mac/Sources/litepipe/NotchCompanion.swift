@@ -102,6 +102,7 @@ final class NotchCompanionController {
         p.orderFrontRegardless()
         startHoverTracking()
         _ = meetingPrompt // wire the banner to the watcher
+        engine.hotkeyBlocked = { [weak self] in self?.meetings.transcribing ?? false }
         meetings.start()
     }
 
