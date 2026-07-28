@@ -14,8 +14,13 @@ import SQLite3
 final class MeetingWatcher: ObservableObject {
     @Published private(set) var suspected = false
     @Published private(set) var suspectedAppName: String?
+    @Published private(set) var suspectedServiceName: String?
     @Published private(set) var suspectedAppIcon: NSImage?
     @Published private(set) var transcribing = false
+
+    private static let serviceNames = [
+        "meet": "Google Meet", "zoom": "Zoom", "teams": "Teams", "facetime": "FaceTime",
+    ]
 
     private let engine: EngineController
     private var timer: Timer?
@@ -105,6 +110,7 @@ final class MeetingWatcher: ObservableObject {
             negativeStreak = 0
             if positiveStreak >= 2, !suspected, !transcribing, !dismissedUntilClear {
                 suspectedAppName = match.app
+                suspectedServiceName = Self.serviceNames[match.service]
                 // The banner shows the meeting SERVICE's logo (Meet/Zoom/Teams),
                 // not the browser's; the app icon is the fallback.
                 let bundled = Bundle.main.url(forResource: match.service, withExtension: "png",

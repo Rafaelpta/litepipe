@@ -69,7 +69,8 @@ struct MeetingPromptView: View {
                     icon(watcher.suspectedAppIcon)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Transcribe this meeting?")
+                    Text("Transcribe this \(watcher.suspectedServiceName ?? "") meeting?"
+                        .replacingOccurrences(of: "  ", with: " "))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white)
                     Text("You can use litepipe to:")
