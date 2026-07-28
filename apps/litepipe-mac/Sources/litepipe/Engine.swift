@@ -58,9 +58,36 @@ final class EngineController: ObservableObject {
     private var hotkeyMonitor: Any?
     private var chordActive = false
     private var chordDirty = false
-    // While a confirmed meeting is being transcribed the hotkey is ignored:
-    // stray chord taps kept pausing capture mid meeting. Set by the companion.
+    // While a confirmed meeting is being transcribed the hotkey must not kill
+    // the capture; instead it mutes/unmutes the meeting mic (off the record).
+    // Set by the companion.
     var hotkeyBlocked: (() -> Bool)?
+    private var meetingMicMuted = false
+
+    // Off-the-record toggle during meetings: pauses only the input devices and
+    // plays the usual cue; the meeting and the engine keep running.
+    func toggleMeetingMic() {
+        let mute = !meetingMicMuted
+        meetingMicMuted = mute
+        litepipeLog("meeting mic \(mute ? "muted" : "unmuted") via hotkey")
+        engineAPI("audio/device/status", method: "GET", body: nil) { [weak self] json in
+            guard let self else { return }
+            var devices = json as? [[String: Any]]
+            if devices == nil, let obj = json as? [String: Any] {
+                devices = obj["devices"] as? [[String: Any]]
+            }
+            let inputs = (devices ?? []).filter {
+                ($0["name"] as? String ?? "").hasSuffix("(input)")
+                    && (($0[mute ? "is_running" : "is_user_disabled"] as? Bool) ?? false)
+            }
+            let action = mute ? "audio/device/stop" : "audio/device/start"
+            for d in inputs {
+                guard let name = d["name"] as? String else { continue }
+                self.engineAPI(action, method: "POST", body: ["device_name": name]) { _ in }
+            }
+        }
+        playCue(paused: mute)
+    }
     private let port = 3030
     // litepipe's own data dir (avoids colliding with a screenpipe install).
     private let dataDir = FileManager.default.homeDirectoryForCurrentUser
@@ -256,7 +283,7 @@ final class EngineController: ObservableObject {
                 if !self.chordDirty {
                     DispatchQueue.main.async {
                         if self.hotkeyBlocked?() == true {
-                            litepipeLog("hotkey ignored: meeting transcription active")
+                            self.toggleMeetingMic()
                             return
                         }
                         self.togglePause(source: "hotkey")
@@ -349,6 +376,7 @@ final class EngineController: ObservableObject {
         guard audioOn, !micGateBusy else { return }
         if micGateInMeeting == inMeeting { return }
         micGateBusy = true
+        meetingMicMuted = false // meeting transitions clear any off-the-record mute
         let action = inMeeting ? "audio/start" : "audio/stop"
         engineAPI(action, method: "POST", body: [:]) { [weak self] json in
             guard let self else { return }
