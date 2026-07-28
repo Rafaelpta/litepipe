@@ -160,7 +160,7 @@ final class MeetingWatcher: ObservableObject {
             if suspected, negativeStreak >= 4 { // ~20s without a meeting window
                 suspected = false
             }
-            if transcribing, negativeStreak >= 12 { // ~60s: the call really ended
+            if transcribing, negativeStreak >= 6 { // ~30s: the call really ended
                 stopTranscribing()
             }
         }
@@ -229,15 +229,61 @@ final class MeetingWatcher: ObservableObject {
         }
     }
 
+    // The MacBook mic records around -40dB mean; the engine's silence gates
+    // discard that as noise. Boost pending mic chunks to broadcast loudness with
+    // the bundled ffmpeg before asking for the transcription pass — the exact
+    // procedure that made real speech transcribe correctly in testing.
+    private func boostPendingMicAudio(then done: @escaping () -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async { [dataDir] in
+            defer { DispatchQueue.main.async(execute: done) }
+            guard let ffmpeg = Bundle.main.resourceURL?
+                .appendingPathComponent("bin/ffmpeg").path,
+                FileManager.default.isExecutableFile(atPath: ffmpeg) else { return }
+            var db: OpaquePointer?
+            let dbPath = dataDir.appendingPathComponent("db.sqlite").path
+            guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else { return }
+            var stmt: OpaquePointer?
+            let sql = """
+                SELECT file_path FROM audio_chunks
+                WHERE file_path LIKE '%(input)%' AND transcription_status IN ('pending','silent')
+                  AND timestamp > datetime('now','-3 hours')
+                """
+            var paths: [String] = []
+            if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
+                while sqlite3_step(stmt) == SQLITE_ROW {
+                    if let c = sqlite3_column_text(stmt, 0) { paths.append(String(cString: c)) }
+                }
+            }
+            sqlite3_finalize(stmt)
+            sqlite3_close(db)
+            var boosted = 0
+            for p in paths where FileManager.default.fileExists(atPath: p) {
+                let tmp = p + ".boost.mp4"
+                let proc = Process()
+                proc.launchPath = ffmpeg
+                proc.arguments = ["-y", "-i", p, "-af", "loudnorm=I=-16:TP=-1.5", "-c:a", "aac", tmp]
+                proc.standardOutput = FileHandle.nullDevice
+                proc.standardError = FileHandle.nullDevice
+                try? proc.run()
+                proc.waitUntilExit()
+                if proc.terminationStatus == 0 {
+                    try? FileManager.default.removeItem(atPath: p)
+                    try? FileManager.default.moveItem(atPath: tmp, toPath: p)
+                    boosted += 1
+                } else {
+                    try? FileManager.default.removeItem(atPath: tmp)
+                }
+            }
+            if boosted > 0 { litepipeLog("meeting: boosted \(boosted) quiet mic chunk(s)") }
+        }
+    }
+
     private func retranscribe(id: Int?) {
         let engineName = UserDefaults.standard.string(forKey: "transcription.engine")
             ?? "whisper-large-v3-turbo-quantized"
         let fire: (Int) -> Void = { [weak self] mid in
-            self?.engine.engineAPI("meetings/\(mid)/retranscribe", method: "POST",
-                                   body: ["engine": engineName]) { _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 120) {
-                    self?.cleanupAudioFiles()
-                }
+            self?.boostPendingMicAudio { [weak self] in
+                self?.fireRetranscribe(mid: mid, engineName: engineName)
             }
         }
         if let id { fire(id); return }
@@ -247,6 +293,16 @@ final class MeetingWatcher: ObservableObject {
                 rows = obj["meetings"] as? [[String: Any]]
             }
             if let mid = rows?.first?["id"] as? Int { fire(mid) }
+        }
+    }
+
+    private func fireRetranscribe(mid: Int, engineName: String) {
+        engine.engineAPI("meetings/\(mid)/retranscribe", method: "POST",
+                         body: ["engine": engineName]) { [weak self] _ in
+            litepipeLog("meeting: retranscribe fired for id=\(mid)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 120) {
+                self?.cleanupAudioFiles()
+            }
         }
     }
 

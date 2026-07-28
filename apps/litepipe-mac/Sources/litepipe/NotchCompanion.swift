@@ -102,7 +102,11 @@ final class NotchCompanionController {
         p.orderFrontRegardless()
         startHoverTracking()
         _ = meetingPrompt // wire the banner to the watcher
-        engine.hotkeyBlocked = { [weak self] in self?.meetings.transcribing ?? false }
+        engine.meetingAbort = { [weak self] in
+            guard let self, self.meetings.transcribing else { return false }
+            self.meetings.stopTranscribing()
+            return true
+        }
         meetings.start()
     }
 
@@ -347,10 +351,10 @@ private struct ContextControl: View {
             Button(action: {
                 // Swallow clicks inherited from the hover that opened the panel.
                 guard Date().timeIntervalSince(model.expandedAt) > 0.5 else { return }
-                // A confirmed meeting outranks the pause button too; the meeting
-                // row's Stop is the way to end it.
-                if engine.hotkeyBlocked?() == true {
-                    litepipeLog("pause button ignored: meeting transcription active")
+                // During a meeting the button ends the transcription cleanly
+                // (same as the hotkey) instead of killing the capture engine.
+                if engine.meetingAbort?() == true {
+                    litepipeLog("pause button ended the meeting transcription")
                     return
                 }
                 engine.togglePause(source: "pause-button")
