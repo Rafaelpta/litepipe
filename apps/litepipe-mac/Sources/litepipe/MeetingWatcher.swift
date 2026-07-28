@@ -86,6 +86,9 @@ final class MeetingWatcher: ObservableObject {
                 return Match(app: owner, pid: pid, service: "facetime")
             }
         }
+        // Titles are the meeting TOPIC on web clients ("Ma réunion") — fall back
+        // to the browser URL the engine already captures with each frame.
+        if let m = matchFromRecentFrameURLs() { return m }
         // No match: leave a breadcrumb of what the browser windows were called,
         // so a missed meeting explains itself (rate limited to every 5 min).
         if Date().timeIntervalSince(lastTitleDiag) > 300 {
@@ -98,6 +101,37 @@ final class MeetingWatcher: ObservableObject {
             }
             if !titles.isEmpty {
                 litepipeLog("meeting scan: no match; browser titles=\(titles.prefix(4))")
+            }
+        }
+        return nil
+    }
+
+    // The engine stamps the focused browser window's URL onto captured frames;
+    // a recent frame on a meeting domain is a solid signal regardless of title.
+    private func matchFromRecentFrameURLs() -> Match? {
+        var db: OpaquePointer?
+        let path = dataDir.appendingPathComponent("db.sqlite").path
+        guard sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else { return nil }
+        defer { sqlite3_close(db) }
+        let sql = """
+            SELECT browser_url, app_name FROM frames
+            WHERE timestamp > datetime('now','-30 seconds') AND browser_url IS NOT NULL
+            ORDER BY id DESC LIMIT 10
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return nil }
+        defer { sqlite3_finalize(stmt) }
+        let domains: [(String, String)] = [
+            ("zoom.us", "zoom"), ("meet.google.com", "meet"), ("teams.microsoft", "teams"),
+        ]
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let u = sqlite3_column_text(stmt, 0) else { continue }
+            let url = String(cString: u).lowercased()
+            let app = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? "browser"
+            for (domain, service) in domains where url.contains(domain) {
+                // zoom.us matches the whole site; require the meeting client path.
+                if service == "zoom", !url.contains("/wc/"), !url.contains("/j/") { continue }
+                return Match(app: app, pid: 0, service: service)
             }
         }
         return nil
