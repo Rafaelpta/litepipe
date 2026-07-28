@@ -13,5 +13,9 @@
     <!-- browser-URL capture reads the active tab via Apple Events -->
     <key>com.apple.security.automation.apple-events</key>
     <true/>
+    <!-- hardened runtime blocks the microphone without this: the Allow prompt
+         never appears and capture is silently denied (both app and engine) -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
 </dict>
 </plist>
