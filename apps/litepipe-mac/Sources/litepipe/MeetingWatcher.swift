@@ -90,8 +90,8 @@ final class MeetingWatcher: ObservableObject {
         // to the browser URL the engine already captures with each frame.
         if let m = matchFromRecentFrameURLs() { return m }
         // No match: leave a breadcrumb of what the browser windows were called,
-        // so a missed meeting explains itself (rate limited to every 5 min).
-        if Date().timeIntervalSince(lastTitleDiag) > 300 {
+        // so a missed meeting explains itself (rate limited to once a minute).
+        if Date().timeIntervalSince(lastTitleDiag) > 60 {
             lastTitleDiag = Date()
             let titles = list.compactMap { w -> String? in
                 guard let o = (w[kCGWindowOwnerName as String] as? String)?.lowercased(),
@@ -129,8 +129,12 @@ final class MeetingWatcher: ObservableObject {
             let url = String(cString: u).lowercased()
             let app = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? "browser"
             for (domain, service) in domains where url.contains(domain) {
-                // zoom.us matches the whole site; require the meeting client path.
+                // Domains match their whole sites; require an in-call path so a
+                // landing page or a "you left" tab does not trigger the banner.
                 if service == "zoom", !url.contains("/wc/"), !url.contains("/j/") { continue }
+                if service == "meet",
+                   url.range(of: #"meet\.google\.com/[a-z]{3}-[a-z]{4}-[a-z]{3}"#,
+                             options: .regularExpression) == nil { continue }
                 return Match(app: app, pid: 0, service: service)
             }
         }
