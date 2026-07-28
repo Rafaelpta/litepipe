@@ -23,12 +23,16 @@ if [ -f "$BG" ]; then
 fi
 
 # Read-write image first so the Finder layout can be written into its .DS_Store.
-# HFS+ because APFS .DS_Store layouts don't render reliably on older systems.
+# HFS+ because APFS .DS_Store layouts don't render reliably on older systems (and
+# it lets the Finder step below tell our volume apart from any other mounted
+# volume that happens to share the name, e.g. a previously opened litepipe.dmg).
 hdiutil create -volname "$VOL" -fs HFS+ -srcfolder "$STAGE" -format UDRW -ov litepipe-rw.dmg >/dev/null
 rm -rf "$STAGE"
 
-MOUNT="/Volumes/$VOL"
-hdiutil attach litepipe-rw.dmg -mountpoint "$MOUNT" -nobrowse >/dev/null
+ATTACH_OUT="$(hdiutil attach litepipe-rw.dmg -noautoopen)"
+DEV="$(echo "$ATTACH_OUT" | awk '/^\/dev\// {print $1; exit}')"
+MOUNT="$(echo "$ATTACH_OUT" | grep -o '/Volumes/.*$' | head -1)"
+[ -d "$MOUNT" ] || { echo "mount failed"; exit 1; }
 
 # Volume icon (shows on the mounted disk and the DMG file itself).
 if [ -f "Resources/AppIcon.icns" ]; then
@@ -37,9 +41,11 @@ if [ -f "Resources/AppIcon.icns" ]; then
 fi
 
 # Finder layout: fixed 660x400 window, icon view, background, icon positions.
+# Address our volume as "first HFS+ disk named $VOL" so a stuck or user-mounted
+# copy of a released (APFS-imaged) litepipe.dmg can't receive the layout instead.
 osascript <<EOF
 tell application "Finder"
-  tell disk "$VOL"
+  tell (first disk whose name begins with "$VOL" and format is Mac OS Extended format)
     open
     set current view of container window to icon view
     set toolbar visible of container window to false
@@ -63,7 +69,12 @@ end tell
 EOF
 
 sync
-hdiutil detach "$MOUNT" >/dev/null
+# Finder can briefly hold the volume after writing .DS_Store; retry the detach.
+for i in 1 2 3 4 5; do
+  hdiutil detach "$DEV" >/dev/null 2>&1 && break
+  sleep 2
+  [ "$i" = 5 ] && hdiutil detach "$DEV" -force >/dev/null
+done
 hdiutil convert litepipe-rw.dmg -format UDZO -o "$DMG" >/dev/null
 rm -f litepipe-rw.dmg
 
