@@ -38,6 +38,7 @@ final class EngineController: ObservableObject {
     }()
     private var hotkeyMonitor: Any?
     private var chordActive = false
+    private var chordWork: DispatchWorkItem?
     private let port = 3030
     // litepipe's own data dir (avoids colliding with a screenpipe install).
     private let dataDir = FileManager.default.homeDirectoryForCurrentUser
@@ -187,14 +188,25 @@ final class EngineController: ObservableObject {
     // so holding the chord fires once.
     private func startHotkey() {
         guard hotkeyMonitor == nil else { return }
-        hotkeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] e in
+        // The chord must be held ALONE for a moment before it toggles: window
+        // managers and app shortcuts use control+option plus another key, and
+        // firing on the bare flags change made every such shortcut silently
+        // pause the capture.
+        hotkeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] e in
             guard let self else { return }
+            if e.type == .keyDown {
+                self.chordWork?.cancel(); self.chordWork = nil
+                return
+            }
             let both = e.modifierFlags.contains(.control) && e.modifierFlags.contains(.option)
             if both, !self.chordActive {
                 self.chordActive = true
-                DispatchQueue.main.async { self.togglePause() }
+                let work = DispatchWorkItem { [weak self] in self?.togglePause() }
+                self.chordWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: work)
             } else if !both {
                 self.chordActive = false
+                self.chordWork?.cancel(); self.chordWork = nil
             }
         }
     }
