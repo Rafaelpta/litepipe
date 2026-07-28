@@ -120,16 +120,36 @@ final class MeetingWatcher: ObservableObject {
         guard !transcribing else { return }
         transcribing = true
         litepipeLog("meeting: start requested app=\(suspectedAppName ?? "?")")
+        // A confirmed meeting outranks a paused capture: wake the engine if
+        // needed, then keep knocking until its API is up (cold start takes a
+        // while) before registering the meeting.
+        if engine.status != .recording, engine.status != .starting {
+            engine.togglePause(source: "meeting-start")
+        }
+        attemptStart(retriesLeft: 15)
+    }
+
+    private func attemptStart(retriesLeft: Int) {
+        guard transcribing else { return } // user stopped meanwhile
         engine.engineAPI("meetings/start", method: "POST",
                          body: ["app": suspectedAppName ?? "meeting"]) { [weak self] json in
             guard let self else { return }
             if let obj = json as? [String: Any], let id = obj["id"] as? Int {
                 self.meetingId = id
+                litepipeLog("meeting: registered id=\(id)")
             } else if let obj = json as? [String: Any], obj["error"] != nil {
                 // e.g. 409: a meeting is already active; adopt it.
                 self.engine.engineAPI("meetings/status", method: "GET", body: nil) { st in
                     self.meetingId = (st as? [String: Any])?["active_meeting_id"] as? Int
                 }
+            } else if retriesLeft > 0 {
+                // engine API not up yet
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                    self?.attemptStart(retriesLeft: retriesLeft - 1)
+                }
+            } else {
+                litepipeLog("meeting: start FAILED (engine api never came up)")
+                self.transcribing = false
             }
         }
     }

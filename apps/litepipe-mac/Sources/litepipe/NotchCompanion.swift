@@ -9,6 +9,9 @@ import Combine
 // the name/marketing slots).
 final class CompanionModel: ObservableObject {
     @Published var expanded = false
+    // When the panel expanded: clicks in the first instants after a hover-open
+    // are inherited from whatever the user was aiming at and must not hit Pause.
+    var expandedAt = Date.distantPast
 }
 
 // The screen that physically has the notch (safeAreaInsets.top > 0), so the
@@ -134,6 +137,7 @@ final class NotchCompanionController {
     private func expand() {
         guard !model.expanded else { return }
         panel?.ignoresMouseEvents = false // become interactive while open
+        model.expandedAt = Date()
         model.expanded = true // the view animates via .animation(value:)
     }
 
@@ -148,7 +152,9 @@ final class NotchCompanionController {
     private func triggerRect() -> NSRect? {
         guard let screen = litepipeNotchScreen() else { return nil }
         let f = screen.frame
-        let w: CGFloat = 230, h: CGFloat = 40
+        // Tight: only hovering the notch itself expands. A generous strip made
+        // ordinary menu-bar mousing open the panel under the cursor.
+        let w: CGFloat = 210, h: CGFloat = 26
         let x = f.origin.x + (f.width - w) / 2
         return NSRect(x: x, y: f.origin.y + f.height - h, width: w, height: h)
     }
@@ -284,7 +290,7 @@ struct CompanionView: View {
 
     private var leftColumn: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ContextControl(engine: engine)
+            ContextControl(engine: engine, model: model)
             if meetings.transcribing {
                 HStack(spacing: 6) {
                     Circle().fill(Color.orange).frame(width: 7, height: 7)
@@ -321,6 +327,7 @@ struct CompanionView: View {
 // toggles Pause / Resume; the ⌥⌃ shortcut is shown beneath.
 private struct ContextControl: View {
     @ObservedObject var engine: EngineController
+    @ObservedObject var model: CompanionModel
     @State private var hover = false
 
     var body: some View {
@@ -336,7 +343,11 @@ private struct ContextControl: View {
                 }
             }
 
-            Button(action: { engine.togglePause() }) {
+            Button(action: {
+                // Swallow clicks inherited from the hover that opened the panel.
+                guard Date().timeIntervalSince(model.expandedAt) > 0.5 else { return }
+                engine.togglePause(source: "pause-button")
+            }) {
                 HStack(spacing: 7) {
                     Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .semibold))
                     Text(paused ? "Resume" : "Pause").font(.system(size: 13, weight: .semibold))
