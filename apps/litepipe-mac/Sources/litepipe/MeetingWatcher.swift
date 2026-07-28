@@ -165,9 +165,9 @@ final class MeetingWatcher: ObservableObject {
         litepipeLog("meeting: stop id=\(meetingId.map(String.init) ?? "?")")
         let id = meetingId
         engine.engineAPI("meetings/stop", method: "POST", body: [:]) { _ in }
-        // Full-context quality pass once the last chunks have landed, then turn
-        // the mic audio into text only.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 90) { [weak self] in
+        // Full-context quality pass. The engine refuses chunks younger than 10
+        // minutes (reconciliation freshness floor), so the pass waits them out.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 660) { [weak self] in
             self?.retranscribe(id: id)
         }
     }

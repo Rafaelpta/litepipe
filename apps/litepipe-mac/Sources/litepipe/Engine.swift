@@ -315,11 +315,14 @@ final class EngineController: ObservableObject {
                 else { return } // engine still coming up -> stay `.starting`
                 let s = (obj["status"] as? String ?? "").lowercased()
                 let frame = (obj["frame_status"] as? String ?? "").lowercased()
-                if s.contains("error") || s.contains("unhealthy") {
-                    self.status = .error("engine unhealthy")
-                } else if frame.contains("ok") || s.contains("healthy") || s.contains("ok") {
+                // Frame health leads: with audio intentionally stopped outside
+                // meetings, the overall status may read degraded — that's not
+                // an engine failure.
+                if frame.contains("ok") || s.contains("healthy") || s.contains("ok") {
                     if self.status != .paused { self.status = .recording }
                     self.restartAttempts = 0 // healthy run resets the respawn budget
+                } else if s.contains("error") || s.contains("unhealthy") {
+                    if self.micGateInMeeting != false { self.status = .error("engine unhealthy") }
                 }
                 // This engine build only reports meeting state on /meetings/status.
                 self.engineAPI("meetings/status", method: "GET", body: nil) { json in
@@ -332,50 +335,25 @@ final class EngineController: ObservableObject {
 
     // MARK: - Microphone gate (mic records only during meetings)
 
-    // The engine's meeting detector publishes `in_meeting` on /health; the mic's
-    // purpose is transcribing meetings, so input devices are paused outside them
-    // (no permanent orange indicator) and resumed when a meeting is detected.
-    // Screen and system-audio capture are untouched. Outside meetings the check
-    // runs every poll because the engine's device monitor auto-starts a new
-    // default input (e.g. after plugging a headset).
+    // The mic exists to transcribe meetings. Outside them the whole audio
+    // pipeline is STOPPED (not paused): the engine's per-device pause keeps the
+    // microphone claimed and macOS shows the orange indicator permanently, which
+    // reads as "always listening". A full stop releases the device — indicator
+    // off. Cost: system audio isn't transcribed outside meetings either; screen
+    // capture (frames/OCR) is unaffected.
     private func syncMicGate(inMeeting: Bool) {
         let audioOn = (UserDefaults.standard.object(forKey: "capture.audio") as? Bool) ?? true
         guard audioOn, !micGateBusy else { return }
-        if inMeeting, micGateInMeeting == true { return }
+        if micGateInMeeting == inMeeting { return }
         micGateBusy = true
-        engineAPI("audio/device/status", method: "GET", body: nil) { [weak self] json in
+        let action = inMeeting ? "audio/start" : "audio/stop"
+        engineAPI(action, method: "POST", body: [:]) { [weak self] json in
             guard let self else { return }
-            var devices = json as? [[String: Any]]
-            if devices == nil, let obj = json as? [String: Any] {
-                devices = obj["devices"] as? [[String: Any]]
-            }
-            guard let devices else { self.micGateBusy = false; return }
-            let toChange = devices.filter {
-                guard ($0["name"] as? String ?? "").hasSuffix("(input)") else { return false }
-                if inMeeting {
-                    // Re-enable only what the gate itself paused; leave non-default
-                    // inputs (virtual mics etc.) alone.
-                    return ($0["is_user_disabled"] as? Bool) ?? false
-                }
-                return ($0["is_running"] as? Bool) ?? false
-            }
-            guard !toChange.isEmpty else {
+            if json != nil {
+                litepipeLog("audio gate: \(inMeeting ? "started (meeting)" : "stopped, devices released (idle)")")
                 self.micGateInMeeting = inMeeting
-                self.micGateBusy = false
-                return
             }
-            let action = inMeeting ? "audio/device/start" : "audio/device/stop"
-            let group = DispatchGroup()
-            for d in toChange {
-                guard let name = d["name"] as? String else { continue }
-                group.enter()
-                self.engineAPI(action, method: "POST", body: ["device_name": name]) { _ in group.leave() }
-            }
-            group.notify(queue: .main) {
-                litepipeLog("mic gate: \(inMeeting ? "resumed" : "paused") \(toChange.count) input(s)")
-                self.micGateInMeeting = inMeeting
-                self.micGateBusy = false
-            }
+            self.micGateBusy = false
         }
     }
 
