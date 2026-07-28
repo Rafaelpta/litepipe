@@ -2,8 +2,14 @@
 # Package litepipe.app into a designed drag-to-Applications DMG: fixed Finder
 # window, background art, big icons, volume icon. For real beta distribution the
 # app must first be Developer ID signed + notarized.
-# Note: the Finder layout step (osascript) triggers a one-time Automation prompt
-# (Terminal -> Finder) the first time it runs.
+#
+# Two macOS quirks shape this script (both bit us in practice):
+# - Once litepipe.app is registered/installed, TCC App Management blocks the
+#   shell (and hdiutil's copier) from writing a bundle with that name onto the
+#   image. Finder has the permission, so FINDER does the app copy.
+# - Finder only flushes the window layout into .DS_Store when IT ejects the
+#   volume; detaching underneath it ships a DMG with a default window.
+# The Finder steps need the one-time Terminal -> Finder Automation approval.
 set -e
 cd "$(dirname "$0")"
 
@@ -14,27 +20,20 @@ BG="Resources/dmg-background.png"
 [ -d "$APP" ] || { echo "build $APP first (./build-app.sh release)"; exit 1; }
 
 rm -f "$DMG" litepipe-rw.dmg
-STAGE="$(mktemp -d)"
-cp -R "$APP" "$STAGE/"
-ln -s /Applications "$STAGE/Applications"
-if [ -f "$BG" ]; then
-  mkdir "$STAGE/.background"
-  cp "$BG" "$STAGE/.background/background.png"
-fi
 
-# Read-write image first so the Finder layout can be written into its .DS_Store.
-# HFS+ because APFS .DS_Store layouts don't render reliably on older systems (and
-# it lets the Finder step below tell our volume apart from any other mounted
-# volume that happens to share the name, e.g. a previously opened litepipe.dmg).
-hdiutil create -volname "$VOL" -fs HFS+ -srcfolder "$STAGE" -format UDRW -ov litepipe-rw.dmg >/dev/null
-rm -rf "$STAGE"
-
+# Blank read-write image; contents are copied in while it is mounted.
+hdiutil create -size 250m -volname "$VOL" -fs HFS+ litepipe-rw.dmg >/dev/null
 ATTACH_OUT="$(hdiutil attach litepipe-rw.dmg -noautoopen)"
 DEV="$(echo "$ATTACH_OUT" | awk '/^\/dev\// {print $1; exit}')"
 MOUNT="$(echo "$ATTACH_OUT" | grep -o '/Volumes/.*$' | head -1)"
 [ -d "$MOUNT" ] || { echo "mount failed"; exit 1; }
 
-# Volume icon (shows on the mounted disk and the DMG file itself).
+osascript -e "tell application \"Finder\" to duplicate (POSIX file \"$PWD/$APP\" as alias) to (POSIX file \"$MOUNT\" as alias)" >/dev/null
+ln -s /Applications "$MOUNT/Applications"
+if [ -f "$BG" ]; then
+  mkdir "$MOUNT/.background"
+  cp "$BG" "$MOUNT/.background/background.png"
+fi
 if [ -f "Resources/AppIcon.icns" ]; then
   cp Resources/AppIcon.icns "$MOUNT/.VolumeIcon.icns"
   command -v SetFile >/dev/null && SetFile -a C "$MOUNT"
@@ -68,22 +67,20 @@ tell application "Finder"
 end tell
 EOF
 
-# Finder flushes the layout into .DS_Store asynchronously; without this wait the
-# converted DMG ships without background/positions (default alphabetical window).
+sync
+osascript -e "tell application \"Finder\" to eject (first disk whose name begins with \"$VOL\" and format is Mac OS Extended format)" 2>/dev/null || true
 for i in $(seq 1 10); do
-  [ -s "$MOUNT/.DS_Store" ] && break
+  mount | grep -q "on $MOUNT " || break
   sleep 1
 done
-[ -s "$MOUNT/.DS_Store" ] || echo "warning: .DS_Store not written - layout may be lost"
-sleep 2
-
-sync
-# Finder can briefly hold the volume after writing .DS_Store; retry the detach.
-for i in 1 2 3 4 5; do
-  hdiutil detach "$DEV" >/dev/null 2>&1 && break
-  sleep 2
-  [ "$i" = 5 ] && hdiutil detach "$DEV" -force >/dev/null
-done
+# Fallback if Finder didn't let go.
+if mount | grep -q "on $MOUNT "; then
+  for i in 1 2 3 4 5; do
+    hdiutil detach "$DEV" >/dev/null 2>&1 && break
+    sleep 2
+    [ "$i" = 5 ] && hdiutil detach "$DEV" -force >/dev/null
+  done
+fi
 hdiutil convert litepipe-rw.dmg -format UDZO -o "$DMG" >/dev/null
 rm -f litepipe-rw.dmg
 
