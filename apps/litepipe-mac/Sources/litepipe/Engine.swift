@@ -25,6 +25,17 @@ final class EngineController: ObservableObject {
     private var restartAttempts = 0
     private var restartWork: DispatchWorkItem?
     private let maxRestartAttempts = 5
+    private var micGateBusy = false
+    private var micGateInMeeting: Bool?
+
+    // Local API key for the engine's control endpoints (write ops need auth).
+    // Generated once, persisted, and handed to the engine via env at spawn.
+    private lazy var apiKey: String = {
+        if let k = UserDefaults.standard.string(forKey: "engine.apikey") { return k }
+        let k = UUID().uuidString + UUID().uuidString
+        UserDefaults.standard.set(k, forKey: "engine.apikey")
+        return k
+    }()
     private var hotkeyMonitor: Any?
     private var chordActive = false
     private let port = 3030
@@ -54,6 +65,7 @@ final class EngineController: ObservableObject {
         }
         guard let bin = enginePath else { status = .error("engine not found"); return }
         intentionalStop = false
+        micGateInMeeting = nil // re-apply the mic gate on the fresh engine
         try? FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
 
         // Prefer the bundled, self-contained ffmpeg/ffprobe (so capture works on
@@ -65,6 +77,7 @@ final class EngineController: ObservableObject {
         }
         pathParts += ["/opt/homebrew/bin", "/usr/local/bin", env["PATH"] ?? "/usr/bin:/bin"]
         env["PATH"] = pathParts.joined(separator: ":")
+        env["SCREENPIPE_API_KEY"] = apiKey // lets the app drive the control endpoints
         let envArr = env.map { "\($0.key)=\($0.value)" }
         // audio ON by default (mic + system, transcribed); the Settings toggle can
         // disable it, persisted in UserDefaults.
@@ -113,6 +126,7 @@ final class EngineController: ObservableObject {
         healthTimer?.invalidate(); healthTimer = nil
         if let p = pid { kill(p, SIGTERM) }
         pid = nil
+        micGateInMeeting = nil
         status = markPaused ? .paused : .stopped
     }
 
@@ -243,6 +257,77 @@ final class EngineController: ObservableObject {
                     if self.status != .paused { self.status = .recording }
                     self.restartAttempts = 0 // healthy run resets the respawn budget
                 }
+                // This engine build only reports meeting state on /meetings/status.
+                self.engineAPI("meetings/status", method: "GET", body: nil) { json in
+                    let active = ((json as? [String: Any])?["active"] as? Bool) ?? false
+                    self.syncMicGate(inMeeting: active)
+                }
+            }
+        }.resume()
+    }
+
+    // MARK: - Microphone gate (mic records only during meetings)
+
+    // The engine's meeting detector publishes `in_meeting` on /health; the mic's
+    // purpose is transcribing meetings, so input devices are paused outside them
+    // (no permanent orange indicator) and resumed when a meeting is detected.
+    // Screen and system-audio capture are untouched. Outside meetings the check
+    // runs every poll because the engine's device monitor auto-starts a new
+    // default input (e.g. after plugging a headset).
+    private func syncMicGate(inMeeting: Bool) {
+        let audioOn = (UserDefaults.standard.object(forKey: "capture.audio") as? Bool) ?? true
+        guard audioOn, !micGateBusy else { return }
+        if inMeeting, micGateInMeeting == true { return }
+        micGateBusy = true
+        engineAPI("audio/device/status", method: "GET", body: nil) { [weak self] json in
+            guard let self else { return }
+            var devices = json as? [[String: Any]]
+            if devices == nil, let obj = json as? [String: Any] {
+                devices = obj["devices"] as? [[String: Any]]
+            }
+            guard let devices else { self.micGateBusy = false; return }
+            let toChange = devices.filter {
+                guard ($0["name"] as? String ?? "").hasSuffix("(input)") else { return false }
+                if inMeeting {
+                    // Re-enable only what the gate itself paused; leave non-default
+                    // inputs (virtual mics etc.) alone.
+                    return ($0["is_user_disabled"] as? Bool) ?? false
+                }
+                return ($0["is_running"] as? Bool) ?? false
+            }
+            guard !toChange.isEmpty else {
+                self.micGateInMeeting = inMeeting
+                self.micGateBusy = false
+                return
+            }
+            let action = inMeeting ? "audio/device/start" : "audio/device/stop"
+            let group = DispatchGroup()
+            for d in toChange {
+                guard let name = d["name"] as? String else { continue }
+                group.enter()
+                self.engineAPI(action, method: "POST", body: ["device_name": name]) { _ in group.leave() }
+            }
+            group.notify(queue: .main) {
+                self.micGateInMeeting = inMeeting
+                self.micGateBusy = false
+            }
+        }
+    }
+
+    private func engineAPI(_ path: String, method: String, body: [String: Any]?,
+                           done: @escaping (Any?) -> Void) {
+        guard let url = URL(string: "http://127.0.0.1:\(port)/\(path)") else { done(nil); return }
+        var req = URLRequest(url: url)
+        req.httpMethod = method
+        req.timeoutInterval = 2
+        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let body {
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        }
+        URLSession.shared.dataTask(with: req) { data, _, _ in
+            DispatchQueue.main.async {
+                done(data.flatMap { try? JSONSerialization.jsonObject(with: $0) })
             }
         }.resume()
     }
