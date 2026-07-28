@@ -36,6 +36,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         nc.addObserver(forName: .litepipeHideDragHelper, object: nil, queue: .main) { [weak self] _ in
             self?.dragHelper.hide()
         }
+        // Keep the onboarding panel pinned under the notch when displays change.
+        nc.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
+                       object: nil, queue: .main) { [weak self] _ in
+            guard let self, let panel = self.panel, let screen = litepipeNotchScreen() else { return }
+            let f = screen.frame
+            let x = f.origin.x + (f.width - panel.frame.width) / 2
+            panel.setFrameTopLeftPoint(NSPoint(x: x, y: f.origin.y + f.height))
+        }
         // Onboarding finished -> tear it down and bring up the persistent companion.
         nc.addObserver(forName: .litepipeOnboardingDone, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }

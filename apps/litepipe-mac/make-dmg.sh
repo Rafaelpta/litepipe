@@ -68,6 +68,15 @@ tell application "Finder"
 end tell
 EOF
 
+# Finder flushes the layout into .DS_Store asynchronously; without this wait the
+# converted DMG ships without background/positions (default alphabetical window).
+for i in $(seq 1 10); do
+  [ -s "$MOUNT/.DS_Store" ] && break
+  sleep 1
+done
+[ -s "$MOUNT/.DS_Store" ] || echo "warning: .DS_Store not written - layout may be lost"
+sleep 2
+
 sync
 # Finder can briefly hold the volume after writing .DS_Store; retry the detach.
 for i in 1 2 3 4 5; do

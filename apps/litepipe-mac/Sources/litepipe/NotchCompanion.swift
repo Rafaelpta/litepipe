@@ -28,6 +28,15 @@ final class NotchCompanionController {
 
     init(engine: EngineController) {
         self.engine = engine
+        // Displays being plugged/unplugged rearrange screen coordinates; the panel
+        // keeps its stale frame and ends up floating mid screen unless re-pinned.
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self, let panel = self.panel, let r = self.expandedRect() else { return }
+            panel.setFrame(r, display: true)
+        }
     }
 
     // The window is a FIXED size (the expanded footprint), anchored flush at the
