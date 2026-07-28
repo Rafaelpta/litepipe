@@ -38,8 +38,18 @@ final class OnboardingModel: ObservableObject {
         }
 
         if defaults.bool(forKey: kComplete) {
-            phase = .done
-            return
+            if Permissions.allRequiredGranted() {
+                phase = .done
+                return
+            }
+            // Completed before, but a required grant was revoked or reset since.
+            // Drop the flag and redo only what's missing: optional permissions the
+            // user never granted are auto-skipped so they aren't asked again.
+            defaults.set(false, forKey: kComplete)
+            for p in steps where p.skippable && !(granted[p] ?? false) {
+                skipped.insert(p)
+            }
+            defaults.set(Array(skipped.map(\.rawValue)), forKey: kSkipped)
         }
 
         let anyGranted = steps.contains { (granted[$0] ?? false) }

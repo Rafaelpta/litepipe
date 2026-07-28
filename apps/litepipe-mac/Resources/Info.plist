@@ -19,7 +19,9 @@
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
-    <true/>
+    <false/>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>NSScreenCaptureUsageDescription</key>
     <string>litepipe records your screen locally so you can rewind your day.</string>
     <key>NSMicrophoneUsageDescription</key>

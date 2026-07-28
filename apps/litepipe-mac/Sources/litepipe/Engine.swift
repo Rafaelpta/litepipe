@@ -22,6 +22,9 @@ final class EngineController: ObservableObject {
     private var healthTimer: Timer?
     private var procSource: DispatchSourceProcess?
     private var intentionalStop = false
+    private var restartAttempts = 0
+    private var restartWork: DispatchWorkItem?
+    private let maxRestartAttempts = 5
     private var hotkeyMonitor: Any?
     private var chordActive = false
     private let port = 3030
@@ -41,7 +44,14 @@ final class EngineController: ObservableObject {
     // MARK: - Lifecycle
 
     func start() {
+        restartWork?.cancel(); restartWork = nil
         guard pid == nil else { return }
+        // The engine binary asks macOS for Screen Recording on every launch; spawning
+        // it without the grant means a system dialog per spawn. Refuse instead.
+        guard Permissions.isGranted(.screen) else {
+            status = .error("screen recording permission required")
+            return
+        }
         guard let bin = enginePath else { status = .error("engine not found"); return }
         intentionalStop = false
         try? FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
@@ -98,6 +108,7 @@ final class EngineController: ObservableObject {
 
     func stop(markPaused: Bool = false) {
         intentionalStop = true
+        restartWork?.cancel(); restartWork = nil
         procSource?.cancel(); procSource = nil
         healthTimer?.invalidate(); healthTimer = nil
         if let p = pid { kill(p, SIGTERM) }
@@ -116,8 +127,20 @@ final class EngineController: ObservableObject {
             self.pid = nil
             self.healthTimer?.invalidate(); self.healthTimer = nil
             if !self.intentionalStop {
+                guard Permissions.isGranted(.screen) else {
+                    self.status = .error("screen recording permission missing")
+                    return
+                }
+                self.restartAttempts += 1
+                guard self.restartAttempts <= self.maxRestartAttempts else {
+                    self.status = .error("engine keeps exiting")
+                    return
+                }
                 self.status = .starting
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.start() }
+                let delay = min(pow(2.0, Double(self.restartAttempts - 1)), 30)
+                let work = DispatchWorkItem { [weak self] in self?.start() }
+                self.restartWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
             }
         }
         src.resume()
@@ -126,8 +149,12 @@ final class EngineController: ObservableObject {
 
     func togglePause() {
         switch status {
-        case .recording, .starting: stop(markPaused: true); playCue(paused: true)
-        case .paused, .stopped, .error: start(); playCue(paused: false)
+        case .recording, .starting:
+            stop(markPaused: true); playCue(paused: true)
+        case .paused, .stopped, .error:
+            start()
+            if case .error = status { return } // start refused (no permission): no cue
+            playCue(paused: false)
         }
     }
 
@@ -214,6 +241,7 @@ final class EngineController: ObservableObject {
                     self.status = .error("engine unhealthy")
                 } else if frame.contains("ok") || s.contains("healthy") || s.contains("ok") {
                     if self.status != .paused { self.status = .recording }
+                    self.restartAttempts = 0 // healthy run resets the respawn budget
                 }
             }
         }.resume()

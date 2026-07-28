@@ -13,10 +13,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var companion = NotchCompanionController(engine: engine)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory) // no Dock icon; lives in the notch
+        NSApp.setActivationPolicy(.regular) // Dock icon so the app is visible and quittable
 
-        // If onboarding is already complete, start the engine and show the companion.
-        if UserDefaults.standard.bool(forKey: "onboarding.complete.v1") {
+        // Never trust the sticky "complete" flag alone: permissions can be revoked
+        // or reset after onboarding finished. Capture only runs with live grants.
+        if UserDefaults.standard.bool(forKey: "onboarding.complete.v1"),
+           Permissions.allRequiredGranted() {
             engine.start()
             companion.show()
         } else {
@@ -45,6 +47,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // Without this the posix_spawned engine child outlives the app (holding port
+    // 3030 and re-prompting for permissions on the next launch).
+    func applicationWillTerminate(_ notification: Notification) {
+        engine.stop()
+    }
+
+    // Dock click: re-front whichever panel is active (a .regular app with no
+    // standard windows would otherwise do nothing visible).
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if let panel {
+            panel.orderFrontRegardless()
+        } else {
+            companion.show()
+        }
+        return false
+    }
+
     private func showOnboarding() {
         let width = DS.Dim.panelWidth
         let height: CGFloat = 640
@@ -69,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.contentView = hosting
 
         // Pin the top edge flush with the physical top, centered under the notch.
-        if let screen = NSScreen.screens.first {
+        if let screen = litepipeNotchScreen() {
             let f = screen.frame // full frame includes the menu-bar / notch strip
             let x = f.origin.x + (f.width - width) / 2
             let topY = f.origin.y + f.height

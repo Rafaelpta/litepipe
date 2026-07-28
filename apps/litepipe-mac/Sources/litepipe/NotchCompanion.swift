@@ -40,6 +40,9 @@ final class NotchCompanionController {
     private let expH: CGFloat = 250
 
     func show() {
+        // Defense-in-depth: the capture UI (and its Pause/Resume) must never appear
+        // while a required permission is missing — onboarding owns that state.
+        guard Permissions.allRequiredGranted() else { return }
         if let panel { panel.orderFrontRegardless(); return }
 
         let container = NSView()

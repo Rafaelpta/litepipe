@@ -54,6 +54,13 @@ enum Permission: String, CaseIterable {
 }
 
 enum Permissions {
+    // The permissions the app cannot function without (non-skippable ones).
+    static var required: [Permission] { Permission.allCases.filter { !$0.skippable } }
+
+    // The one gate the engine, companion and launch path all consult: never run
+    // capture (or show capture UI) unless every required grant is actually live.
+    static func allRequiredGranted() -> Bool { required.allSatisfy(isGranted) }
+
     static func isGranted(_ p: Permission) -> Bool {
         switch p {
         case .screen:
