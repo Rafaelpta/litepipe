@@ -49,7 +49,7 @@ final class MeetingWatcher: ObservableObject {
 
     // MARK: - Detection (window titles)
 
-    private struct Match { let app: String; let pid: pid_t }
+    private struct Match { let app: String; let pid: pid_t; let service: String }
 
     private func findMeetingWindow() -> Match? {
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
@@ -63,19 +63,19 @@ final class MeetingWatcher: ObservableObject {
 
             // Google Meet in any browser: the tab window is titled "Meet – xyz".
             if t.hasPrefix("meet – ") || t.hasPrefix("meet - ") || t.hasPrefix("meet —") {
-                return Match(app: owner, pid: pid)
+                return Match(app: owner, pid: pid, service: "meet")
             }
             if t.contains("zoom meeting") || t.contains("zoom webinar") {
-                return Match(app: owner, pid: pid)
+                return Match(app: owner, pid: pid, service: "zoom")
             }
             if o.contains("zoom.us"), t.contains("meeting") {
-                return Match(app: owner, pid: pid)
+                return Match(app: owner, pid: pid, service: "zoom")
             }
             if o.contains("microsoft teams"), t.contains("meeting") || t.contains("call") {
-                return Match(app: owner, pid: pid)
+                return Match(app: owner, pid: pid, service: "teams")
             }
             if o == "facetime", !t.isEmpty {
-                return Match(app: owner, pid: pid)
+                return Match(app: owner, pid: pid, service: "facetime")
             }
         }
         return nil
@@ -88,7 +88,12 @@ final class MeetingWatcher: ObservableObject {
             negativeStreak = 0
             if positiveStreak >= 2, !suspected, !transcribing, !dismissedUntilClear {
                 suspectedAppName = match.app
-                suspectedAppIcon = NSRunningApplication(processIdentifier: match.pid)?.icon
+                // The banner shows the meeting SERVICE's logo (Meet/Zoom/Teams),
+                // not the browser's; the app icon is the fallback.
+                let bundled = Bundle.main.url(forResource: match.service, withExtension: "png",
+                                              subdirectory: "servicelogos")
+                    .flatMap { NSImage(contentsOf: $0) }
+                suspectedAppIcon = bundled ?? NSRunningApplication(processIdentifier: match.pid)?.icon
                 suspected = true
             }
         } else {
