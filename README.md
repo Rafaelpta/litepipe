@@ -111,9 +111,5 @@ signed build and is not published yet.
 
 ## Provenance and license
 
-litepipe is an independent fork of [Screenpipe](https://github.com/mediar-ai/screenpipe),
-taken from its last release under the MIT license, and it stays MIT. Internal
-crate names, the `screenpipe://` URL scheme, and the `~/.screenpipe` data
-directory keep their original names so the lineage stays honest. See
-[NOTICE](NOTICE) for attribution and [LICENSE.md](LICENSE.md) for terms. litepipe
-is not affiliated with or endorsed by Screenpipe or Mediar, Inc.
+litepipe incorporates open source code from Screenpipe, used under the MIT
+license and preserved in [NOTICE](NOTICE) and [LICENSE.md](LICENSE.md).
