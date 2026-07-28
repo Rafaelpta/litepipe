@@ -117,8 +117,11 @@ final class EngineController: ObservableObject {
         // first use; transcription is silent until the download finishes).
         let sttEngine = UserDefaults.standard.string(forKey: "transcription.engine")
             ?? "whisper-large-v3-turbo-quantized"
+        // VoiceProcessingIO on the mic: automatic gain + echo cancellation (what
+        // Zoom/Meet use). Without it the MacBook mic records so quietly that the
+        // engine's silence gates discard real speech before transcription.
         var args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path,
-                    "-a", sttEngine]
+                    "-a", sttEngine, "--macos-input-vpio-enabled"]
         if !audioOn { args.append("--disable-audio") }
 
         var attr: posix_spawnattr_t?

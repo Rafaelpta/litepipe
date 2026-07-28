@@ -24,6 +24,7 @@ final class MeetingWatcher: ObservableObject {
     private var dismissedUntilClear = false
     private var meetingId: Int?
     private var cleanupTimer: Timer?
+    private var lastTitleDiag = Date.distantPast
     private let dataDir = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".litepipe", isDirectory: true)
 
@@ -65,10 +66,12 @@ final class MeetingWatcher: ObservableObject {
             if t.hasPrefix("meet – ") || t.hasPrefix("meet - ") || t.hasPrefix("meet —") {
                 return Match(app: owner, pid: pid, service: "meet")
             }
-            if t.contains("zoom meeting") || t.contains("zoom webinar") {
+            // Zoom web client titles vary (topic, "Zoom", "Meeting - Zoom");
+            // be generous — the banner's No button makes false positives cheap.
+            if t.contains("zoom") {
                 return Match(app: owner, pid: pid, service: "zoom")
             }
-            if o.contains("zoom.us"), t.contains("meeting") {
+            if o.contains("zoom.us"), !t.isEmpty {
                 return Match(app: owner, pid: pid, service: "zoom")
             }
             if o.contains("microsoft teams"), t.contains("meeting") || t.contains("call") {
@@ -76,6 +79,20 @@ final class MeetingWatcher: ObservableObject {
             }
             if o == "facetime", !t.isEmpty {
                 return Match(app: owner, pid: pid, service: "facetime")
+            }
+        }
+        // No match: leave a breadcrumb of what the browser windows were called,
+        // so a missed meeting explains itself (rate limited to every 5 min).
+        if Date().timeIntervalSince(lastTitleDiag) > 300 {
+            lastTitleDiag = Date()
+            let titles = list.compactMap { w -> String? in
+                guard let o = (w[kCGWindowOwnerName as String] as? String)?.lowercased(),
+                      o.contains("chrome") || o.contains("safari") || o.contains("arc") || o.contains("edge"),
+                      let t = w[kCGWindowName as String] as? String, !t.isEmpty else { return nil }
+                return t
+            }
+            if !titles.isEmpty {
+                litepipeLog("meeting scan: no match; browser titles=\(titles.prefix(4))")
             }
         }
         return nil
