@@ -86,6 +86,21 @@ cd litepipe/apps/litepipe-mac
 The capture engine ships prebuilt inside the app bundle; rebuilding it needs
 Rust and CMake, see the engine crate under `crates/`.
 
+### Headless
+
+If you only want the memory and none of the interface, run the engine on its
+own, with no app installed:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/swift/headless.sh | bash
+```
+
+It captures into `~/.litepipe` and serves the local API, and stops with control
+C. You give up what the app adds: the meeting banner, the microphone gate, the
+privacy settings, and the pause shortcut. macOS also attributes the permissions
+to your terminal rather than to litepipe, so it is the developer path, not the
+one to hand to someone else.
+
 ## How it works
 
 The engine reads the text of whatever you are working on through the
