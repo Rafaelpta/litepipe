@@ -24,7 +24,7 @@ It remembers your work. It stays on your Mac. It feeds your AI.
      Caption: litepipe asks before it records. One click, and the meeting becomes
      a transcript on your disk. -->
 
-> All work and no play makes Jack a dull boy.
+All work and no play makes Jack a dull boy.
 
 It's insane that you work all day and your agents still start from scratch.
 
