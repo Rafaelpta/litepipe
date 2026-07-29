@@ -91,15 +91,15 @@ Capture is not all or nothing. What ships today:
 
 | Control | What it does |
 |---------|--------------|
-| Private browsing | Incognito and private windows are skipped automatically, in every major browser, in more than 20 languages; nothing to configure |
+| Private browsing | Private windows in Safari, Chrome, Edge, Brave, Arc, and Firefox are excluded from capture, in the languages those browsers ship, with nothing to configure |
 | Password managers | 1Password, Bitwarden, LastPass, Dashlane, KeePassXC, and Keychain Access are never captured, by default |
-| Excluded apps and sites | Any app window or domain can be put on an ignore list; an excluded window never enters the capture buffer |
+| Excluded apps and sites | Settings, Privacy takes a list of apps and domains to skip; an excluded window never enters the capture buffer, so no frame, no text, and no screenshot of it exists |
 | Pause | One shortcut stops all capture; the notch shows the state |
 | Schedule | Capture can be limited to the hours you choose |
 | DRM content | Netflix and other DRM protected video pause capture automatically |
 | Delete a time range | One call to the local API removes the frames, audio, text, and files of any period |
 | Vault | A password lock encrypts the database and media with a key derived from your password (Argon2id, ChaCha20); the key never leaves your machine |
-| Secret redaction | 46 secret patterns plus a local model on the Apple Neural Engine detect keys, cards, and passwords; text becomes labels, image regions are painted solid black, the original is overwritten. Off by default; app setting coming |
+| Secret redaction | On by default. 46 patterns plus a local model on the Apple Neural Engine detect keys, cards, and passwords; in text the secret becomes a label, in screenshots the region is painted solid black, and the original is overwritten. Switch it off in Settings, Privacy |
 
 ## How litepipe compares
 
@@ -163,6 +163,8 @@ something, with all data on your machine.
 | Meeting end | Automatic about 30 seconds after the meeting windows disappear; stop button; shortcut |
 | Transcription | Whisper large v3 turbo, quantized, Metal; audio normalized to -16 LUFS; full meeting context; transcript about 11 minutes after the call ends |
 | Speaker separation | pyannote segmentation and voice embeddings |
+| Secret redaction | On by default; 46 deterministic patterns plus ONNX models on the Apple Neural Engine (text and image); labels in text, solid black boxes in screenshots, source overwritten |
+| Capture exclusions | Private browser windows, password managers, and the app and domain lists from Settings; excluded windows never reach the capture buffer |
 | Storage | SQLite with FTS5 at `~/.litepipe/db.sqlite`; media in `~/.litepipe/data` |
 | Retention | Voice audio deleted after transcription, within the hour; system audio 7 days; frames 30 days; text and index kept |
 | Local API | REST on 127.0.0.1:3030 with a per install key; the same API the app uses |
@@ -178,8 +180,9 @@ something, with all data on your machine.
 <details>
 <summary>Does any audio or screen data leave my machine?</summary>
 
-No. The engine downloads its speech models once on first run (Whisper from
-Hugging Face, a voice activity model from GitHub). After that, the only network
+No. The engine downloads its models once on first run: Whisper and a voice
+activity model for transcription, and two redaction models (54 MB for images,
+278 MB for text) while secret redaction is on. After that, the only network
 socket in the product is the app talking to its own engine on 127.0.0.1. There
 is no telemetry, no crash reporting, and no updater.
 </details>
@@ -219,10 +222,10 @@ at the folder and query it.
 <details>
 <summary>How do I keep something out of the memory?</summary>
 
-Four ways. A private browser window is skipped automatically. Any app or domain
-can be put on the ignore list. The shortcut pauses all capture instantly. And if
-something was captured anyway, one call to the local API deletes everything in a
-time range, files included.
+Four ways. A private browser window is skipped automatically, in every browser.
+Any app or domain can be added to the ignore list in Settings, Privacy. The
+shortcut pauses all capture instantly. And if something was captured anyway, one
+call to the local API deletes everything in a time range, files included.
 </details>
 
 <details>
