@@ -34,17 +34,16 @@ All data stays on your machine, in a local folder.
 
 ## Features
 
-* **Meetings become transcripts.** A banner asks when a Zoom, Google Meet, or
-  Teams call appears; one click and the transcript lands on your disk after the
-  call
-* **The microphone opens only in meetings you accepted.** Voice audio is deleted
-  after transcription; the text stays
-* **Every app on screen is captured.** Browsers, chat clients, terminals; text
-  comes from the accessibility tree, OCR covers the rest
-* **Everything is processed on your Mac.** Whisper transcribes, pyannote
-  separates speakers; no network in the path
-* **One folder holds it all.** SQLite with full text search; point your AI agent
-  at it and ask
+* **Meetings become transcripts.** litepipe spots the call window and asks. One
+  click, and the transcript is on your disk when the call ends.
+* **The microphone opens only for meetings you accept.** The recording is
+  deleted once it has become text.
+* **Everything on screen is captured.** Text comes from the accessibility tree,
+  the layer assistive technology reads, with OCR for what the tree cannot see.
+* **Nothing leaves the Mac.** Whisper and pyannote run on device, and the only
+  socket is the app talking to its own engine.
+* **One folder holds it all.** SQLite with full text search, so your agent reads
+  it directly.
 
 ## Install
 
@@ -86,40 +85,56 @@ missed.
 
 Capture is not all or nothing. What ships today:
 
-| Control | What it does |
-|---------|--------------|
-| Private browsing | Private windows in Safari, Chrome, Edge, Brave, Arc, and Firefox are excluded from capture, in the languages those browsers ship, with nothing to configure |
-| Password managers | 1Password, Bitwarden, LastPass, Dashlane, KeePassXC, and Keychain Access are never captured, by default |
-| Excluded apps and sites | Settings, Privacy takes a list of apps and domains to skip; an excluded window never enters the capture buffer, so no frame, no text, and no screenshot of it exists |
-| Pause | One shortcut stops all capture; the notch shows the state |
-| Schedule | Capture can be limited to the hours you choose |
-| DRM content | Netflix and other DRM protected video pause capture automatically |
-| Delete a time range | One call to the local API removes the frames, audio, text, and files of any period |
-| Vault | A password lock encrypts the database and media with a key derived from your password (Argon2id, ChaCha20); the key never leaves your machine |
-| Secret redaction | On by default. 46 patterns plus a local model on the Apple Neural Engine detect keys, cards, and passwords; in text the secret becomes a label, in screenshots the region is painted solid black, and the original is overwritten. Switch it off in Settings, Privacy |
-
-## How litepipe compares
-
-**Against meeting note takers.** Cloud note takers join the call as a bot or
-upload the audio to transcribe it. litepipe captures on the machine, transcribes
-on the machine, and deletes the voice audio after the transcript is written.
-There is no bot in the call and no upload.
-
-**Against always on recorders.** Desktop recorders keep the microphone open from
-boot. litepipe records the screen continuously but opens the microphone only
-when you accept a meeting, and closes it when the meeting ends.
+* **Private windows are never captured.** Safari, Chrome, Edge, Brave, Arc, and
+  Firefox, with nothing to configure.
+* **Password managers are never captured.** 1Password, Bitwarden, LastPass,
+  Dashlane, KeePassXC, and Keychain Access.
+* **Any app or site can be excluded.** Settings, Privacy takes the list, and an
+  excluded window never reaches the capture buffer, so no frame and no text of
+  it exists.
+* **Capture stops when you want.** One shortcut pauses everything, hours can be
+  restricted to a schedule, and DRM video pauses it on its own.
+* **Secrets are redacted.** On by default: keys, cards, and passwords become
+  labels in text and black boxes in screenshots, and the original is
+  overwritten.
+* **What was captured can be deleted.** One call to the local API removes the
+  frames, audio, text, and files of a time range.
+* **The whole memory can be locked.** The vault encrypts database and media with
+  a key derived from your password, held only on your machine.
 
 ## Architecture
 
 | Component | Stack | Role |
 |-----------|-------|------|
 | litepipe.app | Swift, AppKit, SwiftUI | Notch companion, meeting detection and consent, mic gate, timeline, settings |
-| engine | Rust | Screen and audio capture, VAD, transcription, diarization, SQLite, local HTTP API |
+| engine | Rust | Screen and audio capture, VAD, transcription, diarization, redaction, SQLite, local HTTP API |
 
 The app spawns the engine as a child process and stays the TCC responsible
 process, so one set of permissions covers both. Control flows over a loopback
 HTTP API authenticated with a per install key. Data lives in `~/.litepipe`: a
 SQLite database, media files, and logs you can open, back up, or delete.
+
+```mermaid
+flowchart TD
+    EV["macOS events<br/>app switch, click, scroll stop, typing pause"]
+    CALL["Call window on screen"] --> ASK{"litepipe asks<br/>transcribe this meeting?"}
+    ASK -->|"declined"| CLOSED["Microphone stays closed"]
+
+    subgraph ENGINE["engine, Rust"]
+        CAP["Screenshot paired with the accessibility tree<br/>OCR fills what the tree cannot read"]
+        MIC["Microphone, this meeting only"] --> STT
+        SYS["System audio"] --> STT["Whisper transcription<br/>pyannote speaker separation"]
+        STT -.->|"once the transcript is written"| DEL["Voice audio deleted"]
+        CAP --> RED
+        STT --> RED["Redaction workers<br/>labels in text, black boxes in frames"]
+        RED --> STORE[("SQLite and media<br/>in ~/.litepipe")]
+    end
+
+    EV --> CAP
+    ASK -->|"accepted"| MIC
+    STORE --> API["Local API<br/>127.0.0.1:3030<br/>the app reads it too"]
+    STORE --> AGENT["Your AI agent<br/>reads the folder"]
+```
 
 ## The fork, in specs
 
