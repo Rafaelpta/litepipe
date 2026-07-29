@@ -126,14 +126,17 @@ SQLite database, media files, and logs you can open, back up, or delete.
 
 ## The fork, in specs
 
-litepipe exists to keep the capture engine Screenpipe built and published under
-MIT in the open and evolving. Pipes, accounts, telemetry, and cloud sync are not
-here. All the work goes into less weight, less latency, and more guardrails on
-what the engine captures.
+Screenpipe built the hard part: a full day of screen and audio turned into
+searchable text on a laptop, with the accessibility tree doing the heavy
+lifting, published under MIT.
+
+litepipe exists to keep that engine in the open and evolving. Pipes, accounts,
+telemetry, and cloud sync are not here. All the work goes into less weight, less
+latency, and more guardrails on what the engine captures.
 
 | Kept (the core) | Removed (the platform) |
 |-----------------|------------------------|
-| Accessibility tree text extraction, OCR fallback, ScreenCaptureKit capture | Accounts, subscriptions, paywalls |
+| Accessibility tree text extraction, OCR fallback, ScreenCaptureKit capture | Accounts and subscriptions |
 | Local transcription: VAD, Whisper, Parakeet, speaker embeddings | Telemetry, crash reporting, auto update |
 | SQLite storage, FTS5 search, local HTTP API | Cloud sync, hosted AI models, provider presets |
 | Meeting detection and the retranscription pass | The pipe store and its schedulers |
