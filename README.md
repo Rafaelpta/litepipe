@@ -235,72 +235,40 @@ flowchart LR
 
 ## FAQ
 
-<details>
-<summary>Does any audio or screen data leave my machine?</summary>
+**Does any audio or screen data leave my machine?** No. On first run the engine
+downloads its models, Whisper and a voice activity model, plus two redaction
+models while secret redaction is on. After that the only network socket is the
+app talking to its own engine on 127.0.0.1. No telemetry, no crash reporting, no
+updater.
 
-No. The engine downloads its models once on first run: Whisper and a voice
-activity model for transcription, and two redaction models (54 MB for images,
-278 MB for text) while secret redaction is on. After that, the only network
-socket in the product is the app talking to its own engine on 127.0.0.1. There
-is no telemetry, no crash reporting, and no updater.
-</details>
+**What happens to the recording of my voice?** Deleted on the next cleanup pass,
+within the hour, and the transcript stays. A voice recording is the most
+sensitive file on the disk, minutes of it are enough to clone a voice, and the
+largest: an hour of meetings is about 25 MB of audio against 50 KB of text.
 
-<details>
-<summary>What happens to the recording of my voice?</summary>
+**Which meeting apps are detected?** Zoom, Google Meet, and Microsoft Teams,
+native and web, plus FaceTime. Detection reads window titles and the browser
+URLs already in captured frames.
 
-It is deleted after transcription, on the next cleanup pass, within the hour.
-The transcript is kept. A voice recording is the most sensitive file on the disk
-(minutes of audio are enough to clone a voice) and also the largest: an hour of
-meetings is about 25 MB of audio and about 50 KB of transcript. The transcript
-keeps the content; deleting the recording removes the risk and the bulk.
-</details>
+**How do I keep something out of the memory?** Four ways. Private browser
+windows are skipped on their own. Any app or site goes on the ignore list in
+Settings, Privacy. The shortcut pauses everything instantly. And what was
+captured anyway can be deleted by period in Settings, Data.
 
-<details>
-<summary>Which meeting apps are detected?</summary>
+**Is the data encrypted?** FileVault covers the disk, which macOS enables by
+default. On top of that the vault locks the database and media behind a key
+derived from your password, held only on your machine. Transparent encryption
+during capture is on the roadmap.
 
-Zoom, Google Meet, and Microsoft Teams, both native apps and web clients, plus
-FaceTime. Detection uses window titles and the browser URLs present in captured
-frames.
-</details>
+**How much disk does it use?** System audio is kept 7 days and screen frames 30
+days, both reclaimed automatically. Text and the search index stay, and they are
+small. Settings, Data shows the current size.
 
-<details>
-<summary>How much disk does it use?</summary>
+**Can my AI agent read the data?** Yes, that is the point. Plain SQLite and
+media files in `~/.litepipe`. Point an agent at the folder and query it.
 
-System audio is kept 7 days and screen frames 30 days, both reclaimed
-automatically. Text and the search index are kept and are small.
-</details>
-
-<details>
-<summary>Can my AI agent read the data?</summary>
-
-Yes. Everything is plain SQLite and media files in `~/.litepipe`. Point an agent
-at the folder and query it.
-</details>
-
-<details>
-<summary>How do I keep something out of the memory?</summary>
-
-Four ways. A private browser window is skipped automatically, in every browser.
-Any app or domain can be added to the ignore list in Settings, Privacy. The
-shortcut pauses all capture instantly. And if something was captured anyway, one
-call to the local API deletes everything in a time range, files included.
-</details>
-
-<details>
-<summary>Is the data encrypted?</summary>
-
-The disk is covered by FileVault, which macOS enables by default. On top of
-that, litepipe ships a vault: a password lock that encrypts the database and all
-media with a key derived from your password, held only on your machine. The
-vault locks data at rest; transparent encryption during capture is on the
-roadmap.
-</details>
-
-<details>
-<summary>How do I delete everything?</summary>
-
-Quit the app and delete `~/.litepipe`.
-</details>
+**How do I delete everything?** Settings, Data, delete all context. Or quit the
+app and remove `~/.litepipe`.
 
 ## Status
 
