@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/litepipe-icon.png" width="72" alt="litepipe" />
+<img src="docs/assets/litepipe-icon.png" width="150" alt="litepipe" />
 
 # litepipe
 
