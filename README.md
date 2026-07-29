@@ -109,15 +109,78 @@ Capture is not all or nothing. What ships today:
 
 ## Architecture
 
+Two processes and one folder. Everything below is verifiable from a shell on
+your own machine.
+
+```mermaid
+flowchart LR
+    subgraph MAC["your Mac, no other host involved"]
+        APP["litepipe.app<br/>Swift, TCC responsible process"]
+        ENG["engine<br/>Rust child process"]
+        DIR[("~/.litepipe<br/>db.sqlite, media, logs")]
+        AGT["your AI agent"]
+    end
+    APP -->|"posix_spawn"| ENG
+    APP <-->|"HTTP 127.0.0.1:3030, bearer key"| ENG
+    ENG -->|"writes"| DIR
+    APP -->|"reads, SQLite"| DIR
+    AGT -->|"reads"| DIR
+```
+
 | Component | Stack | Role |
 |-----------|-------|------|
 | litepipe.app | Swift, AppKit, SwiftUI | Notch companion, meeting detection and consent, mic gate, timeline, settings |
 | engine | Rust | Screen and audio capture, VAD, transcription, diarization, redaction, SQLite, local HTTP API |
 
-The app spawns the engine as a child process and stays the TCC responsible
-process, so one set of permissions covers both. Control flows over a loopback
-HTTP API authenticated with a per install key. Data lives in `~/.litepipe`: a
-SQLite database, media files, and logs you can open, back up, or delete.
+### Processes and permissions
+
+The app spawns the engine with `posix_spawn` and disclaims responsibility
+transfer, so it stays the TCC responsible process: the permission prompts and
+grants belong to litepipe.app, and one set covers both processes. Kill the app
+and the engine goes with it.
+
+macOS permissions used: Screen Recording (capture), Accessibility (screen text
+and UI events), Microphone (only while a meeting you accepted is running).
+
+### What is written to disk
+
+| Path | Contents |
+|------|----------|
+| `~/.litepipe/db.sqlite` | `frames`, `ocr_text`, `elements`, `ui_events`, `audio_chunks`, `audio_transcriptions`, `speakers`, `meetings`, `tags`, plus FTS5 indexes |
+| `~/.litepipe/data/<date>/` | JPEG frames, compacted `.mp4` per monitor, audio chunks per device |
+| `~/.litepipe/app.log` | App and engine lifecycle: spawn, exit, pause, meeting start and stop |
+| `~/.litepipe/engine-app.log` | Engine stdout and stderr |
+
+Nothing is encrypted at rest by default; FileVault covers the disk, and the
+vault (`/vault/*`) locks the database and media behind a password when you turn
+it on. Delete everything by quitting the app and removing `~/.litepipe`.
+
+### Network
+
+One listening socket: the engine on `127.0.0.1:3030`, writes authenticated with
+a key generated at install time. The app is the only client; it calls
+`meetings/start`, `meetings/stop`, `meetings/status`, `audio/start`,
+`audio/stop`, and `health`, and reads history straight from SQLite. Confirm with
+`lsof -nP -iTCP -sTCP:LISTEN | grep screenpipe` or a network monitor.
+
+Models are downloaded once on first run and then cached: Whisper and a voice
+activity model for transcription, and, while secret redaction is on, an image
+redactor (52 MB, `~/.screenpipe/models/rfdetr_v12.onnx`) and a text redactor
+(159 MB, `~/.screenpipe/models/v45_phase5_pruned/`).
+
+### Source map
+
+| What you want to audit | Where it lives |
+|------------------------|----------------|
+| Engine spawn, flags, restart, mic gate | `apps/litepipe-mac/Sources/litepipe/Engine.swift` |
+| Meeting detection, consent, cleanup | `apps/litepipe-mac/Sources/litepipe/MeetingWatcher.swift`, `MeetingPrompt.swift` |
+| Privacy settings and exclusion lists | `apps/litepipe-mac/Sources/litepipe/Settings.swift` |
+| Screen capture and window filtering | `crates/screenpipe-screen/`, `crates/screenpipe-capture/` |
+| Accessibility text and private window detection | `crates/screenpipe-a11y/` |
+| Audio, VAD, transcription | `crates/screenpipe-audio/` |
+| Secret redaction, text and image | `crates/screenpipe-redact/` |
+| Storage, schema, retention | `crates/screenpipe-db/`, `crates/screenpipe-engine/src/retention.rs` |
+| HTTP API and routes | `crates/screenpipe-engine/src/server.rs`, `src/routes/` |
 
 ```mermaid
 flowchart LR
