@@ -64,7 +64,7 @@ function trackInstall() {
     }
 
     const payload = JSON.stringify({
-      api_key: "phc_z7FZXE8vmXtdTQ78LMy3j1BQWW4zP6PGDUP46rgcdnb",
+      api_key: "", // upstream analytics key removed
       event: "cli_install_npm",
       properties,
     });

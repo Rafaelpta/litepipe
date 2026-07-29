@@ -332,7 +332,8 @@ impl ResourceMonitor {
         TelemetryContext::from_env().insert_posthog_properties(&mut properties);
 
         let payload = json!({
-            "api_key": "phc_z7FZXE8vmXtdTQ78LMy3j1BQWW4zP6PGDUP46rgcdnb",
+            // upstream analytics key removed, see analytics.rs
+            "api_key": "",
             "event": "resource_usage",
             "properties": properties,
         });

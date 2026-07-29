@@ -108,6 +108,11 @@ final class EngineController: ObservableObject {
         pathParts += ["/opt/homebrew/bin", "/usr/local/bin", env["PATH"] ?? "/usr/bin:/bin"]
         env["PATH"] = pathParts.joined(separator: ":")
         env["SCREENPIPE_API_KEY"] = apiKey // lets the app drive the control endpoints
+        // The engine inherits an update check that hits registry.npmjs.org at
+        // startup and every few minutes. It is not covered by --disable-telemetry,
+        // and litepipe promises loopback only, so both nudges are opted out here.
+        env["SCREENPIPE_NO_UPDATE_CHECK"] = "1"
+        env["SCREENPIPE_NO_REMINDERS"] = "1"
         // Beta diagnosability: the meeting detector only tells its story at debug level.
         env["SCREENPIPE_LOG"] = "screenpipe_engine::meeting_detector=debug"
         let envArr = env.map { "\($0.key)=\($0.value)" }

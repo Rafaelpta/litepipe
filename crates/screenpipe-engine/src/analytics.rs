@@ -11,7 +11,9 @@ use sysinfo::{System, SystemExt};
 #[cfg(target_os = "macos")]
 use tracing::warn;
 
-const POSTHOG_API_KEY: &str = "phc_z7FZXE8vmXtdTQ78LMy3j1BQWW4zP6PGDUP46rgcdnb";
+// litepipe ships no analytics project of its own; the upstream key was
+// removed rather than inherited. An empty key means nothing is accepted.
+const POSTHOG_API_KEY: &str = "";
 const POSTHOG_HOST: &str = "https://us.i.posthog.com";
 
 static TELEMETRY_ENABLED: AtomicBool = AtomicBool::new(false);

@@ -12,9 +12,9 @@ resolver = "2"
 
 [workspace.package]
 version = "0.4.15"
-authors = ["louis030195 <hi@louis030195.com>"]
-description = ""
-repository = "https://github.com/screenpipe/screenpipe"
+authors = ["Rafaelpta"]
+description = "Open source local memory"
+repository = "https://github.com/Rafaelpta/litepipe"
 license = "MIT OR Apache-2.0"
 edition = "2021"
 

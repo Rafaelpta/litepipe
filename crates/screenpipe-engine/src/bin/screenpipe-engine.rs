@@ -475,7 +475,9 @@ async fn main() -> anyhow::Result<()> {
             sentry_release_name_append
         );
         let guard = sentry::init((
-            "https://123656092b01a72b0417355ebbfb471f@o4505591122886656.ingest.us.sentry.io/4510761360949248",
+            // upstream crash reporting endpoint removed; an empty DSN makes
+            // sentry::init return a disabled client
+            "",
             sentry::ClientOptions {
                 release: Some(release_name.into()),
                 sample_rate: 0.1,
