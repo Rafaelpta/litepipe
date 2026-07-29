@@ -274,5 +274,7 @@ local, keep it stripped to the basics, and make the capture engine better.
 
 ## License
 
-litepipe incorporates open source code from Screenpipe, used under the MIT
-license and preserved in [NOTICE](NOTICE) and [LICENSE.md](LICENSE.md).
+litepipe is MIT. It adapts open source code from Screenpipe and Clicky, both
+MIT, and bundles FFmpeg. The notices are in [LICENSE.md](LICENSE.md),
+[NOTICE](NOTICE), and
+[THIRD_PARTY_NOTICES.md](apps/litepipe-mac/THIRD_PARTY_NOTICES.md).
