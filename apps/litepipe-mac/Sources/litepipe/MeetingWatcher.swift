@@ -185,6 +185,7 @@ final class MeetingWatcher: ObservableObject {
     func startTranscribing() {
         guard !transcribing else { return }
         transcribing = true
+        negativeStreak = 0 // a fresh meeting starts with a fresh absence counter
         litepipeLog("meeting: start requested app=\(suspectedAppName ?? "?")")
         // A confirmed meeting outranks a paused capture: wake the engine if
         // needed, then keep knocking until its API is up (cold start takes a
@@ -247,9 +248,12 @@ final class MeetingWatcher: ObservableObject {
             let dbPath = dataDir.appendingPathComponent("db.sqlite").path
             guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else { return }
             var stmt: OpaquePointer?
+            // All statuses: chunks the engine transcribed early (before the
+            // boost) carry low quality text, and the meeting pass re reads the
+            // audio regardless of status. loudnorm is idempotent at the target.
             let sql = """
                 SELECT file_path FROM audio_chunks
-                WHERE file_path LIKE '%(input)%' AND transcription_status IN ('pending','silent')
+                WHERE file_path LIKE '%(input)%'
                   AND timestamp > datetime('now','-3 hours')
                 """
             var paths: [String] = []
