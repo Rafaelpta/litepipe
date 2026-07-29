@@ -246,6 +246,12 @@ Early beta. Native macOS on Apple Silicon. Open an issue when something breaks.
 The engine binary in the app predates that fix, so private browsing is excluded
 by window title until the next engine build.
 
+## Contributing
+
+Bug reports and fixes are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the
+scope, how to report a bug without pasting your captured data, and the rule
+about not importing Screenpipe code from after the relicense.
+
 ## License
 
 litepipe incorporates open source code from Screenpipe, used under the MIT
