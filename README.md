@@ -64,8 +64,16 @@ Bugs in the shared code go back upstream, as in
 
 ## Install
 
-litepipe ships as a signed and notarized DMG: drag to Applications, open, and
-the onboarding walks through the permissions.
+One line, no clone, no build:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/swift/install.sh | bash
+```
+
+It downloads the latest signed and notarized DMG, checks it against Gatekeeper,
+installs to `/Applications`, and opens it. The onboarding walks through the
+permissions. You can also grab the DMG from
+[releases](https://github.com/Rafaelpta/litepipe/releases) and drag it yourself.
 
 Building from source needs Xcode:
 
