@@ -33,11 +33,13 @@ to its own engine on 127.0.0.1.
 
 All data stays on your machine, in a local folder.
 
-litepipe is a fork of Screenpipe, which built the hard part: a full day of
-screen and audio turned into searchable text on a laptop, published under MIT.
-litepipe keeps that engine in the open and evolving, without the pipes,
-accounts, telemetry, and cloud sync that grew around it. Bugs in the shared code
-go back upstream, as in
+Screenpipe built good foundations for a capture engine, published under MIT.
+
+litepipe is a fork that exists to keep that core engine evolving in the open.
+The features that grew around it, pipes, accounts, telemetry, and cloud sync,
+are not here. All the work goes into more simplicity, less weight, and safer
+guardrails on what the engine captures. Bugs in the shared code go back
+upstream, as in
 [issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
 [pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532).
 
