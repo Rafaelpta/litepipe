@@ -21,9 +21,7 @@
      Caption: litepipe asks before it records. One click, and the meeting becomes
      a transcript on your disk. -->
 
-You are leaving your context on the table. The meeting you were just in, the
-page you read five minutes ago, the work you did all morning: your AI sees none
-of it.
+You work all day and your AI sees none of it.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
 computer: the videos you watch, the meetings you join, the clicks and the work
