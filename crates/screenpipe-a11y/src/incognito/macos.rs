@@ -191,10 +191,15 @@ impl IncognitoDetector for MacOSIncognitoDetector {
     fn is_incognito(&self, app_name: &str, _process_id: i32, window_title: &str) -> bool {
         // Strategy 1: AppleScript query for Chromium browsers (not Arc).
         if Self::is_chromium_browser(app_name) {
-            if let Some(is_private) = self.check_with_cache(app_name, window_title) {
-                return is_private;
+            if let Some(true) = self.check_with_cache(app_name, window_title) {
+                return true;
             }
-            // AppleScript failed — fall through to title check.
+            // A negative AppleScript answer is not final: it returns tab
+            // titles, while the AX title carries a " - App (Incognito)"
+            // suffix, so the exact-match lookup misses windows that really
+            // are private. Let the localized title check have the last word;
+            // a false positive skips one window, a false negative records a
+            // private one.
         }
 
         // Strategy 2: Localized title matching (all browsers).
