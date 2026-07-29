@@ -35,11 +35,11 @@ All data stays on your machine, in a local folder.
 
 Screenpipe built good foundations for a capture engine, published under MIT.
 
-litepipe is a fork that exists to keep that core engine evolving in the open.
-The features that grew around it, pipes, accounts, telemetry, and cloud sync,
-are not here. All the work goes into more simplicity, less weight, and safer
-guardrails on what the engine captures. Bugs in the shared code go back
-upstream, as in
+litepipe is my fork of it. I want that core to keep evolving in the open, and to
+stay simple and light, so the features that grew around the engine, pipes,
+accounts, telemetry, and cloud sync, are not here. My work goes into simplicity,
+less weight, and safer guardrails on what the engine captures. Bugs I find in
+the shared code go back upstream, as in
 [issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
 [pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532).
 
