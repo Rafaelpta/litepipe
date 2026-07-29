@@ -109,22 +109,20 @@ Capture is not all or nothing. What ships today:
 
 ## Architecture
 
-Two processes and one folder. Everything below is verifiable from a shell on
-your own machine.
+Everything runs in two processes on your machine, and what they may write is
+checked twice: once before anything is captured, and once before it settles on
+disk. Every claim below is verifiable from a shell on your own machine.
 
 ```mermaid
 flowchart LR
-    subgraph MAC["your Mac, no other host involved"]
-        APP["litepipe.app<br/>Swift, TCC responsible process"]
-        ENG["engine<br/>Rust child process"]
-        DIR[("~/.litepipe<br/>db.sqlite, media, logs")]
-        AGT["your AI agent"]
-    end
-    APP -->|"posix_spawn"| ENG
-    APP <-->|"HTTP 127.0.0.1:3030, bearer key"| ENG
-    ENG -->|"writes"| DIR
-    APP -->|"reads, SQLite"| DIR
-    AGT -->|"reads"| DIR
+    IN["Screen, screen text, system audio<br/>Microphone only in meetings you accept"] --> G1
+    G1{"Checked before capture<br/>private windows, password managers,<br/>your app and site lists, pause, schedule"}
+    G1 -->|"blocked"| NONE["Nothing is written<br/>no frame, no text"]
+    G1 -->|"allowed"| CAP["Captured and transcribed<br/>on this machine"]
+    CAP --> G2["Checked after capture<br/>secrets redacted in text and pixels<br/>voice audio deleted once transcribed"]
+    G2 --> DISK[("~/.litepipe<br/>db.sqlite, media, logs")]
+    DISK --> APP["litepipe.app"]
+    DISK --> AGT["your AI agent"]
 ```
 
 | Component | Stack | Role |
