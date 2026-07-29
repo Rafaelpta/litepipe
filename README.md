@@ -96,7 +96,12 @@ Capture is not all or nothing. What ships today:
   restricted to a schedule, and DRM video pauses it on its own.
 * **Secrets are redacted.** On by default: keys, cards, and passwords become
   labels in text and black boxes in screenshots, and the original is
-  overwritten.
+  overwritten. Under the hood: 46 deterministic patterns run first (credit
+  cards, private keys, database URLs carrying credentials, API keys for Stripe,
+  OpenAI, Anthropic, Google, GitHub and more), an ONNX model on the Apple Neural
+  Engine catches what patterns cannot, and a second model finds secrets in the
+  pixels and paints those regions solid black rather than blurred, since a blur
+  can be undone.
 * **What was captured can be deleted.** One call to the local API removes the
   frames, audio, text, and files of a time range.
 * **The whole memory can be locked.** The vault encrypts database and media with
@@ -116,24 +121,15 @@ SQLite database, media files, and logs you can open, back up, or delete.
 
 ```mermaid
 flowchart TD
-    EV["macOS events<br/>app switch, click, scroll stop, typing pause"]
-    CALL["Call window on screen"] --> ASK{"litepipe asks<br/>transcribe this meeting?"}
-    ASK -->|"declined"| CLOSED["Microphone stays closed"]
-
-    subgraph ENGINE["engine, Rust"]
-        CAP["Screenshot paired with the accessibility tree<br/>OCR fills what the tree cannot read"]
-        MIC["Microphone, this meeting only"] --> STT
-        SYS["System audio"] --> STT["Whisper transcription<br/>pyannote speaker separation"]
-        STT -.->|"once the transcript is written"| DEL["Voice audio deleted"]
-        CAP --> RED
-        STT --> RED["Redaction workers<br/>labels in text, black boxes in frames"]
-        RED --> STORE[("SQLite and media<br/>in ~/.litepipe")]
-    end
-
-    EV --> CAP
-    ASK -->|"accepted"| MIC
-    STORE --> API["Local API<br/>127.0.0.1:3030<br/>the app reads it too"]
-    STORE --> AGENT["Your AI agent<br/>reads the folder"]
+    SRC["Screen, screen text,<br/>system audio, UI events"] --> GATE
+    MIC["Microphone<br/>only meetings you accept"] --> GATE
+    GATE{"Guardrails<br/>private windows, password managers,<br/>your exclusions, pause, schedule, DRM"}
+    GATE -->|"excluded"| DROP["Never written<br/>no frame, no text"]
+    GATE -->|"allowed"| PROC["On device processing<br/>Whisper, speaker separation,<br/>secret redaction, retention"]
+    PROC --> DISK[("~/.litepipe<br/>SQLite with full text search,<br/>frames and audio, optional vault lock")]
+    DISK --> API["Local API on 127.0.0.1:3030"]
+    DISK --> AGENT["Your AI agent<br/>reads the folder"]
+    API --> APP["litepipe.app<br/>notch, timeline, settings"]
 ```
 
 ## The fork, in specs
