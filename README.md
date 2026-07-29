@@ -4,7 +4,9 @@
 
 # litepipe
 
-**The open source local memory of your work.**
+**Open source local memory.**
+
+It remembers your work. It stays on your Mac. It feeds your AI.
 
 [Features](#features) | [Install](#install) | [How it works](#how-it-works) | [Architecture](#architecture) | [FAQ](#faq)
 
