@@ -120,16 +120,15 @@ HTTP API authenticated with a per install key. Data lives in `~/.litepipe`: a
 SQLite database, media files, and logs you can open, back up, or delete.
 
 ```mermaid
-flowchart TD
+flowchart LR
     SRC["Screen, screen text,<br/>system audio, UI events"] --> GATE
-    MIC["Microphone<br/>only meetings you accept"] --> GATE
-    GATE{"Guardrails<br/>private windows, password managers,<br/>your exclusions, pause, schedule, DRM"}
-    GATE -->|"excluded"| DROP["Never written<br/>no frame, no text"]
-    GATE -->|"allowed"| PROC["On device processing<br/>Whisper, speaker separation,<br/>secret redaction, retention"]
-    PROC --> DISK[("~/.litepipe<br/>SQLite with full text search,<br/>frames and audio, optional vault lock")]
-    DISK --> API["Local API on 127.0.0.1:3030"]
-    DISK --> AGENT["Your AI agent<br/>reads the folder"]
-    API --> APP["litepipe.app<br/>notch, timeline, settings"]
+    MIC["Microphone<br/>accepted meetings only"] --> GATE
+    GATE{"Guardrails"}
+    GATE -->|"excluded"| DROP["Never written"]
+    GATE -->|"allowed"| PROC["Whisper, speakers,<br/>redaction, retention"]
+    PROC --> DISK[("~/.litepipe<br/>SQLite, frames, audio")]
+    DISK --> API["Local API<br/>127.0.0.1:3030"] --> APP["litepipe.app"]
+    DISK --> AGENT["Your AI agent"]
 ```
 
 ## The fork, in specs
