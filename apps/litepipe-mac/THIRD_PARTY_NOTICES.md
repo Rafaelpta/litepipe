@@ -55,8 +55,16 @@ SOFTWARE.
 
 ## FFmpeg
 
-This app bundles FFmpeg (ffmpeg/ffprobe) for media processing. FFmpeg is
-licensed under the LGPL v2.1+ (some builds, the GPL). See
-https://ffmpeg.org/legal.html. TODO before public release: confirm the exact
-license of the bundled build and include the corresponding license text (and,
-for LGPL, keep FFmpeg as a separable/replaceable component).
+This app bundles the `ffmpeg` and `ffprobe` binaries, used to normalize audio
+levels before transcription and to extract frames from compacted video. They run
+as separate programs, invoked over the command line; no FFmpeg code is linked
+into litepipe.
+
+The bundled build is FFmpeg 7.0, configured with `--enable-gpl`, so it is
+distributed under the GNU General Public License version 2 or later. The license
+text is in `LICENSE-ffmpeg-GPLv2.txt` next to this file. The corresponding
+source is the official FFmpeg 7.0 release, https://ffmpeg.org/download.html, and
+the exact configuration used for this build is printed by `ffmpeg -version`.
+
+Replacing these binaries with your own FFmpeg build is supported: they live in
+`litepipe.app/Contents/Resources/bin/`.
