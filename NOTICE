@@ -1,7 +1,11 @@
 litepipe
 
-This project is a fork of Screenpipe (https://github.com/mediar-ai/screenpipe),
-taken from the last commit published under the MIT license (June 2026).
+This project is a fork of Screenpipe (https://github.com/screenpipe/screenpipe),
+taken at commit 24d3c2551d9b of 2026-06-10, the last commit published under the
+MIT license. Screenpipe moved to a commercial license later that same day, in
+commit 81e412ff, and states in that license that versions previously released
+under the MIT license remain available under the MIT license. No code from that
+commit onward is used here.
 
 Original work Copyright (c) 2024-2026 louis030195 and the Screenpipe
 contributors, licensed under the MIT license. The original copyright and
