@@ -85,6 +85,22 @@ missed.
 | Transcription | Whisper large v3 turbo (quantized, Metal) retranscribes the meeting after the call on audio normalized to -16 LUFS; transcript ready about 11 minutes after the call ends |
 | Cleanup | Voice audio deleted after transcription, within the hour; system audio kept 7 days; frames 30 days; text and index kept |
 
+## Privacy controls
+
+Capture is not all or nothing. What ships today:
+
+| Control | What it does |
+|---------|--------------|
+| Private browsing | Incognito and private windows are skipped automatically, in every major browser, in more than 20 languages; nothing to configure |
+| Password managers | 1Password, Bitwarden, LastPass, Dashlane, KeePassXC, and Keychain Access are never captured, by default |
+| Excluded apps and sites | Any app window or domain can be put on an ignore list; an excluded window never enters the capture buffer |
+| Pause | One shortcut stops all capture; the notch shows the state |
+| Schedule | Capture can be limited to the hours you choose |
+| DRM content | Netflix and other DRM protected video pause capture automatically |
+| Delete a time range | One call to the local API removes the frames, audio, text, and files of any period |
+| Vault | A password lock encrypts the database and media with a key derived from your password (Argon2id, ChaCha20); the key never leaves your machine |
+| Secret redaction | 46 secret patterns plus a local model on the Apple Neural Engine detect keys, cards, and passwords; text becomes labels, image regions are painted solid black, the original is overwritten. Off by default; app setting coming |
+
 ## How litepipe compares
 
 **Against meeting note takers.** Cloud note takers join the call as a bot or
@@ -198,6 +214,25 @@ automatically. Text and the search index are kept and are small.
 
 Yes. Everything is plain SQLite and media files in `~/.litepipe`. Point an agent
 at the folder and query it.
+</details>
+
+<details>
+<summary>How do I keep something out of the memory?</summary>
+
+Four ways. A private browser window is skipped automatically. Any app or domain
+can be put on the ignore list. The shortcut pauses all capture instantly. And if
+something was captured anyway, one call to the local API deletes everything in a
+time range, files included.
+</details>
+
+<details>
+<summary>Is the data encrypted?</summary>
+
+The disk is covered by FileVault, which macOS enables by default. On top of
+that, litepipe ships a vault: a password lock that encrypts the database and all
+media with a key derived from your password, held only on your machine. The
+vault locks data at rest; transparent encryption during capture is on the
+roadmap.
 </details>
 
 <details>
