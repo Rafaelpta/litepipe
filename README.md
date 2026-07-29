@@ -26,7 +26,8 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 
 All work and no play makes Jack a dull boy.
 
-It's insane that you work all day and your agents still start from scratch.
+It's insane that you work all day and your agents still start from scratch, with
+no idea what you've been doing.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
 computer: the videos you watch, the meetings you join, the clicks and the work
