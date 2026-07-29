@@ -26,15 +26,22 @@ You work all day and your AI still has the context of almost none of it.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
 computer: the videos you watch, the meetings you join, the clicks and the work
-across your apps, in one folder on your Mac. It all stays there. The only
-network socket in litepipe is the app talking to its own engine on 127.0.0.1.
+across your apps, and stores it in one folder on your Mac.
+
+litepipe is fully local. The only network socket in litepipe is the app talking
+to its own engine on 127.0.0.1.
+
+All data stays on your machine, in a local folder.
 
 Screenpipe built good foundations for a capture engine, published under MIT.
-litepipe is my fork of it: the same core, without the pipes, accounts,
-telemetry, and cloud sync that grew around it. My work goes into simplicity,
-less weight, and safer guardrails on what gets captured, and bugs I find go back
-upstream ([issue 5531](https://github.com/screenpipe/screenpipe/issues/5531),
-[pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532)).
+
+litepipe is a fork that exists to keep that core engine evolving in the open.
+The features that grew around it, pipes, accounts, telemetry, and cloud sync,
+are not here. All the work goes into more simplicity, less weight, and safer
+guardrails on what the engine captures. Bugs in the shared code go back
+upstream, as in
+[issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
+[pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532).
 
 ## Features
 
