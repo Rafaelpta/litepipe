@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](#install)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
-[![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-6f42c1.svg)](#the-fork-in-specs)
+[![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-6f42c1.svg)](NOTICE)
 
 </div>
 
@@ -32,6 +32,14 @@ litepipe is fully local. The only network socket in litepipe is the app talking
 to its own engine on 127.0.0.1.
 
 All data stays on your machine, in a local folder.
+
+litepipe is a fork of Screenpipe, which built the hard part: a full day of
+screen and audio turned into searchable text on a laptop, published under MIT.
+litepipe keeps that engine in the open and evolving, without the pipes,
+accounts, telemetry, and cloud sync that grew around it. Bugs in the shared code
+go back upstream, as in
+[issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
+[pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532).
 
 ## Features
 
@@ -198,32 +206,6 @@ flowchart LR
     DISK --> API["Local API<br/>127.0.0.1:3030"] --> APP["litepipe.app"]
     DISK --> AGENT["Your AI agent"]
 ```
-
-## The fork, in specs
-
-Screenpipe built the hard part: a full day of screen and audio turned into
-searchable text on a laptop, with the accessibility tree doing the heavy
-lifting, published under MIT.
-
-litepipe exists to keep that engine in the open and evolving. Pipes, accounts,
-telemetry, and cloud sync are not here. All the work goes into less weight, less
-latency, and more guardrails on what the engine captures.
-
-| Kept (the core) | Removed (the platform) |
-|-----------------|------------------------|
-| Accessibility tree text extraction, OCR fallback, ScreenCaptureKit capture | Accounts and subscriptions |
-| Local transcription: VAD, Whisper, Parakeet, speaker embeddings | Telemetry, crash reporting, auto update |
-| SQLite storage, FTS5 search, local HTTP API | Cloud sync, hosted AI models, provider presets |
-| Meeting detection and the retranscription pass | The pipe store and its schedulers |
-| New: native Swift notch app replacing the Tauri shell | The web view shell |
-
-Every removal serves the same goal: an app that stays idle until you ask it
-something, with all data on your machine.
-
-Bugs in the shared code go back to Screenpipe:
-[issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
-[pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532) fix
-private browser windows being captured on macOS.
 
 ## Specs
 
