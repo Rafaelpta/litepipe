@@ -201,18 +201,6 @@ redactor (52 MB, `~/.screenpipe/models/rfdetr_v12.onnx`) and a text redactor
 | Storage, schema, retention | `crates/screenpipe-db/`, `crates/screenpipe-engine/src/retention.rs` |
 | HTTP API and routes | `crates/screenpipe-engine/src/server.rs`, `src/routes/` |
 
-```mermaid
-flowchart LR
-    SRC["Screen, screen text,<br/>system audio, UI events"] --> GATE
-    MIC["Microphone<br/>accepted meetings only"] --> GATE
-    GATE{"Guardrails"}
-    GATE -->|"excluded"| DROP["Never written"]
-    GATE -->|"allowed"| PROC["Whisper, speakers,<br/>redaction, retention"]
-    PROC --> DISK[("~/.litepipe<br/>SQLite, frames, audio")]
-    DISK --> API["Local API<br/>127.0.0.1:3030"] --> APP["litepipe.app"]
-    DISK --> AGENT["Your AI agent"]
-```
-
 ## Specs
 
 | Area | Spec |
