@@ -26,7 +26,7 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 
 > All work and no play makes Jack a dull boy.
 
-It is insane that you work all day and your agents still start from scratch.
+It's insane that you work all day and your agents still start from scratch.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
 computer: the videos you watch, the meetings you join, the clicks and the work
@@ -35,15 +35,14 @@ across your apps, and stores it in one folder on your Mac.
 litepipe is fully local. The only network socket in litepipe is the app talking
 to its own engine on 127.0.0.1.
 
-All data stays on your machine, in a local folder.
+Screenpipe built foundations for a solid capture engine, published under MIT.
 
-Screenpipe built good foundations for a capture engine, published under MIT.
+litepipe is a fork that exists to keep the core of the capture engine evolving
+in the open. The features that grew around it are not here (pipes, accounts,
+telemetry, and cloud sync, etc). All the work goes into more simplicity, less
+weight, and safer guardrails on what the engine captures.
 
-litepipe is a fork that exists to keep that core engine evolving in the open.
-The features that grew around it, pipes, accounts, telemetry, and cloud sync,
-are not here. All the work goes into more simplicity, less weight, and safer
-guardrails on what the engine captures. Bugs in the shared code go back
-upstream, as in
+Bugs in the shared code go back upstream, as in
 [issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
 [pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532).
 
