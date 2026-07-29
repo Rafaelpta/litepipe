@@ -266,6 +266,11 @@ Quit the app and delete `~/.litepipe`.
 
 Early beta. Native macOS on Apple Silicon. Open an issue when something breaks.
 
+Known gap: the engine binary shipped in the app predates the private window fix
+sent upstream, so private browsing is currently excluded by window title from
+the app side. That covers every browser tested here, including Safari, but the
+engine level fix lands with the next engine build.
+
 ## License
 
 litepipe incorporates open source code from Screenpipe, used under the MIT
