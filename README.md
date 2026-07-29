@@ -1,115 +1,216 @@
 <div align="center">
 
+<img src="docs/assets/litepipe-icon.png" width="72" alt="litepipe" />
+
 # litepipe
 
-**A local memory of everything you see and hear. Recorded, transcribed, and searchable, entirely on your own machine.**
+**The open source local memory of your work.**
+
+[Features](#features) | [Install](#install) | [How it works](#how-it-works) | [Architecture](#architecture) | [FAQ](#faq)
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
-[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](#build-from-source)
-[![Status](https://img.shields.io/badge/status-early-orange.svg)](#status)
+[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](#install)
+[![Status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
 
 </div>
 
 ---
 
-litepipe runs quietly in the background and keeps a searchable record of what
-crossed your screen and what was said around you. Ask it what a client agreed to
-last Tuesday, pull the exact wording of a message you closed an hour ago, or hand
-a meeting to a local model and get the summary back. Everything is captured,
-transcribed, and stored on your computer, and none of it leaves.
+<!-- demo GIF goes here: banner "Transcribe this meeting?" appears over a call,
+     click Yes, notch panel shows Transcribing meeting, transcript opens at the end.
+     Caption: litepipe asks before it records. One click, and the meeting becomes
+     a transcript on your disk. -->
 
-Most tools in this space are built the other way around. They open with a sign in
-screen, send usage home, check for updates, and lean on a hosted service for the
-parts that cost money. litepipe takes the opposite stance: no account, no
-telemetry, no cloud. The app you install is the whole app, and it answers only to
-you.
+You work all day and your AI sees none of it. The meetings you join, the videos
+you watch, the reading and the work across every app: none of that reaches the
+model you ask for help. litepipe gives your AI that memory. Ask what you agreed
+to, what you planned, what you missed.
 
-## What it does
+litepipe keeps a local memory of everything you do, hear, and see on your
+computer: the videos you watch, the meetings you join, the clicks and the work
+across your apps, and stores it in one folder on your Mac.
 
-* **Captures your screen** through the accessibility tree, with OCR as a fallback
-  for anything the tree cannot read, such as video, games, and remote desktops.
-* **Transcribes audio** locally with Whisper, and separates speakers so you can
-  search by who said what.
-* **A timeline** you can scroll and rewind, frame by frame, across your whole day.
-* **Full text search** over everything on screen and everything spoken.
-* **Meeting notes** detected automatically, with attendees and a place for your
-  own notes.
-* **Memories**, the high signal facts and decisions distilled out of the raw
-  stream, so the important things stay easy to find.
-* **Chat** over your own history, running against a local model or your own key.
+litepipe is fully local. The only network socket in litepipe is the app talking
+to its own engine on 127.0.0.1.
 
-## How litepipe is set up
+All data stays on your machine, in a local folder.
 
-Every part of the app is built around one rule: the data stays on the machine.
+## Features
 
-| Area | How litepipe handles it |
-|------|-------------------------|
-| Network | Nothing leaves the computer. No analytics, no crash reporting, no updater, no attribution ping. The only socket is between the app and its own engine on `127.0.0.1`. |
-| Accounts | None. No sign in, no subscription, no paywall. The app opens straight into the product. |
-| Disk | Retention is on by default. Old video and audio are reclaimed after 30 days while the text, the search index, and the timeline history are kept. Your disk does not quietly fill up. |
-| Background work | Quiet at rest. The suggestion schedulers, calendar pollers, and cloud sync workers that usually run at boot are gone, so an idle app is actually idle. |
-| AI | Yours. Chat runs against local Ollama or any OpenAI or Anthropic compatible endpoint with your own key. There is no hosted provider and no default that phones anywhere. |
+* **Meetings become transcripts.** A banner asks when a Zoom, Google Meet, or
+  Teams call appears; one click and the transcript lands on your disk after the
+  call
+* **The microphone opens only in meetings you accepted.** Voice audio is deleted
+  after transcription; the text stays
+* **Every app on screen is captured.** Browsers, chat clients, terminals; text
+  comes from the accessibility tree, OCR covers the rest
+* **Everything is processed on your Mac.** Whisper transcribes, pyannote
+  separates speakers; no network in the path
+* **One folder holds it all.** SQLite with full text search; point your AI agent
+  at it and ask
 
-## Why local matters
+## Install
 
-**Privacy.** A record of your screen and your conversations is about as sensitive
-as data gets. The safest place for it is the one machine you control, and the
-safest amount to send anywhere else is none.
+litepipe ships as a signed and notarized DMG: drag to Applications, open, and
+the onboarding walks through the permissions.
 
-**Cost.** No subscription, no per seat pricing, no metered API in the middle. If
-you already run a local model, running litepipe costs you nothing but disk.
-
-**Ownership.** Your history is a plain SQLite database and media files in a folder
-you can open, back up, or delete. Nothing is locked behind a service that can
-change its terms or disappear.
-
-**Quiet by default.** Because the background machinery is gone, litepipe sits
-close to idle when you are not asking it anything.
-
-## How it works
-
-1. A capture engine records screen frames and microphone audio.
-2. Screen text is read from the accessibility tree, with OCR filling the gaps.
-3. Audio is transcribed locally and grouped by speaker.
-4. Everything lands in a local SQLite database and a search index on your disk.
-5. The app reads that data back for the timeline, search, meetings, and memories.
-6. Chat sends the relevant slice of your history to the model you chose, local or
-   your own key, and nowhere else.
-
-The engine listens only on `127.0.0.1`. The app talks to it there. That loop is
-the entire network footprint.
-
-## Status
-
-Early. macOS is the primary target today. Windows and Linux build but get less
-testing. Expect rough edges, and please open an issue when you hit one.
-
-## Build from source
-
-Requirements: Rust (stable), Bun, CMake, and on macOS a recent Xcode.
+Building from source needs Xcode:
 
 ```bash
 git clone https://github.com/Rafaelpta/litepipe
-cd litepipe/apps/screenpipe-app-tauri
-bun install
-bun run tauri build
+cd litepipe/apps/litepipe-mac
+./build-app.sh release
 ```
 
-The bundle lands in `src-tauri/target/release/bundle/`.
+The capture engine ships prebuilt inside the app bundle; rebuilding it needs
+Rust and CMake, see the engine crate under `crates/`.
 
-On macOS, screen recording permission is strict about apps that are not
-notarized. An unsigned local build can be granted the permission by hand in
-System Settings, but if it does not stick, sign the build with your own identity.
+## How it works
 
-## Benchmarks
+The engine reads the text of whatever you are working on through the
+accessibility tree, the layer assistive technology uses: like HTML, for every
+app. OCR fills the gaps the tree cannot see, such as video, games, and remote
+desktops. Audio goes through voice activity detection, is transcribed locally
+with Whisper, and grouped by speaker. Everything lands in SQLite with full text
+search.
 
-litepipe is being measured against the stock build for install size, idle cost,
-and network activity, on the same machine. The method and the raw output live in
-[BENCHMARKS.md](BENCHMARKS.md). Those figures are still a draft. The number that
-matters most for a capture tool, the cost while it is actually recording, needs a
-signed build and is not published yet.
+The result is your work in a form software can use: query it, search it, or
+point your AI agent at the folder and ask what you agreed to, planned, or
+missed.
 
-## Provenance and license
+| Step | Detail |
+|------|--------|
+| Meeting detection | Window titles plus browser URLs from captured frames; banner within about 10 seconds of joining, mic on about 3 seconds after you accept |
+| Capture | Event driven: an app switch, click, scroll stop, or typing pause triggers a screenshot paired with the accessibility tree; idle fallback when nothing happens; audio in 30 second chunks with 2 second overlap |
+| Transcription | Whisper large v3 turbo (quantized, Metal) retranscribes the meeting after the call on audio normalized to -16 LUFS; transcript ready about 11 minutes after the call ends |
+| Cleanup | Voice audio deleted after transcription, within the hour; system audio kept 7 days; frames 30 days; text and index kept |
+
+## How litepipe compares
+
+**Against meeting note takers.** Cloud note takers join the call as a bot or
+upload the audio to transcribe it. litepipe captures on the machine, transcribes
+on the machine, and deletes the voice audio after the transcript is written.
+There is no bot in the call and no upload.
+
+**Against always on recorders.** Desktop recorders keep the microphone open from
+boot. litepipe records the screen continuously but opens the microphone only
+when you accept a meeting, and closes it when the meeting ends.
+
+## Architecture
+
+| Component | Stack | Role |
+|-----------|-------|------|
+| litepipe.app | Swift, AppKit, SwiftUI | Notch companion, meeting detection and consent, mic gate, timeline, settings |
+| engine | Rust | Screen and audio capture, VAD, transcription, diarization, SQLite, local HTTP API |
+
+The app spawns the engine as a child process and stays the TCC responsible
+process, so one set of permissions covers both. Control flows over a loopback
+HTTP API authenticated with a per install key. Data lives in `~/.litepipe`: a
+SQLite database, media files, and logs you can open, back up, or delete.
+
+## The fork, in specs
+
+Screenpipe built the hard part: an engine that captures a full day of screen
+and audio on a consumer laptop and turns it into searchable text, published
+under MIT. litepipe exists to keep that core in the open.
+
+litepipe is Screenpipe stripped to the capture engine. Pipes, accounts,
+telemetry, cloud sync, and the platform that grew around the engine are not
+here. All the work goes in one direction: less weight, less latency, and more
+understanding of what the engine captures.
+
+The difference shows at first launch. The stock app opens a web shell with a
+sign in screen and starts its background machinery: update checks, telemetry,
+cloud connections. litepipe opens as a native app in the notch, asks for its
+permissions, and starts capturing. Past the one time model download, its only
+connection is to its own engine on 127.0.0.1.
+
+| Kept (the core) | Removed (the platform) |
+|-----------------|------------------------|
+| Accessibility tree text extraction, OCR fallback, ScreenCaptureKit capture | Accounts, subscriptions, paywalls |
+| Local transcription: VAD, Whisper, Parakeet, speaker embeddings | Telemetry, crash reporting, auto update |
+| SQLite storage, FTS5 search, local HTTP API | Cloud sync, hosted AI models, provider presets |
+| Meeting detection and the retranscription pass | The pipe store and its schedulers |
+| New: native Swift notch app replacing the Tauri shell | The web view shell |
+
+Every removal serves the same goal: an app that stays idle until you ask it
+something, with all data on your machine.
+
+## Specs
+
+| Area | Spec |
+|------|------|
+| Screen capture | ScreenCaptureKit, event driven: captures when the screen changes, idle fallback when it does not; all monitors, every on screen app |
+| Screen text | Accessibility tree extraction; OCR fallback for video, games, remote desktops |
+| Audio capture | System audio continuous; microphone only during confirmed meetings; 30 second chunks with 2 second overlap |
+| Meeting detection | Zoom, Google Meet, Microsoft Teams (native and web), FaceTime; window titles plus browser URLs from captured frames; banner within about 10 seconds |
+| Meeting end | Automatic about 30 seconds after the meeting windows disappear; stop button; shortcut |
+| Transcription | Whisper large v3 turbo, quantized, Metal; audio normalized to -16 LUFS; full meeting context; transcript about 11 minutes after the call ends |
+| Speaker separation | pyannote segmentation and voice embeddings |
+| Storage | SQLite with FTS5 at `~/.litepipe/db.sqlite`; media in `~/.litepipe/data` |
+| Retention | Voice audio deleted after transcription, within the hour; system audio 7 days; frames 30 days; text and index kept |
+| Local API | REST on 127.0.0.1:3030 with a per install key; the same API the app uses |
+| Telemetry | Disabled; the engine logs "telemetry is disabled" at startup |
+| Offline | Fully functional without network after the one time model download on first run |
+| Diagnostics | Engine lifecycle log at `~/.litepipe/app.log` |
+| Distribution | Developer ID, hardened runtime, notarized, stapled DMG (69 MB); installed app about 230 MB |
+| Platform | macOS on Apple Silicon |
+| License | MIT, full source |
+
+## FAQ
+
+<details>
+<summary>Does any audio or screen data leave my machine?</summary>
+
+No. The engine downloads its speech models once on first run (Whisper from
+Hugging Face, a voice activity model from GitHub). After that, the only network
+socket in the product is the app talking to its own engine on 127.0.0.1. There
+is no telemetry, no crash reporting, and no updater.
+</details>
+
+<details>
+<summary>What happens to the recording of my voice?</summary>
+
+It is deleted after transcription, on the next cleanup pass, within the hour.
+The transcript is kept. A voice recording is the most sensitive file on the disk
+(minutes of audio are enough to clone a voice) and also the largest: an hour of
+meetings is about 25 MB of audio and about 50 KB of transcript. The transcript
+keeps the content; deleting the recording removes the risk and the bulk.
+</details>
+
+<details>
+<summary>Which meeting apps are detected?</summary>
+
+Zoom, Google Meet, and Microsoft Teams, both native apps and web clients, plus
+FaceTime. Detection uses window titles and the browser URLs present in captured
+frames.
+</details>
+
+<details>
+<summary>How much disk does it use?</summary>
+
+System audio is kept 7 days and screen frames 30 days, both reclaimed
+automatically. Text and the search index are kept and are small.
+</details>
+
+<details>
+<summary>Can my AI agent read the data?</summary>
+
+Yes. Everything is plain SQLite and media files in `~/.litepipe`. Point an agent
+at the folder and query it.
+</details>
+
+<details>
+<summary>How do I delete everything?</summary>
+
+Quit the app and delete `~/.litepipe`.
+</details>
+
+## Status
+
+Early beta. Native macOS on Apple Silicon. Open an issue when something breaks.
+
+## License
 
 litepipe incorporates open source code from Screenpipe, used under the MIT
 license and preserved in [NOTICE](NOTICE) and [LICENSE.md](LICENSE.md).
