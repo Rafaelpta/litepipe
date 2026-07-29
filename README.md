@@ -21,10 +21,7 @@
      Caption: litepipe asks before it records. One click, and the meeting becomes
      a transcript on your disk. -->
 
-You work all day and your AI sees none of it. The meetings you join, the videos
-you watch, the reading and the work across every app: none of that reaches the
-model you ask for help. litepipe gives your AI that memory. Ask what you agreed
-to, what you planned, what you missed.
+You work all day and your AI sees none of it.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
 computer: the videos you watch, the meetings you join, the clicks and the work
