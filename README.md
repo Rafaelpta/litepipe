@@ -15,6 +15,8 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 [![Status](https://img.shields.io/badge/status-beta-212121?style=flat-square&labelColor=555555)](#status)
 [![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-212121?style=flat-square&labelColor=555555)](NOTICE)
 
+**0 network calls · 100% on device · 151 MB installed**
+
 </div>
 
 ---
@@ -220,7 +222,7 @@ redactor (52 MB, `~/.screenpipe/models/rfdetr_v12.onnx`) and a text redactor
 | Telemetry | Disabled; the engine logs "telemetry is disabled" at startup |
 | Offline | Fully functional without network after the one time model download on first run |
 | Diagnostics | Engine lifecycle log at `~/.litepipe/app.log` |
-| Distribution | Developer ID, hardened runtime, notarized, stapled DMG (69 MB); installed app about 230 MB |
+| Distribution | Developer ID, hardened runtime, notarized, stapled DMG (69 MB); installed app 151 MB |
 | Platform | macOS on Apple Silicon |
 | License | MIT, full source |
 
