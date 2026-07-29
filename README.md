@@ -24,8 +24,9 @@ It remembers your work. It stays on your Mac. It feeds your AI.
      Caption: litepipe asks before it records. One click, and the meeting becomes
      a transcript on your disk. -->
 
-All work and no context makes your AI a dull boy. You work all day, and the
-model you ask for help has almost none of it.
+> All work and no play makes Jack a dull boy.
+
+It is insane that you work all day and your agents still start from scratch.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
 computer: the videos you watch, the meetings you join, the clicks and the work
