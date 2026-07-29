@@ -127,6 +127,37 @@ final class EngineController: ObservableObject {
         var args = [bin.path, "record", "--port", "\(port)", "--data-dir", dataDir.path,
                     "-a", sttEngine, "--macos-input-vpio-enabled", "--disable-telemetry"]
         if !audioOn { args.append("--disable-audio") }
+        // Secret redaction (Settings > Privacy, on by default): background workers
+        // rewrite keys/cards/passwords as labels in text and paint them black in
+        // frames, overwriting the source. Backend stays "local" (the default) —
+        // never the hosted enclave. Without the AI model the text worker degrades
+        // to the 46 deterministic patterns; the image model self-downloads (54MB).
+        if (UserDefaults.standard.object(forKey: "privacy.redactSecrets") as? Bool) ?? true {
+            args += ["--async-pii-redaction", "--async-image-pii-redaction"]
+        }
+        // User exclusion lists (Settings > Privacy): comma or newline separated.
+        func privacyList(_ key: String) -> [String] {
+            (UserDefaults.standard.string(forKey: key) ?? "")
+                .split(whereSeparator: { $0 == "," || $0.isNewline })
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+        }
+        for domain in privacyList("privacy.ignoredUrls") { args += ["--ignored-urls", domain] }
+        for app in privacyList("privacy.ignoredApps") { args += ["--ignored-windows", app] }
+        // Private-window belt and suspenders. The engine's own incognito
+        // detector misses real Chrome windows (its AppleScript pass compares
+        // titles by exact match and, on mismatch, never reaches the localized
+        // title fallback — engine fix queued for the next engine build). The
+        // ignore list has no such gap and excludes the window from the
+        // ScreenCaptureKit buffer itself, so pin the private-window title
+        // suffixes here. "::title" matches any app whose window title
+        // contains it. Safari marks private windows with no title suffix, so
+        // it stays covered only by the engine detector.
+        for marker in ["(Incognito)", "(InPrivate)", "(Navigation privée)",
+                       "(Navegação anônima)", "Private Browsing",
+                       "Navegação privativa", "Navegação Privada"] {
+            args += ["--ignored-windows", "::\(marker)"]
+        }
 
         var attr: posix_spawnattr_t?
         posix_spawnattr_init(&attr)

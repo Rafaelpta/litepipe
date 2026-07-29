@@ -103,11 +103,12 @@ final class SettingsController {
 }
 
 private enum Section: String, CaseIterable, Identifiable {
-    case general = "General", data = "Data", shortcuts = "Shortcuts", about = "About"
+    case general = "General", privacy = "Privacy", data = "Data", shortcuts = "Shortcuts", about = "About"
     var id: String { rawValue }
     var icon: String {
         switch self {
         case .general: return "gearshape"
+        case .privacy: return "hand.raised"
         case .data: return "internaldrive"
         case .shortcuts: return "command"
         case .about: return "info.circle"
@@ -151,6 +152,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     switch section {
                     case .general: GeneralPane(engine: engine)
+                    case .privacy: PrivacyPane(engine: engine)
                     case .data: DataPane(engine: engine)
                     case .shortcuts: ShortcutsPane()
                     case .about: AboutPane()
@@ -197,6 +199,63 @@ private struct GeneralPane: View {
             }
         }
         .font(.system(size: 13))
+    }
+}
+
+// MARK: - Privacy
+
+private struct PrivacyPane: View {
+    @ObservedObject var engine: EngineController
+    @AppStorage("privacy.redactSecrets") private var redactSecrets = true
+    @AppStorage("privacy.ignoredUrls") private var ignoredUrls = ""
+    @AppStorage("privacy.ignoredApps") private var ignoredApps = ""
+    // Lists apply on engine restart; track edits so the Apply button only
+    // shows when there is something new to apply.
+    @State private var draftUrls = ""
+    @State private var draftApps = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Privacy").font(.system(size: 18, weight: .semibold)).foregroundColor(DS.Colors.fg)
+
+            Toggle("Redact secrets (keys, cards, passwords) from the memory", isOn: $redactSecrets)
+                .onChange(of: redactSecrets) { _ in engine.restart() }
+                .foregroundColor(DS.Colors.dim)
+            Text("Detected secrets become labels in text and black boxes in screenshots. The original is overwritten.")
+                .font(.system(size: 11)).foregroundColor(DS.Colors.dim.opacity(0.7))
+
+            Divider().background(Color.white.opacity(0.06))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Never capture these websites").foregroundColor(DS.Colors.dim)
+                TextField("bank.com, health.com", text: $draftUrls)
+                    .textFieldStyle(.roundedBorder).font(.system(size: 12))
+                Text("Never capture these apps").foregroundColor(DS.Colors.dim)
+                TextField("WhatsApp, Signal", text: $draftApps)
+                    .textFieldStyle(.roundedBorder).font(.system(size: 12))
+                if draftUrls != ignoredUrls || draftApps != ignoredApps {
+                    Button("Apply (restarts capture)") {
+                        ignoredUrls = draftUrls
+                        ignoredApps = draftApps
+                        engine.restart()
+                    }
+                }
+            }
+
+            Divider().background(Color.white.opacity(0.06))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Private browser windows are never captured", systemImage: "eye.slash")
+                Label("Password managers are never captured", systemImage: "key")
+                Label("The shortcut pauses everything instantly", systemImage: "pause.circle")
+            }
+            .font(.system(size: 12)).foregroundColor(DS.Colors.dim)
+        }
+        .font(.system(size: 13))
+        .onAppear {
+            draftUrls = ignoredUrls
+            draftApps = ignoredApps
+        }
     }
 }
 
