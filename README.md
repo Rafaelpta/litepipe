@@ -131,12 +131,6 @@ MIT in the open and evolving. Pipes, accounts, telemetry, and cloud sync are not
 here. All the work goes into less weight, less latency, and more guardrails on
 what the engine captures.
 
-The difference shows at first launch. The stock app opens a web shell with a
-sign in screen and starts its background machinery: update checks, telemetry,
-cloud connections. litepipe opens as a native app in the notch, asks for its
-permissions, and starts capturing. Past the one time model download, its only
-connection is to its own engine on 127.0.0.1.
-
 | Kept (the core) | Removed (the platform) |
 |-----------------|------------------------|
 | Accessibility tree text extraction, OCR fallback, ScreenCaptureKit capture | Accounts, subscriptions, paywalls |
