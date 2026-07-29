@@ -152,23 +152,10 @@ connection is to its own engine on 127.0.0.1.
 Every removal serves the same goal: an app that stays idle until you ask it
 something, with all data on your machine.
 
-## Why a fork and not a patch
-
-Two kinds of change live in this repository, and only one of them belongs
-upstream.
-
-Defects go to Screenpipe. Testing litepipe surfaced a privacy bug in the shared
-code: on macOS, with enhanced detection enabled, private browser windows were
-captured anyway. It was reported and fixed against Screenpipe, with a regression
-test, in [issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
-[pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532). Bugs
-found here will keep going there.
-
-Product decisions stay here. Removing accounts, telemetry, cloud sync, and the
-pipe store; opening the microphone only for a meeting you accepted; replacing
-the web shell with a native app in the notch: none of that is a defect, and none
-of it is a patch a maintainer could merge without changing what their product
-is. The MIT license exists so both can be built on the same engine.
+Bugs in the shared code go back to Screenpipe:
+[issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
+[pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532) fix
+private browser windows being captured on macOS.
 
 ## Specs
 
@@ -266,10 +253,8 @@ Quit the app and delete `~/.litepipe`.
 
 Early beta. Native macOS on Apple Silicon. Open an issue when something breaks.
 
-Known gap: the engine binary shipped in the app predates the private window fix
-sent upstream, so private browsing is currently excluded by window title from
-the app side. That covers every browser tested here, including Safari, but the
-engine level fix lands with the next engine build.
+The engine binary in the app predates that fix, so private browsing is excluded
+by window title until the next engine build.
 
 ## License
 
