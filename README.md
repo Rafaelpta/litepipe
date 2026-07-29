@@ -271,9 +271,6 @@ Early beta. Native macOS on Apple Silicon. Open an issue when something breaks.
 
 Bug reports and fixes are welcome. The direction is narrow on purpose: keep it
 local, keep it stripped to the basics, and make the capture engine better.
-Anything that adds an account, a server, or a background service pulls against
-that. Open an issue before writing something large, and please describe a
-problem without pasting what litepipe captured for you.
 
 ## License
 
