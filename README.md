@@ -8,10 +8,10 @@
 
 [Features](#features) | [Install](#install) | [How it works](#how-it-works) | [Architecture](#architecture) | [FAQ](#faq)
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
-[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](#install)
-[![Status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
-[![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-6f42c1.svg)](NOTICE)
+[![License](https://img.shields.io/badge/license-MIT-212121?style=flat-square&labelColor=555555)](LICENSE.md)
+[![Platform](https://img.shields.io/badge/platform-macOS-212121?style=flat-square&labelColor=555555)](#install)
+[![Status](https://img.shields.io/badge/status-beta-212121?style=flat-square&labelColor=555555)](#status)
+[![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-212121?style=flat-square&labelColor=555555)](NOTICE)
 
 </div>
 
