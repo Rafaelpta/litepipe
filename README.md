@@ -11,6 +11,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](#install)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
+[![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-6f42c1.svg)](#the-fork-in-specs)
 
 </div>
 
@@ -89,9 +90,9 @@ Capture is not all or nothing. What ships today:
   Firefox, with nothing to configure.
 * **Password managers are never captured.** 1Password, Bitwarden, LastPass,
   Dashlane, KeePassXC, and Keychain Access.
-* **Any app or site can be excluded.** Settings, Privacy takes the list, and an
-  excluded window never reaches the capture buffer, so no frame and no text of
-  it exists.
+* **Any app or site can be excluded.** Settings, Privacy takes two lists, one of
+  websites and one of apps. An excluded window never reaches the capture buffer,
+  so no frame and no text of it exists.
 * **Capture stops when you want.** One shortcut pauses everything, hours can be
   restricted to a schedule, and DRM video pauses it on its own.
 * **Secrets are redacted.** On by default: keys, cards, and passwords become
@@ -102,8 +103,9 @@ Capture is not all or nothing. What ships today:
   Engine catches what patterns cannot, and a second model finds secrets in the
   pixels and paints those regions solid black rather than blurred, since a blur
   can be undone.
-* **What was captured can be deleted.** One call to the local API removes the
-  frames, audio, text, and files of a time range.
+* **What was captured can be deleted.** Settings, Data shows how much litepipe
+  holds on this Mac and deletes the last hour, the last day, a period you pick,
+  or everything, files included. The local API does the same for scripts.
 * **The whole memory can be locked.** The vault encrypts database and media with
   a key derived from your password, held only on your machine.
 
@@ -151,7 +153,12 @@ and UI events), Microphone (only while a meeting you accepted is running).
 
 Nothing is encrypted at rest by default; FileVault covers the disk, and the
 vault (`/vault/*`) locks the database and media behind a password when you turn
-it on. Delete everything by quitting the app and removing `~/.litepipe`.
+it on.
+
+Settings, Data reports the size of that folder and deletes from it: the last
+hour, the last day, a period you choose, or all of it. Removing `~/.litepipe`
+by hand does the same thing, and the app rebuilds an empty one on the next
+launch.
 
 ### Network
 
