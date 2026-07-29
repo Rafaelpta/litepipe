@@ -126,14 +126,10 @@ SQLite database, media files, and logs you can open, back up, or delete.
 
 ## The fork, in specs
 
-Screenpipe built the hard part: an engine that captures a full day of screen
-and audio on a consumer laptop and turns it into searchable text, published
-under MIT. litepipe exists to keep that core in the open.
-
-litepipe is Screenpipe stripped to the capture engine. Pipes, accounts,
-telemetry, cloud sync, and the platform that grew around the engine are not
-here. All the work goes in one direction: less weight, less latency, and more
-understanding of what the engine captures.
+litepipe exists to keep the capture engine Screenpipe built and published under
+MIT in the open and evolving. Pipes, accounts, telemetry, and cloud sync are not
+here. All the work goes into less weight, less latency, and more guardrails on
+what the engine captures.
 
 The difference shows at first launch. The stock app opens a web shell with a
 sign in screen and starts its background machinery: update checks, telemetry,
