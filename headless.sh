@@ -2,7 +2,7 @@
 # litepipe headless. Runs the capture engine on its own: no app, no icon, no
 # window. A local memory filling up in ~/.litepipe for your agent to read.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/swift/headless.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash
 #
 # Screen Recording and Accessibility permissions belong to the terminal you run
 # this from, not to litepipe. Stop it with control C.

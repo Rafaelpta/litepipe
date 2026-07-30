@@ -64,18 +64,23 @@ Bugs in the shared code go back upstream, as in
 
 ## Install
 
-One line, no clone, no build:
+The recommended way, one line, no clone, no build:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/swift/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/install.sh | bash
 ```
 
-It downloads the latest signed and notarized DMG, checks it against Gatekeeper,
-installs to `/Applications`, and opens it. The onboarding walks through the
-permissions. You can also grab the DMG from
-[releases](https://github.com/Rafaelpta/litepipe/releases) and drag it yourself.
+It downloads the latest DMG, signed and notarized by Apple, verifies it with
+Gatekeeper and refuses to install if the check fails, copies the app to
+`/Applications`, and opens it. First launch walks you through the macOS
+permissions, granted to litepipe itself, exactly as if you had installed by
+hand. Prefer to do it by hand? Grab the DMG from
+[releases](https://github.com/Rafaelpta/litepipe/releases) and drag it to
+Applications. Same result.
 
-Building from source needs Xcode:
+The other two paths are for developers.
+
+**Build from source**, to audit or change the code. Needs Xcode:
 
 ```bash
 git clone https://github.com/Rafaelpta/litepipe
@@ -86,20 +91,18 @@ cd litepipe/apps/litepipe-mac
 The capture engine ships prebuilt inside the app bundle; rebuilding it needs
 Rust and CMake, see the engine crate under `crates/`.
 
-### Headless
-
-If you only want the memory and none of the interface, run the engine on its
-own, with no app installed:
+**Headless**, the engine alone with no app installed, if you only want the
+memory and none of the interface:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/swift/headless.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash
 ```
 
 It captures into `~/.litepipe` and serves the local API, and stops with control
 C. You give up what the app adds: the meeting banner, the microphone gate, the
 privacy settings, and the pause shortcut. macOS also attributes the permissions
-to your terminal rather than to litepipe, so it is the developer path, not the
-one to hand to someone else.
+to your terminal rather than to litepipe, so it is not the path to hand to
+someone else.
 
 ## How it works
 

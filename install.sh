@@ -2,7 +2,7 @@
 # litepipe installer. Downloads the latest signed DMG from GitHub releases,
 # copies the app to /Applications, and opens it.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/swift/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/install.sh | bash
 set -euo pipefail
 
 REPO="Rafaelpta/litepipe"
