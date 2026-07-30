@@ -28,23 +28,16 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 
 All work and no play makes Jack a dull boy.
 
-It's insane that you work all day and your agents still start from scratch, with
-no idea what you've been doing.
+You work all day and your agents still start from scratch.
 
 litepipe keeps a local memory of everything you do, hear, and see on your
-computer: the videos you watch, the meetings you join, the clicks and the work
-across your apps, and stores it in one folder on your Mac.
+computer: meetings, videos, clicks, every app. It all lands in one folder on
+your Mac.
 
-litepipe is fully local. The only network socket in litepipe is the app talking
-to its own engine on 127.0.0.1.
-
-Screenpipe built foundations for a solid capture engine, published under MIT.
-
-litepipe is a fork that exists to keep the core of the capture engine evolving
-in the open. The features that grew around it are not here (pipes, accounts,
-telemetry, and cloud sync, etc). All the work goes into more simplicity, less
-weight, and safer guardrails on what the engine captures.
-
+Screenpipe built a solid capture engine and published it under MIT. litepipe is
+a fork that keeps that core evolving in the open, without the features that
+grew around it: no pipes, no accounts, no telemetry, no cloud sync. The work
+goes into simplicity, less weight, and safer guardrails on what gets captured.
 Bugs in the shared code go back upstream, as in
 [issue 5531](https://github.com/screenpipe/screenpipe/issues/5531) and
 [pull request 5532](https://github.com/screenpipe/screenpipe/pull/5532).
@@ -54,9 +47,9 @@ Bugs in the shared code go back upstream, as in
 * **Meetings become transcripts.** litepipe spots the call window and asks. One
   click, and the transcript is on your disk when the call ends.
 * **The microphone opens only for meetings you accept.** The recording is
-  deleted once it has become text.
+  deleted once it's text.
 * **Everything on screen is captured.** Text comes from the accessibility tree,
-  the layer assistive technology reads, with OCR for what the tree cannot see.
+  with OCR for what the tree can't see.
 * **Nothing leaves the Mac.** Whisper and pyannote run on device, and the only
   socket is the app talking to its own engine.
 * **One folder holds it all.** SQLite with full text search, so your agent reads
@@ -70,13 +63,11 @@ The recommended way, one line, no clone, no build:
 curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/install.sh | bash
 ```
 
-It downloads the latest DMG, signed and notarized by Apple, verifies it with
-Gatekeeper and refuses to install if the check fails, copies the app to
-`/Applications`, and opens it. First launch walks you through the macOS
-permissions, granted to litepipe itself, exactly as if you had installed by
-hand. Prefer to do it by hand? Grab the DMG from
+It downloads the latest DMG, signed and notarized by Apple, checks it with
+Gatekeeper and refuses to install if that fails, copies the app to
+`/Applications`, and opens it. Prefer to do it by hand? Grab the DMG from
 [releases](https://github.com/Rafaelpta/litepipe/releases) and drag it to
-Applications. Same result.
+Applications.
 
 The other two paths are for developers.
 
@@ -98,24 +89,19 @@ memory and none of the interface:
 curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash
 ```
 
-It captures into `~/.litepipe` and serves the local API, and stops with control
-C. You give up what the app adds: the meeting banner, the microphone gate, the
-privacy settings, and the pause shortcut. macOS also attributes the permissions
-to your terminal rather than to litepipe, so it is not the path to hand to
+It captures into `~/.litepipe`, serves the local API, and stops with control C.
+Without the app there's no meeting banner, no microphone gate, and no privacy
+settings, and the permissions go to your terminal, so don't hand this path to
 someone else.
 
 ## How it works
 
-The engine reads the text of whatever you are working on through the
-accessibility tree, the layer assistive technology uses: like HTML, for every
-app. OCR fills the gaps the tree cannot see, such as video, games, and remote
-desktops. Audio goes through voice activity detection, is transcribed locally
-with Whisper, and grouped by speaker. Everything lands in SQLite with full text
-search.
-
-The result is your work in a form software can use: query it, search it, or
-point your AI agent at the folder and ask what you agreed to, planned, or
-missed.
+The engine reads what you're working on through the accessibility tree, the
+layer assistive technology uses: like HTML, for every app. OCR fills the gaps
+the tree can't see: video, games, remote desktops. Voice is transcribed locally
+with Whisper and grouped by speaker. Everything lands in SQLite with full text
+search, so you can query it, search it, or point your AI agent at the folder
+and ask what you agreed to, planned, or missed.
 
 Screen and voice take separate paths, both end as searchable text in the same
 database, and everything is redacted before it settles.
@@ -141,36 +127,34 @@ flowchart LR
 
 ## Privacy controls
 
-Capture is not all or nothing. What ships today:
+Capture isn't all or nothing. What ships today:
 
 * **Private windows are never captured.** Safari, Chrome, Edge, Brave, Arc, and
-  Firefox, with nothing to configure.
+  Firefox.
 * **Password managers are never captured.** 1Password, Bitwarden, LastPass,
   Dashlane, KeePassXC, and Keychain Access.
 * **Any app or site can be excluded.** Settings, Privacy takes two lists, one of
   websites and one of apps. An excluded window never reaches the capture buffer,
   so no frame and no text of it exists.
 * **Capture stops when you want.** One shortcut pauses everything, hours can be
-  restricted to a schedule, and DRM video pauses it on its own.
+  set to a schedule, and DRM video pauses it on its own.
 * **Secrets are redacted.** On by default: keys, cards, and passwords become
   labels in text and black boxes in screenshots, and the original is
-  overwritten. Under the hood: 46 deterministic patterns run first (credit
-  cards, private keys, database URLs carrying credentials, API keys for Stripe,
-  OpenAI, Anthropic, Google, GitHub and more), an ONNX model on the Apple Neural
-  Engine catches what patterns cannot, and a second model finds secrets in the
-  pixels and paints those regions solid black rather than blurred, since a blur
-  can be undone.
+  overwritten. Under the hood: 46 deterministic patterns run first, an ONNX
+  model on the Apple Neural Engine catches what patterns can't, and a second
+  model finds secrets in the pixels and paints them solid black rather than
+  blurred, since a blur can be undone.
 * **What was captured can be deleted.** Settings, Data shows how much litepipe
-  holds on this Mac and deletes the last hour, the last day, a period you pick,
-  or everything, files included. The local API does the same for scripts.
+  holds and deletes the last hour, the last day, a period you pick, or
+  everything, files included. The local API does the same for scripts.
 * **The whole memory can be locked.** The vault encrypts database and media with
   a key derived from your password, held only on your machine.
 
 ## Architecture
 
 Everything runs in two processes on your machine, and what they may write is
-checked twice: once before anything is captured, and once before it settles on
-disk. Every claim below is verifiable from a shell on your own machine.
+checked twice: before capture, and before it settles on disk. Every claim below
+can be checked from a shell on your own machine.
 
 ```mermaid
 flowchart LR
@@ -199,7 +183,7 @@ and the engine goes with it.
 macOS permissions used: Screen Recording (capture), Accessibility (screen text
 and UI events), Microphone (only while a meeting you accepted is running).
 
-### What is written to disk
+### What's written to disk
 
 Everything lives in one folder, `~/.litepipe`. Browse it with `open ~/.litepipe`.
 
@@ -213,14 +197,11 @@ Everything lives in one folder, `~/.litepipe`. Browse it with `open ~/.litepipe`
 | Keyboard and UI activity | `db.sqlite`, tables `ui_events` and `elements` |
 | App and engine logs | `app.log` and `engine-app.log`, lifecycle events only, no captured content |
 
-Nothing is encrypted at rest by default; FileVault covers the disk, and the
+Nothing is encrypted at rest by default: FileVault covers the disk, and the
 vault (`/vault/*`) locks the database and media behind a password when you turn
-it on.
-
-Settings, Data reports the size of that folder and deletes from it: the last
-hour, the last day, a period you choose, or all of it. Removing `~/.litepipe`
-by hand does the same thing, and the app rebuilds an empty one on the next
-launch.
+it on. Settings, Data shows the folder's size and deletes by period, from the
+last hour to all of it. Removing `~/.litepipe` by hand works too; the app
+rebuilds an empty one on the next launch.
 
 ### Network
 
@@ -253,7 +234,7 @@ redactor (52 MB, `~/.screenpipe/models/rfdetr_v12.onnx`) and a text redactor
 
 | Area | Spec |
 |------|------|
-| Screen capture | ScreenCaptureKit, event driven: captures when the screen changes, idle fallback when it does not; all monitors, every on screen app |
+| Screen capture | ScreenCaptureKit, event driven: captures when the screen changes, idle fallback when it doesn't; all monitors, every on screen app |
 | Screen text | Accessibility tree extraction; OCR fallback for video, games, remote desktops |
 | Audio capture | System audio continuous; microphone only during confirmed meetings; 30 second chunks with 2 second overlap |
 | Meeting detection | Zoom, Google Meet, Microsoft Teams (native and web), FaceTime; window titles plus browser URLs from captured frames; banner within about 10 seconds |
@@ -274,36 +255,33 @@ redactor (52 MB, `~/.screenpipe/models/rfdetr_v12.onnx`) and a text redactor
 
 ## FAQ
 
-**Does any audio or screen data leave my machine?** No. On first run the engine
-downloads its models, Whisper and a voice activity model, plus two redaction
-models while secret redaction is on. After that the only network socket is the
-app talking to its own engine on 127.0.0.1. No telemetry, no crash reporting, no
-updater.
+**Does any audio or screen data leave my machine?** No. The engine downloads
+its models on first run; after that the only network socket is the app talking
+to its own engine on 127.0.0.1. No telemetry, no crash reporting, no updater.
 
-**What happens to the recording of my voice?** Deleted on the next cleanup pass,
-within the hour, and the transcript stays. A voice recording is the most
-sensitive file on the disk, minutes of it are enough to clone a voice, and the
-largest: an hour of meetings is about 25 MB of audio against 50 KB of text.
+**What happens to the recording of my voice?** It's deleted within the hour and
+the transcript stays. A voice recording is the most sensitive file on the disk:
+minutes of it can clone a voice, and an hour of meetings is about 25 MB of
+audio against 50 KB of text.
 
 **Which meeting apps are detected?** Zoom, Google Meet, and Microsoft Teams,
-native and web, plus FaceTime. Detection reads window titles and the browser
-URLs already in captured frames.
+native and web, plus FaceTime. Detection reads window titles and browser URLs
+from captured frames.
 
 **How do I keep something out of the memory?** Four ways. Private browser
-windows are skipped on their own. Any app or site goes on the ignore list in
-Settings, Privacy. The shortcut pauses everything instantly. And what was
-captured anyway can be deleted by period in Settings, Data.
+windows are skipped on their own. Any app or site goes on the ignore list. The
+shortcut pauses everything. And anything already captured can be deleted by
+period in Settings, Data.
 
-**Is the data encrypted?** FileVault covers the disk, which macOS enables by
-default. On top of that the vault locks the database and media behind a key
-derived from your password, held only on your machine. Transparent encryption
-during capture is on the roadmap.
+**Is the data encrypted?** FileVault covers the disk, on by default in macOS.
+The vault adds a lock on the database and media, behind a key derived from your
+password. Transparent encryption during capture is on the roadmap.
 
 **How much disk does it use?** System audio is kept 7 days and screen frames 30
-days, both reclaimed automatically. Text and the search index stay, and they are
-small. Settings, Data shows the current size.
+days, both cleaned up on their own. Text and the index stay, and they're small.
+Settings, Data shows the current size.
 
-**Can my AI agent read the data?** Yes, that is the point. Plain SQLite and
+**Can my AI agent read the data?** Yes, that's the point. Plain SQLite and
 media files in `~/.litepipe`. Point an agent at the folder and query it.
 
 **How do I delete everything?** Settings, Data, delete all context. Or quit the
