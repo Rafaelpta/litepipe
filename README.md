@@ -117,11 +117,26 @@ The result is your work in a form software can use: query it, search it, or
 point your AI agent at the folder and ask what you agreed to, planned, or
 missed.
 
+Screen and voice take separate paths, both end as searchable text in the same
+database, and everything is redacted before it settles.
+
+```mermaid
+flowchart LR
+    SCR["Screen<br/>all day"] --> STT["Screen to text<br/>accessibility tree + OCR"]
+    MIC["Voice<br/>meetings you accept"] --> VTT["Voice to text<br/>Whisper, after the call"]
+    STT --> PII["PII redaction<br/>seconds later, overwritten in place"]
+    VTT --> PII
+    PII --> DB[("~/.litepipe/db.sqlite<br/>full text search")]
+    VTT -. "audio deleted once transcribed" .-> X["no voice file remains"]
+```
+
 | Step | Detail |
 |------|--------|
-| Meeting detection | Window titles plus browser URLs from captured frames; banner within about 10 seconds of joining, mic on about 3 seconds after you accept |
 | Capture | Event driven: an app switch, click, scroll stop, or typing pause triggers a screenshot paired with the accessibility tree; idle fallback when nothing happens; audio in 30 second chunks with 2 second overlap |
-| Transcription | Whisper large v3 turbo (quantized, Metal) retranscribes the meeting after the call on audio normalized to -16 LUFS; transcript ready about 11 minutes after the call ends |
+| Screen to text | The accessibility tree arrives with the frame; OCR fills its gaps seconds behind, in a background queue. Stopping the engine drops whatever is still queued |
+| Meetings | Window titles plus browser URLs from captured frames; banner within about 10 seconds of joining, mic on about 3 seconds after you accept |
+| Voice to text | Whisper large v3 turbo (quantized, Metal) retranscribes the meeting after the call on audio normalized to -16 LUFS; transcript ready about 11 minutes after the call ends |
+| PII redaction | Seconds after each item lands, on this Mac: all text is cleaned, secret regions in screenshots painted black, the original overwritten in place. Voice audio is deleted once transcribed. Details under Privacy controls |
 | Cleanup | Voice audio deleted after transcription, within the hour; system audio kept 7 days; frames 30 days; text and index kept |
 
 ## Privacy controls
@@ -186,12 +201,17 @@ and UI events), Microphone (only while a meeting you accepted is running).
 
 ### What is written to disk
 
-| Path | Contents |
-|------|----------|
-| `~/.litepipe/db.sqlite` | `frames`, `ocr_text`, `elements`, `ui_events`, `audio_chunks`, `audio_transcriptions`, `speakers`, `meetings`, `tags`, plus FTS5 indexes |
-| `~/.litepipe/data/<date>/` | JPEG frames, compacted `.mp4` per monitor, audio chunks per device |
-| `~/.litepipe/app.log` | App and engine lifecycle: spawn, exit, pause, meeting start and stop |
-| `~/.litepipe/engine-app.log` | Engine stdout and stderr |
+Everything lives in one folder, `~/.litepipe`. Browse it with `open ~/.litepipe`.
+
+| Your data | Where it lives |
+|-----------|----------------|
+| Screen captures, the images | `data/<date>/` as JPEG frames plus one compacted `.mp4` per monitor |
+| Screen text read by OCR | `db.sqlite`, table `ocr_text`, one row per captured frame |
+| Voice transcripts | `db.sqlite`, table `audio_transcriptions` |
+| Meetings and their transcripts | `db.sqlite`, tables `meetings` and `meeting_transcript_segments` |
+| Raw audio | `data/<date>/`, one file per device; meeting microphone audio is deleted once transcribed, the text is what remains |
+| Keyboard and UI activity | `db.sqlite`, tables `ui_events` and `elements` |
+| App and engine logs | `app.log` and `engine-app.log`, lifecycle events only, no captured content |
 
 Nothing is encrypted at rest by default; FileVault covers the disk, and the
 vault (`/vault/*`) locks the database and media behind a password when you turn
