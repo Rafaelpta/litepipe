@@ -57,17 +57,17 @@ Bugs in the shared code go back upstream, as in
 
 ## Install
 
-The recommended way, one line, no clone, no build:
+Download the app: [litepipe.dmg](https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg).
+Open it, drag litepipe to Applications, launch it. Signed and notarized by Apple.
+
+Or install from the terminal:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/install.sh | bash
 ```
 
-It downloads the latest DMG, signed and notarized by Apple, checks it with
-Gatekeeper and refuses to install if that fails, copies the app to
-`/Applications`, and opens it. Prefer to do it by hand? Grab the DMG from
-[releases](https://github.com/Rafaelpta/litepipe/releases) and drag it to
-Applications.
+Same DMG: it checks the download with Gatekeeper, refuses to install if that
+fails, copies the app to `/Applications`, and opens it.
 
 The other two paths are for developers.
 
@@ -82,8 +82,7 @@ cd litepipe/apps/litepipe-mac
 The capture engine ships prebuilt inside the app bundle; rebuilding it needs
 Rust and CMake, see the engine crate under `crates/`.
 
-**Headless**, the engine alone with no app installed, if you only want the
-memory and none of the interface:
+**CLI**, the engine alone, no app:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash
