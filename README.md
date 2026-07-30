@@ -57,17 +57,15 @@ Bugs in the shared code go back upstream, as in
 
 ## Install
 
-**App**: download [litepipe.dmg](https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg),
+### App
+
+Download [litepipe.dmg](https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg),
 drag it to Applications, launch. Signed and notarized by Apple.
 
-**Terminal**: same DMG, verified with Gatekeeper, installed and opened for you.
+### Source
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/install.sh | bash
-```
-
-**Source**, to audit or change the code. Needs Xcode. The engine ships
-prebuilt; rebuilding it needs Rust and CMake, see `crates/`.
+To audit or change the code. Needs Xcode. The engine ships prebuilt;
+rebuilding it needs Rust and CMake, see `crates/`.
 
 ```bash
 git clone https://github.com/Rafaelpta/litepipe
@@ -75,7 +73,9 @@ cd litepipe/apps/litepipe-mac
 ./build-app.sh release
 ```
 
-**CLI**, the engine alone, no app. Captures into `~/.litepipe`, local API on
+### CLI
+
+The engine alone, no app. Captures into `~/.litepipe`, local API on
 127.0.0.1:3030, control C stops it. No meeting banner, no microphone gate, and
 the permissions go to your terminal.
 
