@@ -57,21 +57,17 @@ Bugs in the shared code go back upstream, as in
 
 ## Install
 
-Download the app: [litepipe.dmg](https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg).
-Open it, drag litepipe to Applications, launch it. Signed and notarized by Apple.
+**App**: download [litepipe.dmg](https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg),
+drag it to Applications, launch. Signed and notarized by Apple.
 
-Or install from the terminal:
+**Terminal**: same DMG, verified with Gatekeeper, installed and opened for you.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/install.sh | bash
 ```
 
-Same DMG: it checks the download with Gatekeeper, refuses to install if that
-fails, copies the app to `/Applications`, and opens it.
-
-The other two paths are for developers.
-
-**Build from source**, to audit or change the code. Needs Xcode:
+**Source**, to audit or change the code. Needs Xcode. The engine ships
+prebuilt; rebuilding it needs Rust and CMake, see `crates/`.
 
 ```bash
 git clone https://github.com/Rafaelpta/litepipe
@@ -79,19 +75,13 @@ cd litepipe/apps/litepipe-mac
 ./build-app.sh release
 ```
 
-The capture engine ships prebuilt inside the app bundle; rebuilding it needs
-Rust and CMake, see the engine crate under `crates/`.
-
-**CLI**, the engine alone, no app:
+**CLI**, the engine alone, no app. Captures into `~/.litepipe`, local API on
+127.0.0.1:3030, control C stops it. No meeting banner, no microphone gate, and
+the permissions go to your terminal.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash
 ```
-
-It captures into `~/.litepipe`, serves the local API, and stops with control C.
-Without the app there's no meeting banner, no microphone gate, and no privacy
-settings, and the permissions go to your terminal, so don't hand this path to
-someone else.
 
 ## How it works
 
