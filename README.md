@@ -10,11 +10,11 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 
 [Features](#features) | [Install](#install) | [How it works](#how-it-works) | [Architecture](#architecture) | [FAQ](#faq)
 
-<a href="LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/license-MIT.svg?size=sm"><img alt="license MIT" src="https://shieldcn.dev/badge/license-MIT.svg?size=sm&mode=light"></picture></a>
-<a href="#install"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/platform-macOS.svg?size=sm"><img alt="platform macOS" src="https://shieldcn.dev/badge/platform-macOS.svg?size=sm&mode=light"></picture></a>
-<a href="#status"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/status-beta.svg?size=sm"><img alt="status beta" src="https://shieldcn.dev/badge/status-beta.svg?size=sm&mode=light"></picture></a>
-<a href="LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/open%20source-full%20code.svg?size=sm"><img alt="open source full code" src="https://shieldcn.dev/badge/open%20source-full%20code.svg?size=sm&mode=light"></picture></a>
-<a href="#architecture"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/100%25-local.svg?size=sm"><img alt="100 percent local" src="https://shieldcn.dev/badge/100%25-local.svg?size=sm&mode=light"></picture></a>
+[![License](https://img.shields.io/badge/license-MIT-212121?style=flat-square&labelColor=555555)](LICENSE.md)
+[![Platform](https://img.shields.io/badge/platform-macOS-212121?style=flat-square&labelColor=555555)](#install)
+[![Status](https://img.shields.io/badge/status-beta-212121?style=flat-square&labelColor=555555)](#status)
+[![Open source](https://img.shields.io/badge/open%20source-full%20code-212121?style=flat-square&labelColor=555555)](LICENSE.md)
+[![Local](https://img.shields.io/badge/100%25-local-212121?style=flat-square&labelColor=555555)](#architecture)
 
 **0 network calls · 100% on device**
 
