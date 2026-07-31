@@ -13,7 +13,8 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 [![License](https://img.shields.io/badge/license-MIT-212121?style=flat-square&labelColor=555555)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-macOS-212121?style=flat-square&labelColor=555555)](#install)
 [![Status](https://img.shields.io/badge/status-beta-212121?style=flat-square&labelColor=555555)](#status)
-[![Engine](https://img.shields.io/badge/capture%20engine-Screenpipe%20MIT-212121?style=flat-square&labelColor=555555)](NOTICE)
+[![Open source](https://img.shields.io/badge/open%20source-full%20code-212121?style=flat-square&labelColor=555555)](LICENSE.md)
+[![Local](https://img.shields.io/badge/100%25-local-212121?style=flat-square&labelColor=555555)](#architecture)
 
 **0 network calls · 100% on device**
 
