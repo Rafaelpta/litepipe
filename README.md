@@ -60,7 +60,7 @@ Bugs in the shared code go back upstream, as in
 
 ### App
 
-Download [litepipe.dmg](https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg),
+Download [litepipe.dmg](https://rafaelpta.github.io/litepipe/install/?download=1),
 drag it to Applications, launch. Signed and notarized by Apple.
 
 ### Source

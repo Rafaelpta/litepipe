@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install litepipe</title>
+<meta name="description" content="Install litepipe in three steps. A local memory of everything you have seen, said or heard while you work at your computer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: #f7f5f0;
+    --foreground: #141311;
+    --card: #fffdf9;
+    --line: rgba(20, 19, 17, 0.1);
+    --dim: rgba(20, 19, 17, 0.45);
+    --green: #10b981;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh; background: var(--background); color: var(--foreground);
+    font-family: "Crimson Text", Georgia, serif; font-size: 19px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+  .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 72rem; margin: 0 auto; padding: 20px 2rem;
+  }
+  nav .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--foreground); }
+  nav .brand img { width: 28px; height: 28px; border-radius: 7px; }
+  nav .brand span { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; }
+  nav a.gh { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--dim); text-decoration: none; }
+  nav a.gh:hover { color: var(--foreground); }
+
+  section { border-top: 1px solid var(--line); padding: 3.5rem 2rem 4rem; }
+  .inner { max-width: 72rem; margin: 0 auto; }
+
+  .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--dim); }
+  h2 { margin-top: 12px; font-size: 2.25rem; font-weight: 600; letter-spacing: -0.04em; }
+  .head-row { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; justify-content: space-between; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid rgba(20,19,17,0.15); border-radius: 999px; padding: 9px 18px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    background: var(--foreground); color: var(--background);
+  }
+  .dl-note { margin-top: 18px; font-size: 15px; color: var(--dim); font-style: italic; }
+  .dl-note a { color: var(--foreground); }
+
+  .step { display: grid; grid-template-columns: 72px 1fr; gap: 12px; padding: 2.6rem 0 0; }
+  .step + .step { margin-top: 2.6rem; border-top: 1px solid var(--line); }
+  .num { font-size: 15px; font-weight: 600; color: var(--dim); padding-top: 5px; }
+  .step h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+  .step .copy { margin-top: 6px; color: rgba(20,19,17,0.7); max-width: 40rem; }
+  .card {
+    margin-top: 22px; border: 1px solid var(--line); border-radius: 18px;
+    background: var(--card); padding: 3rem 2rem;
+    display: flex; align-items: center; justify-content: center; gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .appicon { text-align: center; }
+  .appicon img { width: 116px; height: 116px; border-radius: 26px; box-shadow: 0 10px 28px rgba(20,19,17,0.16); }
+  .appicon .cap { margin-top: 12px; font-size: 12px; color: var(--dim); }
+
+  .arrow svg { display: block; }
+
+  .folder { text-align: center; }
+  .folder .cap { margin-top: 12px; font-size: 12px; color: var(--dim); }
+
+  /* the Mac mock */
+  .mac { width: min(620px, 100%); }
+  .mac .screen {
+    position: relative; border-radius: 16px 16px 0 0; border: 10px solid #1c1917;
+    border-bottom-width: 12px; background: linear-gradient(160deg, #dce8f2, #cbd8e6 55%, #b9c9da);
+    height: 350px; overflow: hidden;
+  }
+  .mac .menubar {
+    height: 22px; background: rgba(255,255,255,0.55); backdrop-filter: blur(2px);
+    border-bottom: 1px solid rgba(20,19,17,0.08);
+  }
+  .mac .notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 132px; height: 17px; background: #0a0a09; border-radius: 0 0 9px 9px; z-index: 3;
+  }
+  .mac .halo {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 210px; height: 60px; border-radius: 0 0 50% 50%;
+    background: radial-gradient(ellipse at top, rgba(16,185,129,0.35), transparent 70%);
+    z-index: 2;
+  }
+  .panel {
+    position: absolute; top: 26px; left: 50%; transform: translateX(-50%);
+    width: 270px; background: #0d0d0c; border-radius: 14px; z-index: 4;
+    padding: 20px 18px 18px; text-align: center;
+    box-shadow: 0 18px 40px rgba(10,10,9,0.45);
+  }
+  .panel svg.wave { display: block; margin: 0 auto 10px; }
+  .panel .set { color: var(--green); font-size: 14px; font-weight: 600; }
+  .panel .sub { color: #a8a29e; font-size: 11.5px; line-height: 1.45; margin-top: 5px; }
+  .panel .start {
+    display: inline-block; margin-top: 13px; background: #f5f5f4; color: #1c1917;
+    font-size: 12px; font-weight: 600; border-radius: 999px; padding: 7px 22px;
+  }
+  .mac .base {
+    height: 14px; background: linear-gradient(#3a3735, #262321);
+    border-radius: 0 0 14px 14px; margin: 0 -14px;
+  }
+  .mac .basecap { margin-top: 14px; text-align: center; font-size: 12px; color: var(--dim); }
+
+  footer { border-top: 1px solid var(--line); padding: 1.6rem 2rem 3rem; }
+  footer .inner { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; font-size: 12px; color: var(--dim); }
+  footer a { color: var(--dim); }
+  @media (max-width: 620px) { .step { grid-template-columns: 1fr; } h2 { font-size: 1.7rem; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="https://github.com/Rafaelpta/litepipe">
+    <img src="../assets/litepipe-icon.png" alt="litepipe">
+    <span class="mono">litepipe</span>
+  </a>
+  <a class="gh mono" href="https://github.com/Rafaelpta/litepipe">github</a>
+</nav>
+
+<section>
+  <div class="inner">
+    <div class="head-row">
+      <div>
+        <p class="eyebrow mono">how to install</p>
+        <h2 class="sans">Install in three steps.</h2>
+      </div>
+      <span class="pill mono">&#63743; Mac, Apple Silicon</span>
+    </div>
+    <p class="dl-note" id="dlnote">Your download starts in a moment. If it does not,
+      <a href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">download litepipe.dmg here</a>.</p>
+
+    <div class="step">
+      <div class="num mono">01</div>
+      <div>
+        <h3 class="sans">Open the installer</h3>
+        <p class="copy">Open litepipe.dmg from Downloads. Signed and notarized by Apple.</p>
+        <div class="card">
+          <div class="appicon">
+            <img src="../assets/litepipe-icon.png" alt="litepipe app icon">
+            <div class="cap mono">litepipe.dmg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num mono">02</div>
+      <div>
+        <h3 class="sans">Drag it into Applications</h3>
+        <p class="copy">Then launch litepipe from Applications.</p>
+        <div class="card">
+          <div class="appicon">
+            <img src="../assets/litepipe-icon.png" alt="litepipe app icon">
+            <div class="cap mono">litepipe</div>
+          </div>
+          <div class="arrow">
+            <svg width="120" height="44" viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 34 C 40 6, 80 6, 108 22" stroke="#141311" stroke-width="5" stroke-linecap="round"/>
+              <path d="M96 12 L 112 23 L 93 29" stroke="#141311" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="folder">
+            <svg width="116" height="96" viewBox="0 0 116 96" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="fold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#6db6f2"/><stop offset="1" stop-color="#3d8fe0"/>
+                </linearGradient>
+                <linearGradient id="foldtab" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#8ec9f7"/><stop offset="1" stop-color="#6db6f2"/>
+                </linearGradient>
+              </defs>
+              <path d="M8 22 q0 -8 8 -8 h24 q6 0 9 5 l3 5 h48 q8 0 8 8 v2 H8 Z" fill="url(#foldtab)"/>
+              <rect x="8" y="30" width="100" height="56" rx="9" fill="url(#fold)"/>
+              <text x="58" y="66" text-anchor="middle" font-family="-apple-system, Helvetica, sans-serif" font-size="26" fill="rgba(255,255,255,0.85)" font-weight="600">A</text>
+            </svg>
+            <div class="cap mono">Applications</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num mono">03</div>
+      <div>
+        <h3 class="sans">Meet your notch</h3>
+        <p class="copy">litepipe lives in your notch. Hover it to pause, open your timeline, or grab a transcript.</p>
+        <div class="card" style="padding: 3rem 2rem 2.2rem;">
+          <div class="mac">
+            <div class="screen">
+              <div class="menubar"></div>
+              <div class="halo"></div>
+              <div class="notch"></div>
+              <div class="panel">
+                <svg class="wave" width="34" height="14" viewBox="0 0 34 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 7 q4 -9 8 0 t8 0 t8 0 t6 0" stroke="#faf9f7" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+                </svg>
+                <div class="set sans">You're all set.</div>
+                <div class="sub sans">I'm gathering your memories as you work, and I live in your notch.</div>
+                <span class="start sans">Start</span>
+              </div>
+            </div>
+            <div class="base"></div>
+            <div class="basecap mono">the notch, top center of your screen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="inner mono">
+    <span>everything stays on your Mac</span>
+    <a href="https://github.com/Rafaelpta/litepipe">github.com/Rafaelpta/litepipe</a>
+  </div>
+</footer>
+
+<script>
+  if (new URLSearchParams(location.search).get('download') === '1') {
+    setTimeout(function () {
+      window.location.href = 'https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg';
+    }, 900);
+  } else {
+    document.getElementById('dlnote').innerHTML =
+      '<a href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">Download litepipe.dmg</a> and follow the steps.';
+  }
+</script>
+</body>
+</html>
