@@ -3,7 +3,7 @@ import Observation
 
 @Observable
 final class NavigationState {
-    var sidebarItem: SidebarItem = .library
+    var sidebarItem: SidebarItem = .timeline
     var viewMode: ViewMode = .days
     var openedPhotoID: UUID?
     /// Whether the grid↔detail hero (matchedGeometryEffect) is engaged.
@@ -18,9 +18,11 @@ final class NavigationState {
 
     // Sidebar disclosure state lives here (not in the view) so it survives
     // any re-creation of SidebarView when the selection changes.
-    var utilitiesExpanded = true
-    var mediaTypesExpanded = true
-    var albumsExpanded = false
-    var projectsExpanded = false
-    var sharedAlbumsExpanded = true
+    var extractedExpanded = true
+    var sourcesExpanded = true
+    var notebooksExpanded = false
+    var pipesExpanded = false
+    var agentMemoryExpanded = true
+    var sharedContextsExpanded = true
+    var firewallExpanded = true
 }

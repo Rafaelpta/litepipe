@@ -53,56 +53,74 @@ enum ViewMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// The sidebar is the product's storage model made visible. Three sections, three tiers:
+/// Capture is the raw append-only stream, Collections are recomputable indexes over it,
+/// Memory is the small distilled layer an agent reads.
 enum SidebarItem: Hashable {
-    // Photos
-    case library, favorites, map, recentlySaved, recentlyDeleted
-    // Collections
-    case days, peoplePets, memories, trips, featured
-    case utilities, duplicates, receipts, handwriting, illustrations, recentlyViewed, documents
-    case mediaTypes, videos, selfies, livePhotos, portrait, panoramas, timelapse, slomo,
-         bursts, screenshots, screenRecordings, animated
-    case albumsRoot, album(String), projects
-    // Sharing
-    case sharedAlbums, activity, sharedAlbum(String), sharedWithYou
+    // Capture — the raw stream
+    case timeline, highlights, places, today, recentlyDeleted
+    // Collections — derived structure
+    case dayRecaps, people, meetings, sessions, activity
+    case extracted, decisions, actionItems, questions, codeSnippets, links, errors, redacted
+    case sources, screen, microphone, systemAudio, keyboardClicks, browser, terminal,
+         editor, chat, email, documents, design
+    case notebooksRoot, notebook(String), pipesRoot, pipe(String)
+    // Memory — distilled, agent-facing
+    case agentMemory, facts, playbooks, sops, memoryTarget(String)
+    // Sharing — the context firewall: what crosses the machine boundary, to whom
+    case sharedContexts, accessLog, share(String)
+    case firewall, firewallRules, connectedApps, blocked
+    case requests
 
     var displayName: String {
         switch self {
-        case .library: "Library"
-        case .favorites: "Favorites"
-        case .map: "Map"
-        case .recentlySaved: "Recently Saved"
+        case .timeline: "Timeline"
+        case .highlights: "Highlights"
+        case .places: "Places"
+        case .today: "Today"
         case .recentlyDeleted: "Recently Deleted"
-        case .days: "Days"
-        case .peoplePets: "People & Pets"
-        case .memories: "Memories"
-        case .trips: "Trips"
-        case .featured: "Featured Photos"
-        case .utilities: "Utilities"
-        case .duplicates: "Duplicates"
-        case .receipts: "Receipts"
-        case .handwriting: "Handwriting"
-        case .illustrations: "Illustrations"
-        case .recentlyViewed: "Recently Viewed"
-        case .documents: "Documents"
-        case .mediaTypes: "Media Types"
-        case .videos: "Videos"
-        case .selfies: "Selfies"
-        case .livePhotos: "Live Photos"
-        case .portrait: "Portrait"
-        case .panoramas: "Panoramas"
-        case .timelapse: "Time-lapse"
-        case .slomo: "Slo-mo"
-        case .bursts: "Bursts"
-        case .screenshots: "Screenshots"
-        case .screenRecordings: "Screen Recordings"
-        case .animated: "Animated"
-        case .albumsRoot: "Albums"
-        case .album(let name): name
-        case .projects: "Projects"
-        case .sharedAlbums: "Shared Albums"
+        case .dayRecaps: "Day Recaps"
+        case .people: "People"
+        case .meetings: "Meetings"
+        case .sessions: "Sessions"
         case .activity: "Activity"
-        case .sharedAlbum(let name): name
-        case .sharedWithYou: "Shared with You"
+        case .extracted: "Extracted"
+        case .decisions: "Decisions"
+        case .actionItems: "Action Items"
+        case .questions: "Questions"
+        case .codeSnippets: "Code Snippets"
+        case .links: "Links"
+        case .errors: "Errors"
+        case .redacted: "Redacted"
+        case .sources: "Sources"
+        case .screen: "Screen"
+        case .microphone: "Microphone"
+        case .systemAudio: "System Audio"
+        case .keyboardClicks: "Keyboard & Clicks"
+        case .browser: "Browser"
+        case .terminal: "Terminal"
+        case .editor: "Editor"
+        case .chat: "Chat"
+        case .email: "Email"
+        case .documents: "Documents"
+        case .design: "Design"
+        case .notebooksRoot: "Notebooks"
+        case .notebook(let name): name
+        case .pipesRoot: "Pipes"
+        case .pipe(let name): name
+        case .agentMemory: "Agent Memory"
+        case .facts: "Facts"
+        case .playbooks: "Playbooks"
+        case .sops: "SOPs"
+        case .memoryTarget(let name): name
+        case .sharedContexts: "Shared Contexts"
+        case .accessLog: "Access Log"
+        case .share(let name): name
+        case .firewall: "Firewall"
+        case .firewallRules: "Rules"
+        case .connectedApps: "Connected Apps"
+        case .blocked: "Blocked"
+        case .requests: "Requests"
         }
     }
 }

@@ -16,8 +16,8 @@ Requires macOS 15.
 
 ## What to try
 
-- **Sidebar**: Library / Memories / Favorites / Recently Saved, Albums, Utilities
-  (Duplicates shows real identical pairs; Recently Deleted has restore/erase).
+- **Sidebar**: the context taxonomy (see below). Recently Deleted still has
+  restore/erase; clicking a disclosure group label toggles it, as in Photos.
 - **Toolbar**: Years / Months / Days / All Photos segmented control, zoom slider,
   favorites filter menu, Info (inspector), search.
 - **Grid**: pinch-to-zoom (live tracking, spring snap on release) or drag the slider;

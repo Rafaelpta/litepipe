@@ -27,7 +27,7 @@ struct ContentColumn: View {
     @Environment(SelectionModel.self) private var sel
     @Namespace private var heroNS
 
-    private var isLibrary: Bool { nav.sidebarItem == .library }
+    private var isTimeline: Bool { nav.sidebarItem == .timeline }
     private var inTrash: Bool { nav.sidebarItem == .recentlyDeleted }
 
     private var currentPhotos: [Photo] {
@@ -56,7 +56,7 @@ struct ContentColumn: View {
 
     @ViewBuilder private var mainContent: some View {
         let photos = currentPhotos
-        if nav.sidebarItem == .map {
+        if nav.sidebarItem == .places {
             MapPane(photos: photos)
         } else {
             gridModes(photos)
@@ -64,7 +64,7 @@ struct ContentColumn: View {
     }
 
     @ViewBuilder private func gridModes(_ photos: [Photo]) -> some View {
-        let mode: ViewMode = isLibrary ? nav.viewMode : (nav.sidebarItem == .days ? .days : .all)
+        let mode: ViewMode = isTimeline ? nav.viewMode : (nav.sidebarItem == .dayRecaps ? .days : .all)
         ZStack {
             switch mode {
             case .years:
@@ -163,7 +163,7 @@ struct ContentColumn: View {
     }
 
     @ToolbarContentBuilder private var gridToolbar: some ToolbarContent {
-        if isLibrary {
+        if isTimeline {
             ToolbarItem(placement: .principal) {
                 @Bindable var nav = nav
                 Picker("View", selection: Binding(
@@ -179,7 +179,7 @@ struct ContentColumn: View {
             }
         }
         ToolbarItemGroup {
-            if nav.sidebarItem != .map, !isLibrary || nav.viewMode == .days || nav.viewMode == .all {
+            if nav.sidebarItem != .places, !isTimeline || nav.viewMode == .days || nav.viewMode == .all {
                 Slider(value: Binding(
                     get: { nav.zoomLevel },
                     set: { v in withAnimation(Anim.zoom) { nav.zoomLevel = v } }

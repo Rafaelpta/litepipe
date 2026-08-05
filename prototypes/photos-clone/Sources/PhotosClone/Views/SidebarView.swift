@@ -8,11 +8,11 @@ struct SidebarView: View {
     var body: some View {
         @Bindable var nav = nav
         List(selection: $nav.sidebarItem) {
-            Section("Photos") {
-                row(.library, "photo.on.rectangle.angled")
-                row(.favorites, "heart")
-                row(.map, "map")
-                row(.recentlySaved, "square.and.arrow.down")
+            Section("Capture") {
+                row(.timeline, "clock")
+                row(.highlights, "sparkles")
+                row(.places, "map")
+                row(.today, "calendar")
                 HStack {
                     Label("Recently Deleted", systemImage: "trash")
                     Spacer()
@@ -24,69 +24,96 @@ struct SidebarView: View {
             }
 
             Section("Collections") {
-                row(.days, "clock")
-                row(.peoplePets, "person.crop.circle")
-                row(.memories, "memories")
-                row(.trips, "suitcase")
-                row(.featured, "photo.artframe")
+                row(.dayRecaps, "note.text")
+                row(.people, "person.crop.circle")
+                row(.meetings, "person.2.wave.2")
+                row(.sessions, "timeline.selection")
+                row(.activity, "bolt")
 
-                DisclosureGroup(isExpanded: $nav.utilitiesExpanded) {
-                    row(.duplicates, "square.on.square", nested: true)
-                    row(.receipts, "cart", nested: true)
-                    row(.handwriting, "pencil.line", nested: true)
-                    row(.illustrations, "scribble.variable", nested: true)
-                    row(.recentlyViewed, "eye", nested: true)
+                DisclosureGroup(isExpanded: $nav.extractedExpanded) {
+                    row(.decisions, "checkmark.seal", nested: true)
+                    row(.actionItems, "checklist", nested: true)
+                    row(.questions, "questionmark.bubble", nested: true)
+                    row(.codeSnippets, "chevron.left.forwardslash.chevron.right", nested: true)
+                    row(.links, "link", nested: true)
+                    row(.errors, "exclamationmark.triangle", nested: true)
+                    row(.redacted, "eye.slash", nested: true)
+                } label: {
+                    Label("Extracted", systemImage: "wand.and.rays")
+                        .tag(SidebarItem.extracted)
+                }
+
+                DisclosureGroup(isExpanded: $nav.sourcesExpanded) {
+                    row(.screen, "display", nested: true)
+                    row(.microphone, "mic", nested: true)
+                    row(.systemAudio, "speaker.wave.2", nested: true)
+                    row(.keyboardClicks, "keyboard", nested: true)
+                    row(.browser, "safari", nested: true)
+                    row(.terminal, "terminal", nested: true)
+                    row(.editor, "curlybraces", nested: true)
+                    row(.chat, "bubble.left.and.bubble.right", nested: true)
+                    row(.email, "envelope", nested: true)
                     row(.documents, "doc.text", nested: true)
+                    row(.design, "paintbrush", nested: true)
                 } label: {
-                    Label("Utilities", systemImage: "wrench.and.screwdriver")
-                        .tag(SidebarItem.utilities)
+                    Label("Sources", systemImage: "folder")
+                        .tag(SidebarItem.sources)
                 }
 
-                DisclosureGroup(isExpanded: $nav.mediaTypesExpanded) {
-                    row(.videos, "video", nested: true)
-                    row(.selfies, "person.crop.square", nested: true)
-                    row(.livePhotos, "livephoto", nested: true)
-                    row(.portrait, "f.cursive", nested: true)
-                    row(.panoramas, "pano", nested: true)
-                    row(.timelapse, "timelapse", nested: true)
-                    row(.slomo, "slowmo", nested: true)
-                    row(.bursts, "square.stack.3d.down.right", nested: true)
-                    row(.screenshots, "camera.viewfinder", nested: true)
-                    row(.screenRecordings, "record.circle", nested: true)
-                    row(.animated, "wave.3.left", nested: true)
-                } label: {
-                    Label("Media Types", systemImage: "folder")
-                        .tag(SidebarItem.mediaTypes)
-                }
-
-                DisclosureGroup(isExpanded: $nav.albumsExpanded) {
-                    ForEach(lib.albumNames, id: \.self) { name in
-                        row(.album(name), "rectangle.stack", nested: true)
+                DisclosureGroup(isExpanded: $nav.notebooksExpanded) {
+                    ForEach(lib.notebookNames, id: \.self) { name in
+                        row(.notebook(name), "rectangle.stack", nested: true)
                     }
                 } label: {
-                    Label("Albums", systemImage: "folder")
-                        .tag(SidebarItem.albumsRoot)
+                    Label("Notebooks", systemImage: "folder")
+                        .tag(SidebarItem.notebooksRoot)
                 }
 
-                DisclosureGroup(isExpanded: $nav.projectsExpanded) {
-                    EmptyView()
+                DisclosureGroup(isExpanded: $nav.pipesExpanded) {
+                    ForEach(lib.pipeNames, id: \.self) { name in
+                        row(.pipe(name), "wand.and.rays", nested: true)
+                    }
                 } label: {
-                    Label("Projects", systemImage: "folder")
-                        .tag(SidebarItem.projects)
+                    Label("Pipes", systemImage: "folder")
+                        .tag(SidebarItem.pipesRoot)
+                }
+            }
+
+            Section("Memory") {
+                DisclosureGroup(isExpanded: $nav.agentMemoryExpanded) {
+                    row(.facts, "quote.bubble", nested: true)
+                    row(.playbooks, "book.closed", nested: true)
+                    row(.sops, "list.bullet.rectangle", nested: true)
+                    ForEach(lib.memoryTargets, id: \.self) { name in
+                        row(.memoryTarget(name), "doc.text", nested: true)
+                    }
+                } label: {
+                    Label("Agent Memory", systemImage: "brain")
+                        .tag(SidebarItem.agentMemory)
                 }
             }
 
             Section("Sharing") {
-                DisclosureGroup(isExpanded: $nav.sharedAlbumsExpanded) {
-                    row(.activity, "text.bubble", nested: true)
-                    ForEach(lib.sharedAlbumNames, id: \.self) { name in
-                        row(.sharedAlbum(name), "photo.stack", nested: true)
+                DisclosureGroup(isExpanded: $nav.sharedContextsExpanded) {
+                    row(.accessLog, "clock.arrow.circlepath", nested: true)
+                    ForEach(lib.shareNames, id: \.self) { name in
+                        row(.share(name), "antenna.radiowaves.left.and.right", nested: true)
                     }
                 } label: {
-                    Label("Shared Albums", systemImage: "rectangle.stack.badge.person.crop")
-                        .tag(SidebarItem.sharedAlbums)
+                    Label("Shared Contexts", systemImage: "rectangle.stack.badge.person.crop")
+                        .tag(SidebarItem.sharedContexts)
                 }
-                row(.sharedWithYou, "shared.with.you")
+
+                DisclosureGroup(isExpanded: $nav.firewallExpanded) {
+                    row(.firewallRules, "slider.horizontal.3", nested: true)
+                    row(.connectedApps, "puzzlepiece.extension", nested: true)
+                    row(.blocked, "hand.raised", nested: true)
+                } label: {
+                    Label("Firewall", systemImage: "lock.shield")
+                        .tag(SidebarItem.firewall)
+                }
+
+                row(.requests, "tray.and.arrow.down")
             }
         }
         .listStyle(.sidebar)

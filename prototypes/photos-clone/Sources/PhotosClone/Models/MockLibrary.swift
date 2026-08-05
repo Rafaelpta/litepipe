@@ -5,9 +5,13 @@ import Observation
 final class MockLibrary {
     private(set) var photos: [Photo] = []   // ascending by date
 
-    let albumNames = ["Trips", "Family", "Nature", "Screenshots"]
-    let sharedAlbumNames = ["Rolo câmera"]
-    let tripLocations: Set<String> = ["Lisbon", "Tokyo", "Paris", "Rio de Janeiro", "New York"]
+    let notebookNames = ["Auth Rewrite", "Q3 Planning", "Vendor Calls", "Onboarding"]
+    let pipeNames = ["Day Recap", "Standup", "Meeting Summary"]
+    let memoryTargets = ["CLAUDE.md", "AGENTS.md"]
+    /// Named slices of context that cross the machine boundary. Each one is a
+    /// different reason to share: internal team, a scoped vendor handoff, and an
+    /// aggregated panel — the one you'd actually get paid for.
+    let shareNames = ["Team Standup", "Acme Support", "Research Panel"]
 
     init() { generate() }
 
@@ -21,41 +25,70 @@ final class MockLibrary {
             let visible = photos.filter { !$0.isDeleted && !$0.isHidden }
             let scenic: Set<PhotoKind> = [.landscape, .beach, .sunset, .city, .forest]
             switch item {
-            case .library, .days, .none: base = visible
-            case .favorites:      base = visible.filter { $0.isFavorite }
-            case .map:            base = visible.filter { $0.location != nil }
-            case .recentlySaved:  base = visible.filter { $0.date > Date().addingTimeInterval(-30 * 86_400) }
-            case .peoplePets:     base = visible.filter { [.portrait, .pet].contains($0.kind) }
-            case .memories:       base = visible.filter { $0.seed % 6 == 0 }
-            case .trips:          base = visible.filter { tripLocations.contains($0.location ?? "") }
-            case .featured:       base = visible.filter { $0.seed % 5 == 0 && scenic.contains($0.kind) }
-            case .utilities, .duplicates:
-                let counts = Dictionary(grouping: visible, by: \.seed)
-                base = counts.values.filter { $0.count > 1 }.flatMap { $0 }.sorted { $0.date < $1.date }
-            case .receipts:       base = visible.filter { $0.kind == .screenshot && $0.seed % 4 == 0 }
-            case .recentlyViewed: base = Array(visible.suffix(24))
-            case .documents:      base = visible.filter { $0.kind == .screenshot && $0.seed % 2 == 0 }
-            case .mediaTypes:     base = visible.filter { [.screenshot, .portrait].contains($0.kind) }
-            case .selfies:        base = visible.filter { $0.kind == .portrait && $0.seed % 3 == 0 }
-            case .livePhotos:     base = visible.filter { $0.seed % 7 == 0 && $0.kind != .screenshot }
-            case .portrait:       base = visible.filter { $0.kind == .portrait }
-            case .panoramas:      base = visible.filter { $0.aspect > 1.5 && $0.kind != .screenshot }
-            case .bursts:         base = visible.filter { $0.seed % 9 == 0 && $0.kind != .screenshot }
-            case .screenshots:    base = visible.filter { $0.kind == .screenshot }
-            case .handwriting:    base = visible.filter { $0.kind == .screenshot && $0.seed % 13 == 0 }
-            case .illustrations:  base = visible.filter { $0.kind == .screenshot && $0.seed % 11 == 0 }
-            case .videos:         base = visible.filter { $0.seed % 12 == 0 && $0.kind != .screenshot }
-            case .timelapse:      base = visible.filter { $0.seed % 31 == 0 && $0.kind == .city }
-            case .slomo:          base = visible.filter { $0.seed % 29 == 0 && $0.kind == .pet }
-            case .screenRecordings: base = visible.filter { $0.kind == .screenshot && $0.seed % 17 == 0 }
-            case .animated:       base = visible.filter { $0.seed % 23 == 0 }
-            case .projects:       base = []
-            case .albumsRoot:
-                base = visible.filter { p in albumNames.contains { albumContains($0, p) } }
-            case .album(let name): base = visible.filter { albumContains(name, $0) }
-            case .sharedAlbums, .sharedAlbum: base = visible.filter { $0.seed % 4 == 0 }
-            case .activity:       base = Array(visible.filter { $0.isFavorite }.suffix(30))
-            case .sharedWithYou:  base = visible.filter { $0.seed % 5 == 1 }
+            // Capture
+            case .timeline, .none: base = visible
+            case .highlights:     base = visible.filter { $0.isFavorite }
+            case .places:         base = visible.filter { $0.location != nil }
+            case .today:
+                // The generator only emits captures on ~26% of days, so filtering on the
+                // real calendar day would leave this empty most launches. Use the day of
+                // the most recent capture instead.
+                let lastDay = visible.last.map { Calendar.current.startOfDay(for: $0.date) }
+                base = visible.filter { p in
+                    guard let lastDay else { return false }
+                    return Calendar.current.isDate(p.date, inSameDayAs: lastDay)
+                }
+            // Collections
+            case .dayRecaps:      base = visible.filter { $0.seed % 6 == 0 }
+            case .people:         base = visible.filter { [.portrait, .pet].contains($0.kind) }
+            case .meetings:       base = visible.filter { $0.kind == .portrait && $0.seed % 3 == 0 }
+            case .sessions:       base = visible.filter { $0.seed % 4 == 0 }
+            case .activity:       base = visible.filter { $0.seed % 5 == 0 && scenic.contains($0.kind) }
+            case .extracted:      base = visible.filter { $0.kind == .screenshot }
+            case .decisions:      base = visible.filter { $0.kind == .screenshot && $0.seed % 7 == 0 }
+            case .actionItems:    base = visible.filter { $0.kind == .screenshot && $0.seed % 5 == 0 }
+            case .questions:      base = visible.filter { $0.kind == .screenshot && $0.seed % 11 == 0 }
+            case .codeSnippets:   base = visible.filter { $0.kind == .screenshot && $0.seed % 3 == 0 }
+            case .links:          base = visible.filter { $0.seed % 9 == 0 }
+            case .errors:         base = visible.filter { $0.kind == .screenshot && $0.seed % 13 == 0 }
+            case .redacted:       base = visible.filter { $0.seed % 17 == 0 }
+            case .sources, .screen:
+                base = visible.filter { ![.portrait, .pet].contains($0.kind) }
+            case .microphone:     base = visible.filter { $0.kind == .portrait }
+            case .systemAudio:    base = visible.filter { $0.kind == .portrait && $0.seed % 2 == 0 }
+            case .keyboardClicks: base = visible.filter { $0.seed % 2 == 0 }
+            case .browser:        base = visible.filter { [.city, .landscape].contains($0.kind) }
+            case .terminal:       base = visible.filter { $0.kind == .screenshot && $0.seed % 4 == 0 }
+            case .editor:         base = visible.filter { $0.kind == .screenshot && $0.seed % 2 == 0 }
+            case .chat:           base = visible.filter { $0.kind == .food }
+            case .email:          base = visible.filter { $0.kind == .food && $0.seed % 3 == 0 }
+            case .documents:      base = visible.filter { $0.kind == .forest }
+            case .design:         base = visible.filter { $0.kind == .sunset }
+            case .notebooksRoot:
+                base = visible.filter { p in notebookNames.contains { notebookContains($0, p) } }
+            case .notebook(let name): base = visible.filter { notebookContains(name, $0) }
+            case .pipesRoot:
+                base = visible.filter { p in pipeNames.contains { pipeContains($0, p) } }
+            case .pipe(let name): base = visible.filter { pipeContains(name, $0) }
+            // Memory
+            case .agentMemory:    base = visible.filter { $0.isFavorite }
+            case .facts:          base = visible.filter { $0.isFavorite && $0.seed % 2 == 0 }
+            case .playbooks:      base = visible.filter { $0.seed % 31 == 0 }
+            case .sops:           base = visible.filter { $0.seed % 29 == 0 }
+            case .memoryTarget(let name):
+                // The real sync only writes memories above an importance threshold, so
+                // each target file gets a different slice of the favorites.
+                base = visible.filter { $0.isFavorite && (name == "CLAUDE.md" ? $0.seed % 3 != 0 : $0.seed % 3 == 0) }
+            // Sharing — everything here is a subset of what already left or could leave
+            case .sharedContexts:
+                base = visible.filter { p in shareNames.contains { shareContains($0, p) } }
+            case .accessLog:      base = Array(visible.filter { $0.seed % 4 == 1 }.suffix(40))
+            case .share(let name): base = visible.filter { shareContains(name, $0) }
+            case .firewall, .firewallRules:
+                base = visible.filter { $0.seed % 5 == 1 }
+            case .connectedApps:  base = visible.filter { $0.seed % 10 == 3 }
+            case .blocked:        base = visible.filter { $0.seed % 17 == 0 }
+            case .requests:       base = Array(visible.filter { $0.seed % 14 == 5 }.suffix(12))
             case .recentlyDeleted: base = []
             }
         }
@@ -74,13 +107,31 @@ final class MockLibrary {
         return base
     }
 
-    private func albumContains(_ name: String, _ p: Photo) -> Bool {
+    private func notebookContains(_ name: String, _ p: Photo) -> Bool {
         switch name {
-        case "Trips":       [.beach, .city, .landscape].contains(p.kind) && p.seed % 2 == 0
-        case "Family":      [.portrait, .pet].contains(p.kind)
-        case "Nature":      [.forest, .landscape, .sunset].contains(p.kind) && p.seed % 3 != 0
-        case "Screenshots": p.kind == .screenshot
-        default:            false
+        case "Auth Rewrite":  p.kind == .screenshot && p.seed % 2 == 0
+        case "Q3 Planning":   [.forest, .landscape].contains(p.kind) && p.seed % 3 != 0
+        case "Vendor Calls":  [.portrait, .pet].contains(p.kind) && p.seed % 2 == 0
+        case "Onboarding":    [.city, .sunset].contains(p.kind) && p.seed % 3 == 0
+        default:              false
+        }
+    }
+
+    private func shareContains(_ name: String, _ p: Photo) -> Bool {
+        switch name {
+        case "Team Standup":  p.seed % 6 == 0
+        case "Acme Support":  p.kind == .screenshot && p.seed % 3 == 1
+        case "Research Panel": p.seed % 7 == 2
+        default:              false
+        }
+    }
+
+    private func pipeContains(_ name: String, _ p: Photo) -> Bool {
+        switch name {
+        case "Day Recap":       p.seed % 6 == 0
+        case "Standup":         p.seed % 8 == 0
+        case "Meeting Summary": p.kind == .portrait && p.seed % 3 == 0
+        default:                false
         }
     }
 
