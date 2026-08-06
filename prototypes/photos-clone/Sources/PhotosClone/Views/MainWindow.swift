@@ -25,6 +25,7 @@ struct ContentColumn: View {
     @Environment(NavigationState.self) private var nav
     @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
+    @Environment(ChatModel.self) private var chat
     @Namespace private var heroNS
 
     private var isTimeline: Bool { nav.sidebarItem == .timeline }
@@ -56,7 +57,9 @@ struct ContentColumn: View {
 
     @ViewBuilder private var mainContent: some View {
         let photos = currentPhotos
-        if nav.sidebarItem == .places {
+        if nav.sidebarItem == .assistant {
+            ChatPane()
+        } else if nav.sidebarItem == .places {
             MapPane(photos: photos)
         } else {
             gridModes(photos)
@@ -163,6 +166,13 @@ struct ContentColumn: View {
     }
 
     @ToolbarContentBuilder private var gridToolbar: some ToolbarContent {
+        if nav.sidebarItem == .assistant {
+            ToolbarItem {
+                Button { chat.reset() } label: { Label("New Chat", systemImage: "square.and.pencil") }
+                    .help("Start a new conversation")
+                    .disabled(chat.turns.isEmpty)
+            }
+        }
         if isTimeline {
             ToolbarItem(placement: .principal) {
                 @Bindable var nav = nav
@@ -179,6 +189,7 @@ struct ContentColumn: View {
             }
         }
         ToolbarItemGroup {
+            if nav.sidebarItem != .assistant {
             Picker("Mode", selection: Binding(
                 get: { nav.rawMode },
                 set: { raw in
@@ -193,8 +204,10 @@ struct ContentColumn: View {
             .pickerStyle(.segmented)
             .fixedSize()
             .help("Folded moments vs every capture as recorded")
+            }
 
-            if nav.sidebarItem != .places, !isTimeline || nav.viewMode == .days || nav.viewMode == .all {
+            if nav.sidebarItem != .places, nav.sidebarItem != .assistant,
+               !isTimeline || nav.viewMode == .days || nav.viewMode == .all {
                 Slider(value: Binding(
                     get: { nav.zoomLevel },
                     set: { v in withAnimation(Anim.zoom) { nav.zoomLevel = v } }

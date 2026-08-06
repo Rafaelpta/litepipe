@@ -6,6 +6,7 @@ struct PhotosCloneApp: App {
     @State private var library = ContextLibrary()
     @State private var nav = NavigationState()
     @State private var sel = SelectionModel()
+    @State private var chat = ChatModel()
 
     init() {
         // `swift run` launches a bare executable with no bundle — promote it to a
@@ -26,6 +27,7 @@ struct PhotosCloneApp: App {
                 .environment(library)
                 .environment(nav)
                 .environment(sel)
+                .environment(chat)
                 .task { Thumbs.shared.prewarm(library.items) }
         }
         .windowToolbarStyle(.unified(showsTitle: false))

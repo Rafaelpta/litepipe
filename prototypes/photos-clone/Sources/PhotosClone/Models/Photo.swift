@@ -9,7 +9,7 @@ enum ContextSource: String, CaseIterable {
     var label: String {
         switch self {
         case .browser: "Browser"
-        case .chat: "Chat"
+        case .chat: "Messaging"
         case .email: "Email"
         case .terminal: "Terminal"
         case .editor: "Editor"
@@ -151,13 +151,16 @@ enum ViewMode: String, CaseIterable, Identifiable {
 /// Capture is the raw append-only stream, Collections are recomputable indexes over it,
 /// Memory is the small distilled layer an agent reads.
 enum SidebarItem: Hashable {
+    /// Talking to the archive. Sits above everything because it is the one place
+    /// you go with a question rather than a place to browse.
+    case assistant
     // Capture — the raw stream
     case timeline, highlights, places, today, recentlyDeleted
     // Collections — derived structure
     case dayRecaps, people, meetings, sessions, activity
     case extracted, decisions, actionItems, questions, codeSnippets, links, errors, redacted
     case sources, screen, microphone, systemAudio, keyboardClicks, browser, terminal,
-         editor, chat, email, documents, design
+         editor, messaging, email, documents, design
     case notebooksRoot, notebook(String), pipesRoot, pipe(String)
     // Memory — distilled, agent-facing
     case agentMemory, facts, playbooks, sops, memoryTarget(String)
@@ -168,6 +171,7 @@ enum SidebarItem: Hashable {
 
     var displayName: String {
         switch self {
+        case .assistant: "Chat"
         case .timeline: "Timeline"
         case .highlights: "Highlights"
         case .places: "Places"
@@ -194,7 +198,7 @@ enum SidebarItem: Hashable {
         case .browser: "Browser"
         case .terminal: "Terminal"
         case .editor: "Editor"
-        case .chat: "Chat"
+        case .messaging: "Messaging"
         case .email: "Email"
         case .documents: "Documents"
         case .design: "Design"

@@ -68,8 +68,13 @@ enum ContextDB {
         out.items = loadFrames(db, limit: limit, meetings: out.meetings, raw: raw)
         out.meetings = out.meetings.map { m in
             guard m.title == nil else { return m }
+            // The most common window during a call is whatever you were reading,
+            // not the call. Look for the conferencing window itself.
             let during = out.items.filter { $0.meetingId == m.id && !$0.window.isEmpty }
-            let top = Dictionary(grouping: during.map(\.window), by: { $0 })
+            let callWindows = during.map(\.window).filter { w in
+                ["Meet -", "Meet –", "Zoom", "Teams", "FaceTime"].contains { w.contains($0) }
+            }
+            let top = Dictionary(grouping: callWindows, by: { $0 })
                 .max { $0.value.count < $1.value.count }?.key
             return Meeting(id: m.id, start: m.start, end: m.end, app: m.app,
                            title: top.map(cleanMeetingTitle))

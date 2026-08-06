@@ -8,6 +8,12 @@ struct SidebarView: View {
     var body: some View {
         @Bindable var nav = nav
         List(selection: $nav.sidebarItem) {
+            // Above the sections, with no header of its own — the way New Chat
+            // sits above everything in a chat app.
+            Section {
+                row(.assistant, "sparkles.rectangle.stack")
+            }
+
             Section("Capture") {
                 row(.timeline, "clock")
                 row(.highlights, "sparkles")
@@ -51,7 +57,7 @@ struct SidebarView: View {
                     row(.browser, "safari", nested: true)
                     row(.terminal, "terminal", nested: true)
                     row(.editor, "curlybraces", nested: true)
-                    row(.chat, "bubble.left.and.bubble.right", nested: true)
+                    row(.messaging, "bubble.left.and.bubble.right", nested: true)
                     row(.email, "envelope", nested: true)
                     row(.documents, "doc.text", nested: true)
                     row(.design, "paintbrush", nested: true)
