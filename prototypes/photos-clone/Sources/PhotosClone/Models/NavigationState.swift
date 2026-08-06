@@ -28,4 +28,22 @@ final class NavigationState {
     var agentMemoryExpanded = true
     var sharedContextsExpanded = true
     var firewallExpanded = true
+
+    // Capture control. The keyboard shortcut stays the primary toggle; this is
+    // the visible state, so the user is never guessing whether it is recording.
+    /// Nil while capturing. A date means paused until then; `.distantFuture`
+    /// means paused until the app is relaunched.
+    var pausedUntil: Date?
+
+    var capturePaused: Bool {
+        guard let until = pausedUntil else { return false }
+        return until > Date()
+    }
+
+    /// Pass nil to pause until the next launch.
+    func pauseCapture(for seconds: TimeInterval?) {
+        pausedUntil = seconds.map { Date().addingTimeInterval($0) } ?? .distantFuture
+    }
+
+    func resumeCapture() { pausedUntil = nil }
 }

@@ -123,6 +123,7 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom, spacing: 0) { CaptureStatusBar() }
         .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 300)
         .onChange(of: nav.sidebarItem) {
             sel.clear()

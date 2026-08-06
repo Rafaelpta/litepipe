@@ -9,6 +9,8 @@ final class ContextLibrary {
     private(set) var uiEventCount = 0
     private(set) var elementCount = 0
     private(set) var loadError: String?
+    /// Size of the archive on disk, shown where a competitor shows a plan tier.
+    private(set) var archiveSize: String?
     /// frame id → the sentence that matched the current query, from FTS5 snippet().
     private(set) var searchHits: [Int64: String] = [:]
     private var lastQuery = ""
@@ -42,6 +44,16 @@ final class ContextLibrary {
         elementCount = load.elementCount
         loadError = load.error
         notebookNames = topHosts(4)
+        archiveSize = Self.diskSize(ContextDB.defaultPath)
+    }
+
+    private static func diskSize(_ path: String) -> String? {
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+              let bytes = attrs[.size] as? Int64 else { return nil }
+        let f = ByteCountFormatter()
+        f.countStyle = .file
+        f.allowedUnits = [.useMB, .useGB]
+        return f.string(fromByteCount: bytes)
     }
 
     private func topHosts(_ n: Int) -> [String] {
