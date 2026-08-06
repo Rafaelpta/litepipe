@@ -40,7 +40,8 @@ final class NavigationState {
         return until > Date()
     }
 
-    /// Pass nil to pause until the next launch.
+    /// Pass nil to pause until the next launch. The duration is kept so the
+    /// pause can expire on its own; the pill deliberately does not show it.
     func pauseCapture(for seconds: TimeInterval?) {
         pausedUntil = seconds.map { Date().addingTimeInterval($0) } ?? .distantFuture
     }

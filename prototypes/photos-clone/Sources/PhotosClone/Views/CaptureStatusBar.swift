@@ -1,17 +1,14 @@
 import SwiftUI
 
-/// Pinned to the bottom of the sidebar: is capture running, for how much longer
-/// is it paused, and what is in the archive. Littlebird puts a subscription tier
-/// here; a local product should put the archive itself, because "973 MB, this
-/// Mac, never uploaded" is the claim that sells it.
+/// Pinned to the bottom of the sidebar: whether capture is running, and what is
+/// in the archive. Littlebird puts a subscription tier here; a local product
+/// should put the archive itself, because "1,15 GB, this Mac, never uploaded" is
+/// the claim that sells it.
 struct CaptureStatusBar: View {
     @Environment(NavigationState.self) private var nav
     @Environment(ContextLibrary.self) private var lib
-    @State private var now = Date()
     @State private var showExclusions = false
     @State private var confirmDelete: DeleteScope?
-
-    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,7 +21,6 @@ struct CaptureStatusBar: View {
             .padding(.top, 9)
             .padding(.bottom, 10)
         }
-        .onReceive(tick) { now = $0 }
         .sheet(isPresented: $showExclusions) { ExclusionsSheet() }
         .confirmationDialog(
             confirmDelete.map { "Delete \($0.label.lowercased())?" } ?? "",
@@ -41,18 +37,19 @@ struct CaptureStatusBar: View {
 
     // MARK: Status
 
-    private var statusRow: some View {
-        HStack(spacing: 6) {
-            // The dot lives outside the Menu label: .borderlessButton renders the
-            // label's text and drops anything else, so a Circle inside vanishes.
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(nav.capturePaused ? Color.orange : Color.green)
-                    .frame(width: 7, height: 7)
+    /// Two shapes, not one with a variable. Running: a live dot plus a pause
+    /// button beside the pill. Paused: a pause glyph, the word, and nothing
+    /// else — the pause still expires on its own, it just does not narrate it.
+    @ViewBuilder private var statusRow: some View {
+        if nav.capturePaused {
+            HStack(spacing: 7) {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
                 Menu {
                     menuItems
                 } label: {
-                    Text(statusText)
+                    Text("Paused")
                         .font(.system(size: 12))
                         .lineLimit(1)
                 }
@@ -61,36 +58,55 @@ struct CaptureStatusBar: View {
                 .fixedSize()
                 Spacer(minLength: 0)
             }
-            .padding(.leading, 9)
-            .padding(.trailing, 6)
+            .padding(.horizontal, 9)
             .padding(.vertical, 6)
             .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 7))
+        } else {
+            HStack(spacing: 6) {
+                // The dot lives outside the Menu label: .borderlessButton renders
+                // the label's text and drops anything else, so a nested Circle
+                // simply never appears.
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 7, height: 7)
+                    Menu {
+                        menuItems
+                    } label: {
+                        Text("Context enabled")
+                            .font(.system(size: 12))
+                            .lineLimit(1)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 9)
+                .padding(.trailing, 6)
+                .padding(.vertical, 6)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 7))
 
-            Button {
-                if nav.capturePaused { nav.resumeCapture() } else { nav.pauseCapture(for: nil) }
-            } label: {
-                Image(systemName: nav.capturePaused ? "play.fill" : "pause.fill")
-                    .font(.system(size: 10))
-                    .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
+                Button { nav.pauseCapture(for: 15 * 60) } label: {
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 10))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 7))
+                .help("Pause capture for 15 minutes")
             }
-            .buttonStyle(.plain)
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 7))
-            .help(nav.capturePaused ? "Resume capture" : "Pause capture")
         }
-    }
-
-    private var statusText: String {
-        guard nav.capturePaused else { return "Context enabled" }
-        guard let until = nav.pausedUntil else { return "Paused" }
-        let left = Int(until.timeIntervalSince(now))
-        guard left > 0 else { return "Paused" }
-        return left >= 60 ? "Paused · \(left / 60) min left" : "Paused · \(left)s left"
     }
 
     // MARK: Menu
 
     @ViewBuilder private var menuItems: some View {
+        if nav.capturePaused {
+            Button("Resume Context Awareness") { nav.resumeCapture() }
+            Divider()
+        }
         Menu("Pause Context Awareness") {
             Button("5 minutes")   { nav.pauseCapture(for: 5 * 60) }
             Button("15 minutes")  { nav.pauseCapture(for: 15 * 60) }
