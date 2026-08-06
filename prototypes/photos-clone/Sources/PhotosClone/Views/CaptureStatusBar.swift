@@ -8,7 +8,6 @@ struct CaptureStatusBar: View {
     @Environment(NavigationState.self) private var nav
     @Environment(ContextLibrary.self) private var lib
     @State private var hovering = false
-    @State private var showMenu = false
     @State private var showExclusions = false
     @State private var confirmDelete: DeleteScope?
 
@@ -58,21 +57,22 @@ struct CaptureStatusBar: View {
                         .fill(Color.green)
                         .frame(width: 7, height: 7)
                 }
-                Text(nav.capturePaused ? "Paused" : "Context enabled")
-                    .font(.system(size: 12))
-                    .lineLimit(1)
+                Menu {
+                    menuItems
+                } label: {
+                    Text(nav.capturePaused ? "Paused" : "Context enabled")
+                        .font(.system(size: 12))
+                        .lineLimit(1)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
                 Spacer(minLength: 0)
             }
             .padding(.leading, 9)
             .padding(.trailing, 9)
             .padding(.vertical, 6)
             .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 7))
-            .contentShape(RoundedRectangle(cornerRadius: 7))
-            .onTapGesture { showMenu.toggle() }
-            .popover(isPresented: $showMenu, arrowEdge: .top) {
-                CaptureMenu(showExclusions: $showExclusions, confirmDelete: $confirmDelete)
-                    .environment(nav)
-            }
 
             if hovering {
                 Button {
@@ -93,6 +93,47 @@ struct CaptureStatusBar: View {
         .onHover { inside in
             withAnimation(Anim.hover) { hovering = inside }
         }
+    }
+
+    // MARK: Menu
+
+    /// A system menu rather than a popover: no beak, it sits flush against the
+    /// pill, and `Label` gives each row its icon for free. The only thing lost
+    /// against a custom panel is the footer button, which becomes a plain item.
+    @ViewBuilder private var menuItems: some View {
+        Group {
+        if nav.capturePaused {
+            Button { nav.resumeCapture() } label: {
+                Label("Resume Context Awareness", systemImage: "play")
+            }
+        } else {
+            Menu {
+                Button("5 minutes")  { nav.pauseCapture(for: 5 * 60) }
+                Button("15 minutes") { nav.pauseCapture(for: 15 * 60) }
+                Button("30 minutes") { nav.pauseCapture(for: 30 * 60) }
+                Button("An hour")    { nav.pauseCapture(for: 60 * 60) }
+                Divider()
+                Button("Until next launch") { nav.pauseCapture(for: nil) }
+            } label: {
+                Label("Pause Context Awareness", systemImage: "pause")
+            }
+        }
+        Menu {
+            ForEach(DeleteScope.allCases) { scope in
+                Button(scope.label, role: scope == .everything ? .destructive : nil) {
+                    confirmDelete = scope
+                }
+            }
+        } label: {
+            Label("Delete Data", systemImage: "trash")
+        }
+        Divider()
+        Button { showExclusions = true } label: {
+            Label("Exclude Apps and Websites…", systemImage: "nosign")
+        }
+        }
+        // macOS drops menu-item icons unless the style is stated outright.
+        .labelStyle(.titleAndIcon)
     }
 
     // MARK: Archive
@@ -226,74 +267,5 @@ struct ExclusionsSheet: View {
             (p.app + " " + (p.url ?? "") + " " + p.window).lowercased().contains(rule)
         }.count
         return n == 0 ? "no matches" : "\(n) hidden"
-    }
-}
-
-/// The panel that opens from the status pill. Not a system menu: it carries
-/// icons, disclosure chevrons and a footer with its own button, none of which a
-/// plain NSMenu can hold.
-struct CaptureMenu: View {
-    @Environment(NavigationState.self) private var nav
-    @Binding var showExclusions: Bool
-    @Binding var confirmDelete: DeleteScope?
-
-    var body: some View {
-        VStack(spacing: 0) {
-            row(icon: "pause", title: "Pause Context Awareness") {
-                Button("5 minutes")  { nav.pauseCapture(for: 5 * 60) }
-                Button("15 minutes") { nav.pauseCapture(for: 15 * 60) }
-                Button("30 minutes") { nav.pauseCapture(for: 30 * 60) }
-                Button("An hour")    { nav.pauseCapture(for: 60 * 60) }
-                Divider()
-                Button("Until next launch") { nav.pauseCapture(for: nil) }
-            }
-            row(icon: "trash", title: "Delete Data") {
-                ForEach(DeleteScope.allCases) { scope in
-                    Button(scope.label, role: scope == .everything ? .destructive : nil) {
-                        confirmDelete = scope
-                    }
-                }
-            }
-
-            Divider().padding(.horizontal, 12).padding(.vertical, 4)
-
-            HStack(alignment: .center, spacing: 10) {
-                Text("Exclude apps and\nwebsites from context")
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.secondary)
-                    .fixedSize()
-                Spacer(minLength: 0)
-                Button("Manage") { showExclusions = true }
-                    .controlSize(.small)
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 4)
-            .padding(.bottom, 10)
-        }
-        .padding(.top, 6)
-        .frame(width: 232)
-    }
-
-    /// The icon and the chevron sit outside the Menu: a borderlessButton menu
-    /// renders its label's text and silently drops everything else.
-    private func row<C: View>(icon: String, title: String,
-                              @ViewBuilder items: () -> C) -> some View {
-        HStack(spacing: 9) {
-            Image(systemName: icon)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: 15)
-            Menu(title) { items() }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .font(.system(size: 12.5))
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.tertiary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
     }
 }

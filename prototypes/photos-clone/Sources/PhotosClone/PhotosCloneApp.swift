@@ -47,5 +47,16 @@ struct PhotosCloneApp: App {
                 .keyboardShortcut("a", modifiers: [.command, .shift])
             }
         }
+
+        // Capture keeps running with the window closed, so its state and its
+        // pause control belong in the menu bar too. The icon carries the state:
+        // an open eye while watching, struck through while paused.
+        MenuBarExtra {
+            MenuBarMenu()
+                .environment(library)
+                .environment(nav)
+        } label: {
+            Image(systemName: nav.capturePaused ? "eye.slash" : "eye")
+        }
     }
 }
