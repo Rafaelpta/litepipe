@@ -203,7 +203,7 @@ struct ContentColumn: View {
             }
             .pickerStyle(.segmented)
             .fixedSize()
-            .help("Folded moments vs every capture as recorded")
+            .help("Show folded moments or every capture as recorded")
             }
 
             if nav.sidebarItem != .places, nav.sidebarItem != .assistant,
@@ -214,7 +214,7 @@ struct ContentColumn: View {
                 ), in: 0...1)
                 .frame(width: 110)
                 .controlSize(.small)
-                .help("Zoom")
+                .help("Change the size of the thumbnails")
             }
             Menu {
                 Picker("Filter", selection: Binding(
@@ -230,14 +230,14 @@ struct ContentColumn: View {
                       ? "line.3.horizontal.decrease.circle.fill"
                       : "line.3.horizontal.decrease.circle")
             }
-            .help("Filter")
+            .help("Filter what is shown")
 
             Button {
                 nav.showInspector.toggle()
             } label: {
                 Label("Info", systemImage: "info.circle")
             }
-            .help("Show Inspector")
+            .help("Get info on the selected capture")
         }
     }
 
@@ -248,7 +248,7 @@ struct ContentColumn: View {
             } label: {
                 Label("Back", systemImage: "chevron.left")
             }
-            .help("Back")
+            .help("Back to the grid")
         }
         ToolbarItem(placement: .principal) {
             if let id = nav.openedPhotoID, let photo = lib.photo(id) {
@@ -264,15 +264,17 @@ struct ContentColumn: View {
         ToolbarItemGroup {
             Button { step(-1) } label: { Label("Previous", systemImage: "chevron.left") }
                 .disabled(!canStep(-1))
+                .help("Previous capture")
             Button { step(1) } label: { Label("Next", systemImage: "chevron.right") }
                 .disabled(!canStep(1))
+                .help("Next capture")
             if let id = nav.openedPhotoID, let photo = lib.photo(id) {
                 Button {
                     lib.toggleFavorite([id])
                 } label: {
                     Label("Favorite", systemImage: photo.isFavorite ? "heart.fill" : "heart")
                 }
-                .help("Favorite")
+                .help("Add this capture to Highlights")
                 Button {
                     let next = nextAfterDelete(id)
                     withAnimation(Anim.zoom) { lib.moveToTrash([id]) }
@@ -280,14 +282,14 @@ struct ContentColumn: View {
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
-                .help("Delete")
+                .help("Move this capture to Recently Deleted")
             }
             Button {
                 nav.showInspector.toggle()
             } label: {
                 Label("Info", systemImage: "info.circle")
             }
-            .help("Show Inspector")
+            .help("Get info on the selected capture")
         }
     }
 
