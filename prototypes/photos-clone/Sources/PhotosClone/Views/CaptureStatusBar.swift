@@ -57,17 +57,21 @@ struct CaptureStatusBar: View {
                         .fill(Color.green)
                         .frame(width: 7, height: 7)
                 }
+                // No fixedSize and no trailing Spacer: the menu has to span the
+                // whole pill, otherwise only the glyphs of the label are
+                // clickable and the empty half of the pill does nothing.
                 Menu {
                     menuItems
                 } label: {
                     Text(nav.capturePaused ? "Paused" : "Context enabled")
                         .font(.system(size: 12))
                         .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
-                .fixedSize()
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.leading, 9)
             .padding(.trailing, 9)
