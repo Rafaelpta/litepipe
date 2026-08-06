@@ -58,10 +58,36 @@ struct MenuBarMenu: View {
             .keyboardShortcut("q")
     }
 
+    /// Bring the real window forward, wherever it ended up. `isVisible` is not
+    /// enough: the menu bar item owns windows of its own, a minimised window is
+    /// not visible, and a window restored onto a display that is no longer there
+    /// comes forward somewhere the user cannot see. `canBecomeMain` picks the
+    /// document window out of the set, and if it is not on the screen the
+    /// pointer is on, it is moved there — "open" should mean open in front of me.
     static func activate() {
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.windows.first { $0.isVisible && $0.contentView != nil }?
-            .makeKeyAndOrderFront(nil)
+        // canBecomeMain picks the document window out of the set: the menu bar
+        // item owns NSStatusBarWindows of its own, and those never can.
+        guard let window = NSApp.windows.first(where: { $0.canBecomeMain }) else { return }
+        if window.isMiniaturized { window.deminiaturize(nil) }
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+        bringToPointerScreen(window)
+        // SwiftUI restores a window's saved frame moments after it is ordered
+        // front, which silently undoes a move made in the same turn. Repeating
+        // it on the next runloop lands after the restore.
+        DispatchQueue.main.async { bringToPointerScreen(window) }
+    }
+
+    private static func bringToPointerScreen(_ window: NSWindow) {
+        let pointer = NSEvent.mouseLocation
+        guard let here = NSScreen.screens.first(where: { NSMouseInRect(pointer, $0.frame, false) })
+        else { return }
+        guard !here.frame.intersects(window.frame) else { return }
+        var frame = window.frame
+        frame.origin = CGPoint(x: here.visibleFrame.midX - frame.width / 2,
+                               y: here.visibleFrame.midY - frame.height / 2)
+        window.setFrame(frame, display: true)
     }
 
     static func dayWord(_ d: Date) -> String {
