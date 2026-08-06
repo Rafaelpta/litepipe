@@ -28,7 +28,16 @@ struct PhotosCloneApp: App {
                 .environment(nav)
                 .environment(sel)
                 .environment(chat)
-                .task { Thumbs.shared.prewarm(library.items) }
+                .task {
+                    Thumbs.shared.prewarm(library.items)
+                    // The chord has to work with the window closed, so it is
+                    // installed once for the process rather than per view.
+                    GlobalHotkey.shared.start {
+                        if nav.capturePaused { nav.resumeCapture() }
+                        else { nav.pauseCapture(for: nil) }
+                        NSSound(named: NSSound.Name(nav.capturePaused ? "Tink" : "Pop"))?.play()
+                    }
+                }
         }
         .windowToolbarStyle(.unified(showsTitle: false))
         .defaultSize(width: 1280, height: 800)
