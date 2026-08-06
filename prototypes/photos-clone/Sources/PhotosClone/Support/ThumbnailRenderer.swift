@@ -41,7 +41,7 @@ struct CaptureCard: View {
 
             VStack(alignment: .leading, spacing: 7 * unit) {
                 if !photo.window.isEmpty {
-                    Text(photo.window)
+                    Text(Photo.shortTitle(photo.window, app: photo.app, host: photo.host))
                         .font(.system(size: 14 * unit, weight: .semibold))
                         .lineLimit(2)
                         .foregroundStyle(.primary)

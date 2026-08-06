@@ -54,8 +54,9 @@ struct InspectorView: View {
                 let lines = lib.transcript(for: photo)
                 if !lines.isEmpty {
                     Divider()
-                    transcript(lines)
-                } else {
+                    transcript(lines, meeting: lib.meeting(for: photo))
+                }
+                if true {
                     Divider()
                     onScreenText(photo)
                 }
@@ -150,12 +151,22 @@ struct InspectorView: View {
         }
     }
 
-    private func transcript(_ lines: [ContextDB.TranscriptLine]) -> some View {
+    /// This is the microphone running alongside the screen, not a transcript of it.
+    /// Saying so matters: the capture can show WhatsApp while the audio is a call.
+    private func transcript(_ lines: [ContextDB.TranscriptLine],
+                            meeting: ContextDB.Meeting?) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Transcript")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Heard at the same time")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    if let title = meeting?.title, !title.isEmpty {
+                        Text("in \(title)")
+                            .font(.system(size: 10.5))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
                 Spacer()
                 Text("\(lines.count) segments")
                     .font(.system(size: 10.5))

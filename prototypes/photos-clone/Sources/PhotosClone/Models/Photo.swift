@@ -106,19 +106,31 @@ struct Photo: Identifiable, Hashable {
         substantiveLineCount < 3 || substantiveLineCount * 5 < contentLineCount
     }
 
-    /// What a thin moment says instead of showing its text.
+    /// What a thin moment says instead of showing its text. The title is already
+    /// on the line above, so this describes the state, not the place.
     var activityLine: String {
-        let verb: String
         switch source {
-        case .files:   verb = "Browsed files"
-        case .email:   verb = "Scanned the inbox"
-        case .chat:    verb = "Looked at messages"
-        case .browser: verb = "Browsed"
-        case .design:  verb = "Worked in"
-        default:       verb = "Was in"
+        case .files:   "Browsed files — nothing read"
+        case .email:   "Scanned the inbox — nothing opened"
+        case .chat:    "Message list — nothing read"
+        case .meeting: "On a call — nothing read on screen"
+        case .design:  "Design surface — no text captured"
+        default:       "Passed through — nothing read"
         }
-        let place = window.isEmpty ? (host ?? app) : window
-        return "\(verb) \(place)"
+    }
+
+    /// Browsers append their own name and the profile to every window title, so
+    /// "interview clipping bot - Google Search - Google Chrome - Rafael (ottic.ai)"
+    /// is mostly noise. Keep the part that names the page.
+    static func shortTitle(_ window: String, app: String, host: String?) -> String {
+        guard !window.isEmpty else { return host ?? app }
+        var t = window
+        for browser in [" - Google Chrome", " - Safari", " - Arc", " - Firefox", " — Firefox"] {
+            if let r = t.range(of: browser) { t = String(t[t.startIndex..<r.lowerBound]) }
+        }
+        if let r = t.range(of: " - Google Search") { t = String(t[t.startIndex..<r.lowerBound]) }
+        t = t.trimmingCharacters(in: .whitespaces)
+        return t.isEmpty ? (host ?? app) : t
     }
 }
 

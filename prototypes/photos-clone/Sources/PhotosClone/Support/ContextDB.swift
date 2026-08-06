@@ -375,7 +375,7 @@ enum ContextDB {
         var out: [TranscriptLine] = []
         while sqlite3_step(st) == SQLITE_ROW {
             let body = text(st, 4).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !body.isEmpty else { continue }
+            guard !body.isEmpty, !isHallucination(body) else { continue }
             let device = text(st, 3).lowercased()
             let isMe = device.contains("input")
             let named = text(st, 2)
@@ -388,6 +388,26 @@ enum ContextDB {
             ))
         }
         return out
+    }
+
+    /// Whisper was trained on video subtitles, so on silence it emits the phrases
+    /// that end videos — "Thank you.", "See you in the next video" — often in
+    /// Korean, Japanese or Russian regardless of what language was spoken. Roughly
+    /// 8% of the segments in this archive are that. They are noise, not speech.
+    static func isHallucination(_ s: String) -> Bool {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.count <= 3 { return true }
+        let fillers: Set<String> = ["thank you.", "thank you", "thanks.", "okay.", "ok.",
+                                    "bye.", "you", "bye bye.", "so.", ".", "..."]
+        if fillers.contains(t.lowercased()) { return true }
+        // A segment written in a script nobody in the call was speaking.
+        let foreign = t.unicodeScalars.filter { s in
+            (0xAC00...0xD7AF).contains(s.value)      // Hangul
+                || (0x4E00...0x9FFF).contains(s.value)   // CJK
+                || (0x3040...0x30FF).contains(s.value)   // Kana
+                || (0x0400...0x04FF).contains(s.value)   // Cyrillic
+        }.count
+        return foreign > 0 && Double(foreign) / Double(t.unicodeScalars.count) > 0.3
     }
 
     /// "Meet - Jumpstart Checkpoint (Rafael Costa) - Micro..." → "Jumpstart Checkpoint"

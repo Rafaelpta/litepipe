@@ -53,9 +53,20 @@ final class ContextLibrary {
 
     func photo(_ id: UUID) -> Photo? { items.first { $0.id == id } }
 
+    /// The audio recorded while this moment was on screen — not a transcript of
+    /// the screen itself. Scoped to the moment's own span, because a three-minute
+    /// moment inside a two-hour call should not show two hours of talk.
     func transcript(for photo: Photo) -> [ContextDB.TranscriptLine] {
-        guard let mid = photo.meetingId else { return [] }
-        return transcripts[mid] ?? []
+        guard let mid = photo.meetingId, let all = transcripts[mid] else { return [] }
+        let from = photo.date.addingTimeInterval(-30)
+        let to = photo.lastSeen.addingTimeInterval(30)
+        return all.filter { $0.at >= from && $0.at <= to }
+    }
+
+    /// Which meeting was running, so the inspector can name it.
+    func meeting(for photo: Photo) -> ContextDB.Meeting? {
+        guard let mid = photo.meetingId else { return nil }
+        return meetings.first { $0.id == mid }
     }
 
     // MARK: - Filtering
