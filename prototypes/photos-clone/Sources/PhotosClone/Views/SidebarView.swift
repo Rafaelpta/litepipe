@@ -129,6 +129,7 @@ struct SidebarView: View {
             sel.clear()
             nav.openedPhotoID = nil
             nav.heroActive = true
+            nav.focusContentToken += 1
         }
     }
 

@@ -18,6 +18,11 @@ final class NavigationState {
     var rawMode = false
     /// One-shot programmatic scroll request consumed by GridView.
     var scrollTarget: UUID?
+    /// Bumped whenever the sidebar selection changes so the grid takes focus.
+    /// Without it the sidebar stays first responder and macOS paints the row
+    /// with the emphasised accent fill; Photos shows the grey one because focus
+    /// has already moved to the content.
+    var focusContentToken = 0
 
     // Sidebar disclosure state lives here (not in the view) so it survives
     // any re-creation of SidebarView when the selection changes.

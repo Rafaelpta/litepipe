@@ -105,6 +105,7 @@ struct GridView: View {
             .focusEffectDisabled()
             .focused($gridFocused)
             .onAppear { gridFocused = true }
+            .onChange(of: nav.focusContentToken) { _, _ in gridFocused = true }
             .onKeyPress(phases: .down) { press in
                 handleKey(press, proxy: proxy)
             }
