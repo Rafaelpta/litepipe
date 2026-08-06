@@ -62,12 +62,11 @@ private struct CollageCard: View {
 
     @State private var hovering = false
 
+    /// Prefer a real screenshot for the cover; fall back to the longest capture.
     private var hero: Photo? {
-        let scenic: Set<PhotoKind> = [.landscape, .beach, .sunset, .city, .forest]
-        return photos.first { $0.isFavorite && scenic.contains($0.kind) }
-            ?? photos.first { scenic.contains($0.kind) }
-            ?? photos.first(where: \.isFavorite)
-            ?? photos[safe: photos.count / 2]
+        photos.first { $0.isFavorite && $0.hasImage }
+            ?? photos.first(where: \.hasImage)
+            ?? photos.max { $0.textLength < $1.textLength }
             ?? photos.first
     }
 

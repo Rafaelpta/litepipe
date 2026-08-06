@@ -5,6 +5,10 @@ let package = Package(
     name: "PhotosClone",
     platforms: [.macOS("15.0")],
     targets: [
-        .executableTarget(name: "PhotosClone", path: "Sources/PhotosClone")
+        .executableTarget(
+            name: "PhotosClone",
+            path: "Sources/PhotosClone",
+            linkerSettings: [.linkedLibrary("sqlite3")]
+        )
     ]
 )

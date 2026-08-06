@@ -3,7 +3,7 @@ import AppKit
 
 @main
 struct PhotosCloneApp: App {
-    @State private var library = MockLibrary()
+    @State private var library = ContextLibrary()
     @State private var nav = NavigationState()
     @State private var sel = SelectionModel()
 
@@ -26,7 +26,7 @@ struct PhotosCloneApp: App {
                 .environment(library)
                 .environment(nav)
                 .environment(sel)
-                .task { Thumbs.shared.prewarm(library.photos) }
+                .task { Thumbs.shared.prewarm(library.items) }
         }
         .windowToolbarStyle(.unified(showsTitle: false))
         .defaultSize(width: 1280, height: 800)

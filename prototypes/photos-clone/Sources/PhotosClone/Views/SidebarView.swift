@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @Environment(NavigationState.self) private var nav
-    @Environment(MockLibrary.self) private var lib
+    @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
 
     var body: some View {

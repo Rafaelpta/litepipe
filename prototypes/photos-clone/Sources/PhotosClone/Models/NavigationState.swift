@@ -13,6 +13,9 @@ final class NavigationState {
     var showInspector = false
     var searchText = ""
     var favoritesOnly = false
+    /// Moments (folded, furniture removed) vs the raw capture stream.
+    /// The two side by side are the clearest way to show what the folding buys.
+    var rawMode = false
     /// One-shot programmatic scroll request consumed by GridView.
     var scrollTarget: UUID?
 

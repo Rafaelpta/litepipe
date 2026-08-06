@@ -23,7 +23,7 @@ struct MainWindow: View {
 
 struct ContentColumn: View {
     @Environment(NavigationState.self) private var nav
-    @Environment(MockLibrary.self) private var lib
+    @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
     @Namespace private var heroNS
 
@@ -179,6 +179,21 @@ struct ContentColumn: View {
             }
         }
         ToolbarItemGroup {
+            Picker("Mode", selection: Binding(
+                get: { nav.rawMode },
+                set: { raw in
+                    nav.rawMode = raw
+                    lib.setRawMode(raw)
+                    sel.clear()
+                }
+            )) {
+                Text("Moments").tag(false)
+                Text("Raw captures").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
+            .help("Folded moments vs every capture as recorded")
+
             if nav.sidebarItem != .places, !isTimeline || nav.viewMode == .days || nav.viewMode == .all {
                 Slider(value: Binding(
                     get: { nav.zoomLevel },

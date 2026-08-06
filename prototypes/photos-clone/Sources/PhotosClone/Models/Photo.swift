@@ -1,43 +1,125 @@
 import Foundation
 
-enum PhotoKind: String, CaseIterable {
-    case landscape, sunset, portrait, food, pet, city, beach, forest, screenshot
+/// What kind of surface the capture came from. Derived from the app name and
+/// browser URL at load time — litepipe stores neither, it stores the raw app
+/// and window, and this is the cheap classification on top.
+enum ContextSource: String, CaseIterable {
+    case browser, chat, email, terminal, editor, meeting, notes, files, design, other
 
-    var searchName: String {
+    var label: String {
         switch self {
-        case .landscape: "landscape mountains"
-        case .sunset: "sunset sky"
-        case .portrait: "portrait people"
-        case .food: "food restaurant"
-        case .pet: "pet dog cat"
-        case .city: "city buildings"
-        case .beach: "beach sea ocean"
-        case .forest: "forest trees nature"
-        case .screenshot: "screenshot"
+        case .browser: "Browser"
+        case .chat: "Chat"
+        case .email: "Email"
+        case .terminal: "Terminal"
+        case .editor: "Editor"
+        case .meeting: "Meeting"
+        case .notes: "Documents"
+        case .files: "Files"
+        case .design: "Design"
+        case .other: "Screen"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .browser: "safari"
+        case .chat: "bubble.left.and.bubble.right"
+        case .email: "envelope"
+        case .terminal: "terminal"
+        case .editor: "curlybraces"
+        case .meeting: "person.2.wave.2"
+        case .notes: "doc.text"
+        case .files: "folder"
+        case .design: "paintbrush"
+        case .other: "display"
+        }
+    }
+
+    /// Hue used by the generated text card, so each source reads as its own colour.
+    var hue: Double {
+        switch self {
+        case .browser: 0.58
+        case .chat: 0.33
+        case .email: 0.60
+        case .terminal: 0.0
+        case .editor: 0.75
+        case .meeting: 0.08
+        case .notes: 0.13
+        case .files: 0.55
+        case .design: 0.88
+        case .other: 0.62
         }
     }
 }
 
+/// One captured moment. Mirrors a row of `frames` in ~/.litepipe/db.sqlite.
 struct Photo: Identifiable, Hashable {
     let id: UUID
-    let seed: UInt64
+    let frameId: Int64
     let date: Date
-    let kind: PhotoKind
-    let location: String?
+    let app: String
+    let window: String
+    let url: String?
+    /// Host only, e.g. "web.whatsapp.com". Nil for non-browser captures.
+    let host: String?
+    let snapshotPath: String?
+    /// First few hundred characters of what was on screen.
+    let excerpt: String
+    let textLength: Int
+    let source: ContextSource
+    let captureTrigger: String
+    let textSource: String
+    let monitor: String?
+    let meetingId: Int64?
+    /// How many captures were folded into this moment. The engine writes a frame
+    /// on every typing pause, so a screen you sat on for two minutes is one
+    /// moment, not forty.
+    let repeatCount: Int
+    /// Timestamp of the last capture in the moment.
+    let lastSeen: Date
+    /// Lines the raw captures held before furniture and repeats were dropped.
+    let rawLineCount: Int
+    /// Lines that survived — the actual content of the moment.
+    let contentLineCount: Int
+    /// Of those, how many are long enough to be prose rather than a label.
+    /// A transcript line runs 40+ characters; a sidebar item is one word.
+    let substantiveLineCount: Int
     var isFavorite: Bool
     var isDeleted: Bool
     var isHidden: Bool
-    let pixelWidth: Int
-    let pixelHeight: Int
-    let fileName: String
-    let camera: String?
-    let aperture: String?
-    let iso: Int?
-    let focalLength: String?
-    let shutter: String?
-    let megabytes: Double
 
-    var aspect: CGFloat { CGFloat(pixelWidth) / CGFloat(pixelHeight) }
+    /// Stable seed for the generated card, so a frame always looks the same.
+    var seed: UInt64 { UInt64(bitPattern: Int64(frameId &* 2_654_435_761)) }
+    var hasImage: Bool { snapshotPath != nil }
+    var dwell: TimeInterval { lastSeen.timeIntervalSince(date) }
+    /// Where the capture happened, digitally — used as the day-section subtitle.
+    var place: String? { host ?? (app.isEmpty ? nil : app) }
+
+    /// True when nothing on screen was worth reading — a file browser, a message
+    /// list nobody opened. Repetition cannot tell a Finder sidebar from a file
+    /// listing, but the shape of the text can: in a document 65-93% of lines are
+    /// full sentences, in a file browser 0-7% are, and those few are just long
+    /// filenames. Measured on the real archive. Thin moments get a one-line
+    /// summary instead of forty labels.
+    var isThin: Bool {
+        substantiveLineCount < 3 || substantiveLineCount * 5 < contentLineCount
+    }
+
+    /// What a thin moment says instead of showing its text.
+    var activityLine: String {
+        let verb: String
+        switch source {
+        case .files:   verb = "Browsed files"
+        case .email:   verb = "Scanned the inbox"
+        case .chat:    verb = "Looked at messages"
+        case .browser: verb = "Browsed"
+        case .design:  verb = "Worked in"
+        default:       verb = "Was in"
+        }
+        let place = window.isEmpty ? (host ?? app) : window
+        return "\(verb) \(place)"
+    }
 }
 
 enum ViewMode: String, CaseIterable, Identifiable {

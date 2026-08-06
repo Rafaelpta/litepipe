@@ -10,20 +10,25 @@ struct MapPane: View {
         let x: CGFloat
         let y: CGFloat
         let count: Int
+        let label: String
     }
 
+    /// "Where" for captured context is the app or site, not a coordinate. Clusters
+    /// are laid out by a stable hash of the place name so they never jump around.
     private var pins: [Pin] {
-        let withLocation = photos.filter { $0.location != nil }
-        let byLocation = Dictionary(grouping: withLocation, by: { $0.location! })
-        var result: [Pin] = []
-        var rng = SplitMix64(seed: 0x4D41_5050)
-        for (_, group) in byLocation.sorted(by: { $0.key < $1.key }) {
-            guard let hero = group.first(where: \.isFavorite) ?? group.first else { continue }
-            let x = 0.12 + CGFloat(Double.random(in: 0...1, using: &rng)) * 0.76
-            let y = 0.15 + CGFloat(Double.random(in: 0...1, using: &rng)) * 0.7
-            result.append(Pin(id: hero.id, photo: hero, x: x, y: y, count: group.count))
+        let byPlace = Dictionary(grouping: photos.compactMap { p -> (String, Photo)? in
+            guard let place = p.place else { return nil }
+            return (place, p)
+        }, by: { $0.0 }).mapValues { $0.map(\.1) }
+
+        return byPlace.sorted { $0.value.count > $1.value.count }.prefix(12).map { place, group in
+            let hero = group.first(where: \.hasImage) ?? group[group.count / 2]
+            var h: UInt64 = 1469598103934665603
+            for b in place.utf8 { h = (h ^ UInt64(b)) &* 1099511628211 }
+            let x = 0.12 + CGFloat(Double(h % 1000) / 1000) * 0.76
+            let y = 0.15 + CGFloat(Double((h >> 20) % 1000) / 1000) * 0.70
+            return Pin(id: hero.id, photo: hero, x: x, y: y, count: group.count, label: place)
         }
-        return result
     }
 
     var body: some View {
@@ -87,6 +92,7 @@ struct MapPane: View {
     }
 
     private func pinView(_ pin: Pin) -> some View {
+        VStack(spacing: 3) {
         ZStack(alignment: .topTrailing) {
             Image(nsImage: Thumbs.shared.image(for: pin.photo, bucket: .grid))
                 .resizable()
@@ -104,6 +110,13 @@ struct MapPane: View {
                     .background(Color.accentColor, in: Capsule())
                     .offset(x: 8, y: -8)
             }
+        }
+        Text(pin.label)
+            .font(.system(size: 10, weight: .medium))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1.5)
+            .background(.regularMaterial, in: Capsule())
+            .lineLimit(1)
         }
     }
 }

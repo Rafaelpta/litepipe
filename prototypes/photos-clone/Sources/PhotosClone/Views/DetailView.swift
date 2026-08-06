@@ -10,7 +10,7 @@ struct DetailView: View {
     let onClose: () -> Void
 
     @Environment(NavigationState.self) private var nav
-    @Environment(MockLibrary.self) private var lib
+    @Environment(ContextLibrary.self) private var lib
 
     var body: some View {
         ZStack {

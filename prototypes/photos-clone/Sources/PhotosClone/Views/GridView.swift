@@ -29,7 +29,7 @@ struct GridView: View {
     let onOpen: (UUID) -> Void
 
     @Environment(NavigationState.self) private var nav
-    @Environment(MockLibrary.self) private var lib
+    @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
     @FocusState private var gridFocused: Bool
     @State private var viewportWidth: CGFloat = 1000
@@ -122,19 +122,26 @@ struct GridView: View {
 
     private var emptyState: some View {
         ContentUnavailableView(
-            nav.searchText.isEmpty ? "No Photos" : "No Results",
-            systemImage: nav.searchText.isEmpty ? "photo.on.rectangle" : "magnifyingglass",
+            nav.searchText.isEmpty ? "No Captures" : "No Results",
+            systemImage: nav.searchText.isEmpty ? "clock.badge.questionmark" : "magnifyingglass",
             description: Text(nav.searchText.isEmpty
-                              ? "Photos will appear here."
+                              ? "Nothing captured for this filter yet."
                               : "Check the spelling or try a new search.")
         )
         .frame(minHeight: 500)
     }
 
     private var footerText: String {
-        let favs = sections.flatMap(\.photos).filter(\.isFavorite).count
-        let base = "\(totalCount.formatted()) Photo\(totalCount == 1 ? "" : "s")"
-        return favs > 0 ? "\(base) · \(favs) Favorite\(favs == 1 ? "" : "s")" : base
+        let all = sections.flatMap(\.photos)
+        let captures = all.reduce(0) { $0 + $1.repeatCount }
+        let rawLines = all.reduce(0) { $0 + $1.rawLineCount }
+        let keptLines = all.reduce(0) { $0 + $1.contentLineCount }
+        var parts = ["\(totalCount.formatted()) moment\(totalCount == 1 ? "" : "s")"]
+        if captures > totalCount { parts.append("from \(captures.formatted()) captures") }
+        if rawLines > 0 {
+            parts.append("\(keptLines.formatted()) of \(rawLines.formatted()) lines kept")
+        }
+        return parts.joined(separator: " · ")
     }
 
     private func handleKey(_ press: KeyPress, proxy: ScrollViewProxy) -> KeyPress.Result {

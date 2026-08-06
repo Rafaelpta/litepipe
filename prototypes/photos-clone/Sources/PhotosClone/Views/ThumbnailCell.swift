@@ -9,7 +9,7 @@ struct ThumbnailCell: View {
     let onOpen: (UUID) -> Void
 
     @Environment(NavigationState.self) private var nav
-    @Environment(MockLibrary.self) private var lib
+    @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
     @State private var hovering = false
 
@@ -30,6 +30,7 @@ struct ThumbnailCell: View {
             }
         }
         .overlay(alignment: .bottomLeading) { heart }
+        .overlay(alignment: .topTrailing) { dwellBadge }
         .contentShape(Rectangle())
         .onHover { h in
             withAnimation(Anim.hover) { hovering = h }
@@ -50,6 +51,26 @@ struct ThumbnailCell: View {
                     .scaledToFill()
             }
             .clipped()
+    }
+
+    /// A collapsed run of identical captures reads as time spent on one screen.
+    @ViewBuilder private var dwellBadge: some View {
+        if photo.repeatCount > 1 {
+            Text(dwellLabel)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(.black.opacity(0.55), in: Capsule())
+                .padding(5)
+        }
+    }
+
+    private var dwellLabel: String {
+        let secs = Int(photo.dwell)
+        if secs >= 90 { return "\(secs / 60) min" }
+        if secs >= 5 { return "\(secs)s" }
+        return "×\(photo.repeatCount)"
     }
 
     @ViewBuilder private var heart: some View {
