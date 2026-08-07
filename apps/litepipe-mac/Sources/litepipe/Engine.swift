@@ -35,6 +35,11 @@ func litepipeLog(_ message: String) {
 }
 
 final class EngineController: ObservableObject {
+    /// One engine for the whole app. The delegate owns its lifecycle and the
+    /// scenes read its state; two controllers would race for the port, the data
+    /// directory and the log.
+    static let shared = EngineController()
+
     @Published private(set) var status: EngineStatus = .stopped
 
     private var pid: pid_t?

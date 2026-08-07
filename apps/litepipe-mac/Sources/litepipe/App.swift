@@ -14,13 +14,28 @@ struct LitepipeApp: App {
     static let archiveWindowID = "archive"
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+    /// Held here rather than inside a view: the window and the menu bar item are
+    /// two scenes reading one archive, and the menu has to know whether capture
+    /// is running before anybody opens the window.
+    @State private var models = ArchiveModels(engine: .shared)
 
     var body: some Scene {
         Window("litepipe", id: Self.archiveWindowID) {
-            ArchiveWindow(engine: delegate.engine)
+            ArchiveWindow(models: models)
         }
         .defaultSize(width: 1280, height: 800)
         .commands { ArchiveCommands() }
+
+        // The app runs all day with its window closed most of it, so the menu
+        // bar is where it actually lives: the mark, the last meeting, and the
+        // pause control within reach of any screen.
+        MenuBarExtra {
+            MenuBarMenu()
+                .environment(models.library)
+                .environment(models.nav)
+        } label: {
+            Image(nsImage: MenuBarIcon.image(paused: models.nav.capturePaused))
+        }
     }
 }
 
@@ -43,7 +58,7 @@ struct ArchiveCommands: Commands {
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var panel: NSPanel?
     private let dragHelper = DragHelperController()
-    let engine = EngineController()
+    let engine = EngineController.shared
     private lazy var companion = NotchCompanionController(engine: engine)
 
     func applicationDidFinishLaunching(_ notification: Notification) {

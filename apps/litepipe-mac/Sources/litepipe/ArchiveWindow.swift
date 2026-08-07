@@ -11,35 +11,14 @@ import Combine
 /// costs a couple of seconds; paying that on every launch would tax people who
 /// only ever use the notch.
 struct ArchiveWindow: View {
-    @ObservedObject var engine: EngineController
-    @State private var models: ArchiveModels?
+    let models: ArchiveModels
 
     var body: some View {
-        Group {
-            if let models {
-                MainWindow()
-                    .environment(models.library)
-                    .environment(models.nav)
-                    .environment(models.selection)
-                    .environment(models.chat)
-            } else {
-                loading
-            }
-        }
-        .task {
-            guard models == nil else { return }
-            models = ArchiveModels(engine: engine)
-        }
-    }
-
-    private var loading: some View {
-        VStack(spacing: 10) {
-            ProgressView()
-            Text("Reading the archive")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-        }
-        .frame(minWidth: 940, minHeight: 620)
+        MainWindow()
+            .environment(models.library)
+            .environment(models.nav)
+            .environment(models.selection)
+            .environment(models.chat)
     }
 }
 
