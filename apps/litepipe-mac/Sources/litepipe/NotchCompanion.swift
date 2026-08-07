@@ -195,7 +195,7 @@ struct CompanionView: View {
     }
     private var statusColor: Color {
         switch engine.status {
-        case .recording: return DS.Colors.live
+        case .recording: return .green
         case .starting: return DS.Colors.faint
         case .paused, .stopped: return DS.Colors.faint
         case .error: return Color(red: 0.90, green: 0.45, blue: 0.40)
@@ -276,6 +276,10 @@ struct CompanionView: View {
         .background(DS.Colors.panel)
         .clipShape(HangShape(radius: 20))
         .shadow(color: .black.opacity(0.45), radius: 24, y: 12)
+        // The panel is black in both app themes, so the semantic colours inside
+        // it have to be told which side they are on. Without this `.secondary`
+        // resolves against the system theme and turns unreadable in light mode.
+        .environment(\.colorScheme, .dark)
     }
 
     // MARK: - Top bar
@@ -285,8 +289,12 @@ struct CompanionView: View {
             WaveShape()
                 .stroke(DS.Colors.fg, style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
                 .frame(width: 20, height: 10)
-            Text("litepipe").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
-            Text("Local memory of your work").font(.system(size: 11)).foregroundColor(DS.Colors.faint)
+            Text("litepipe")
+                .font(.system(size: DS.Scale.title, weight: .semibold))
+                .foregroundStyle(.primary)
+            Text("Local memory of your work")
+                .font(.system(size: DS.Scale.caption))
+                .foregroundStyle(.tertiary)
             Spacer()
         }
     }
@@ -338,13 +346,25 @@ private struct ContextControl: View {
     var body: some View {
         let paused = engine.status == .paused
         VStack(alignment: .leading, spacing: 11) {
+            // The same indicator the archive window pins to its sidebar: a plain
+            // green dot when running, a pause glyph when not, no glow on either.
             HStack(spacing: 6) {
-                Circle().fill(paused ? DS.Colors.faint : DS.Colors.live)
-                    .frame(width: 7, height: 7)
-                    .shadow(color: (paused ? Color.clear : DS.Colors.live).opacity(0.7), radius: 3)
-                Text("Context aware").font(.system(size: 14, weight: .semibold)).foregroundColor(DS.Colors.fg)
                 if paused {
-                    Text("· paused").font(.system(size: 11)).foregroundColor(DS.Colors.faint)
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                        .frame(width: DS.Scale.dot)
+                } else {
+                    Circle().fill(Color.green)
+                        .frame(width: DS.Scale.dot, height: DS.Scale.dot)
+                }
+                Text("Context aware")
+                    .font(.system(size: DS.Scale.title, weight: .semibold))
+                    .foregroundStyle(.primary)
+                if paused {
+                    Text("· paused")
+                        .font(.system(size: DS.Scale.caption))
+                        .foregroundStyle(.tertiary)
                 }
             }
 
@@ -360,25 +380,34 @@ private struct ContextControl: View {
                 engine.togglePause(source: "pause-button")
             }) {
                 HStack(spacing: 7) {
-                    Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(size: 12, weight: .semibold))
-                    Text(paused ? "Resume" : "Pause").font(.system(size: 13, weight: .semibold))
+                    Image(systemName: paused ? "play.fill" : "pause.fill")
+                        .font(.system(size: DS.Scale.body, weight: .semibold))
+                    Text(paused ? "Resume" : "Pause")
+                        .font(.system(size: DS.Scale.title, weight: .semibold))
                 }
-                .foregroundColor(paused ? DS.Colors.live : DS.Colors.fg)
+                .foregroundStyle(paused ? AnyShapeStyle(Color.green) : AnyShapeStyle(HierarchicalShapeStyle.primary))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(hover ? 0.13 : 0.07)))
-                .contentShape(RoundedRectangle(cornerRadius: 10))
+                .background(.quaternary.opacity(hover ? 0.9 : 0.5),
+                            in: RoundedRectangle(cornerRadius: DS.Scale.control))
+                .contentShape(RoundedRectangle(cornerRadius: DS.Scale.control))
             }
             .buttonStyle(.plain)
             .onHover { hover = $0 }
 
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 5) {
-                    Image(systemName: "command").font(.system(size: 10)).foregroundColor(DS.Colors.faint)
-                    Text("Shortcuts").font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.faint)
+                    Image(systemName: "command")
+                        .font(.system(size: DS.Scale.footnote))
+                        .foregroundStyle(.tertiary)
+                    Text("Shortcuts")
+                        .font(.system(size: DS.Scale.caption, weight: .medium))
+                        .foregroundStyle(.tertiary)
                 }
                 HStack(spacing: 6) {
-                    Text("Pause / resume").font(.system(size: 12)).foregroundColor(DS.Colors.dim)
+                    Text("Pause / resume")
+                        .font(.system(size: DS.Scale.body))
+                        .foregroundStyle(.secondary)
                     Spacer(minLength: 6)
                     keycap("⌥"); keycap("⌃")
                 }
@@ -387,9 +416,11 @@ private struct ContextControl: View {
     }
 
     private func keycap(_ s: String) -> some View {
-        Text(s).font(.system(size: 10, weight: .medium)).foregroundColor(DS.Colors.dim)
+        Text(s)
+            .font(.system(size: DS.Scale.footnote, weight: .medium))
+            .foregroundStyle(.secondary)
             .frame(minWidth: 18).padding(.horizontal, 5).padding(.vertical, 3)
-            .background(RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.08)))
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: DS.Scale.chip))
     }
 }
 
@@ -404,14 +435,22 @@ private struct ActionRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: icon).font(.system(size: 13)).foregroundColor(DS.Colors.dim).frame(width: 18)
-                Text(label).font(.system(size: 12.5, weight: .medium)).foregroundColor(DS.Colors.fg)
+                Image(systemName: icon)
+                    .font(.system(size: DS.Scale.title))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+                Text(label)
+                    .font(.system(size: DS.Scale.body, weight: .medium))
+                    .foregroundStyle(.primary)
                 Spacer()
-                Image(systemName: trailing).font(.system(size: 10, weight: .semibold)).foregroundColor(DS.Colors.faint)
+                Image(systemName: trailing)
+                    .font(.system(size: DS.Scale.footnote, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 12).padding(.vertical, 11)
-            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(hover ? 0.11 : 0.05)))
-            .contentShape(RoundedRectangle(cornerRadius: 9))
+            .background(.quaternary.opacity(hover ? 0.9 : 0.4),
+                        in: RoundedRectangle(cornerRadius: DS.Scale.control))
+            .contentShape(RoundedRectangle(cornerRadius: DS.Scale.control))
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
