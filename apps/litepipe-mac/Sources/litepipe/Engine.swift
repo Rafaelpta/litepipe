@@ -314,6 +314,11 @@ final class EngineController: ObservableObject {
 
     // Audible feedback on pause/resume, using litepipe's own bundled sounds
     // (original tones — not third-party assets). Falls back to a system sound.
+    /// The one piece of feedback capture gives: a tone on the way down and a
+    /// tone on the way up. The window drives the engine directly rather than
+    /// through `togglePause`, so it asks for the cue itself.
+    func cue(paused: Bool) { playCue(paused: paused) }
+
     private func playCue(paused: Bool) {
         let name = paused ? "stop" : "play"
         if let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: "sounds"),

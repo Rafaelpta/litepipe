@@ -44,6 +44,21 @@ struct GridView: View {
         max(1, Int((viewportWidth - 20 + spacing) / (cellSize + spacing)))
     }
 
+    /// Sits above the oldest day on screen. Coming into view is the signal to
+    /// fetch the page behind it, so scrolling into the past loads the past.
+    private var olderSpinner: some View {
+        HStack(spacing: 8) {
+            ProgressView().controlSize(.small)
+            Text("Loading earlier captures")
+                .font(.system(size: 11.5))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .gridCellColumns(max(1, columnCount))
+        .onAppear { lib.loadOlder() }
+    }
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -55,6 +70,11 @@ struct GridView: View {
                         spacing: spacing,
                         pinnedViews: showsHeaders ? [.sectionHeaders] : []
                     ) {
+                        // The grid opens at the bottom, where the present is, so
+                        // the past is up: reaching the top is the ask for more.
+                        if lib.hasMore, !inTrash {
+                            olderSpinner
+                        }
                         ForEach(sections) { section in
                             Section {
                                 ForEach(section.photos) { photo in

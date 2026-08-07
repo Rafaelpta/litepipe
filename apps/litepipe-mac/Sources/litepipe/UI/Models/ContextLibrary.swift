@@ -35,7 +35,16 @@ final class ContextLibrary {
         reload()
     }
 
+    /// Where the loaded window ends, and whether there is more behind it.
+    private var oldestLoaded: Date?
+    private(set) var hasMore = true
+    private var loadingPage = false
+
+    /// Start again from the present. Everything loaded is dropped: this is what
+    /// runs at launch and whenever the fold changes.
     func reload() {
+        oldestLoaded = nil
+        hasMore = true
         let load = ContextDB.load(raw: rawMode)
         items = load.items
         meetings = load.meetings
@@ -43,7 +52,51 @@ final class ContextLibrary {
         uiEventCount = load.uiEventCount
         elementCount = load.elementCount
         loadError = load.error
+        oldestLoaded = load.oldest
+        hasMore = load.hasMore
         notebookNames = topHosts(4)
+        archiveSize = Self.diskSize(ContextDB.defaultPath)
+    }
+
+    /// The page behind what is on screen, fetched when the grid reaches its end.
+    /// Reading the whole archive up front costs seconds and megabytes for a view
+    /// that opens on today; this pays for the past only when the past is asked
+    /// for.
+    func loadOlder() {
+        guard hasMore, !loadingPage, let cursor = oldestLoaded else { return }
+        loadingPage = true
+        defer { loadingPage = false }
+        let load = ContextDB.load(before: cursor, raw: rawMode)
+        guard !load.items.isEmpty else {
+            hasMore = false
+            return
+        }
+        // A moment can straddle the page boundary. The older half arrives here as
+        // its own moment rather than joining the one already on screen, which is
+        // wrong by a hair and cheap; merging across pages would mean re-folding
+        // everything already loaded.
+        items = load.items + items
+        oldestLoaded = load.oldest
+        hasMore = load.hasMore
+    }
+
+    /// Fold in whatever was captured since the window opened. Only the newest
+    /// page is re-read, so this stays cheap however large the archive is.
+    func refreshHead() {
+        guard !loadingPage else { return }
+        loadingPage = true
+        defer { loadingPage = false }
+        let load = ContextDB.load(raw: rawMode)
+        guard let boundary = load.oldest else { return }
+        // Keep everything older than the page that was just re-read, and swap the
+        // head for the fresh one. Moments that were still open have been re-folded
+        // with their newer captures.
+        let older = items.filter { $0.date < boundary }
+        items = older + load.items
+        meetings = load.meetings
+        transcripts = load.transcripts
+        uiEventCount = load.uiEventCount
+        elementCount = load.elementCount
         archiveSize = Self.diskSize(ContextDB.defaultPath)
     }
 

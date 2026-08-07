@@ -64,8 +64,12 @@ struct ArchiveWindow: View {
             // panel used to send when it finished.
             guard phase == .done else { return }
             NotificationCenter.default.post(name: .litepipeOnboardingDone, object: nil)
-            models.library.reload()
             Self.resize(to: Self.archiveSize)
+            // Only on a true first run, where the archive is empty and reading it
+            // costs nothing. On a machine that already has one this reread was
+            // twelve thousand captures folded on the main thread, and the window
+            // sat frozen through all of it before the grid appeared.
+            if models.library.items.isEmpty { models.library.reload() }
         }
     }
 }
@@ -95,24 +99,45 @@ final class ArchiveModels {
     /// stop now and a start later.
     private var resumeWork: DispatchWorkItem?
 
+    /// When capture last changed through this window. Pausing kills the engine
+    /// process, so a stray toggle is not a cosmetic bug: it stops recording. The
+    /// log shows these arriving in pairs seconds apart, which no person clicking
+    /// a menu produces, so anything that fast is refused and named in the log
+    /// until the source is found.
+    private var lastToggle = Date.distantPast
+
+    private func accept(_ what: String) -> Bool {
+        let gap = Date().timeIntervalSince(lastToggle)
+        guard gap > 1.0 else {
+            litepipeLog("capture \(what) refused: \(String(format: "%.2f", gap))s after the last one")
+            return false
+        }
+        lastToggle = Date()
+        litepipeLog("capture \(what) from the window")
+        return true
+    }
+
     init(engine: EngineController) {
         self.engine = engine
         library = ContextLibrary()
         onboarding.bootstrap()
 
         nav.onPause = { [weak self] seconds in
-            guard let self else { return }
+            guard let self, self.accept("pause") else { return }
             self.resumeWork?.cancel()
             self.engine.stop(markPaused: true, source: "archive window")
+            self.engine.cue(paused: true)
             guard let seconds else { return }
             let work = DispatchWorkItem { [weak self] in self?.engine.start() }
             self.resumeWork = work
             DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: work)
         }
         nav.onResume = { [weak self] in
-            self?.resumeWork?.cancel()
-            self?.resumeWork = nil
-            self?.engine.start()
+            guard let self, self.accept("resume") else { return }
+            self.resumeWork?.cancel()
+            self.resumeWork = nil
+            self.engine.start()
+            self.engine.cue(paused: false)
         }
 
         // The chord, the notch and a crashed engine all change capture without

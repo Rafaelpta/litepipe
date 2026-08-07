@@ -31,6 +31,11 @@ enum ContextDB {
         var uiEventCount = 0
         var elementCount = 0
         var error: String?
+        /// The oldest capture this page reached, which is where the next page
+        /// starts. Nil when the page came back empty.
+        var oldest: Date?
+        /// False once a page comes back short, meaning the archive ends here.
+        var hasMore = true
     }
 
     /// Apps or hosts to leave out, from the PC_EXCLUDE env var (comma separated,
@@ -42,7 +47,17 @@ enum ContextDB {
             .filter { !$0.isEmpty }
     }
 
-    static func load(path: String = defaultPath, limit: Int = 6000, raw: Bool = false) -> Load {
+    /// One page of the archive, newest first.
+    ///
+    /// It used to read `ORDER BY timestamp ASC LIMIT 6000`, which is the oldest
+    /// six thousand captures — so the window sat at the beginning of the archive
+    /// and everything recent fell outside it. On a real archive that meant the
+    /// last two days were invisible, and it got worse the more you captured.
+    ///
+    /// `before` is the cursor: pass the oldest capture you already hold to get
+    /// the page behind it.
+    static func load(path: String = defaultPath, limit: Int = 1200,
+                     before: Date? = nil, raw: Bool = false) -> Load {
         var out = Load()
         guard FileManager.default.fileExists(atPath: path) else {
             out.error = "No archive at \(path)"
@@ -65,7 +80,10 @@ enum ContextDB {
         }
         out.uiEventCount = scalar(db, "SELECT COUNT(*) FROM ui_events")
         out.elementCount = scalar(db, "SELECT COUNT(*) FROM elements")
-        out.items = loadFrames(db, limit: limit, meetings: out.meetings, raw: raw)
+        let page = readFrames(db, limit: limit, before: before)
+        out.hasMore = page.count == limit
+        out.oldest = page.first?.at
+        out.items = assemble(page, meetings: out.meetings, raw: raw)
         out.meetings = out.meetings.map { m in
             guard m.title == nil else { return m }
             // The most common window during a call is whatever you were reading,
@@ -108,18 +126,24 @@ enum ContextDB {
     /// The join is what makes old screens visible at all. `snapshot_path` only
     /// survives about ten minutes; after that the picture is a frame inside the
     /// chunk this join brings along.
-    private static let framesSQL = """
-    SELECT f.id, f.timestamp,
-           COALESCE(f.app_name,''), COALESCE(f.window_name,''), COALESCE(f.browser_url,''),
-           COALESCE(f.snapshot_path,''), COALESCE(f.device_name,''),
-           COALESCE(f.capture_trigger,''), COALESCE(f.text_source,''),
-           COALESCE(length(f.full_text),0), COALESCE(f.full_text,''),
-           COALESCE(v.file_path,''), COALESCE(f.offset_index,0), COALESCE(v.fps,0)
-    FROM frames f
-    LEFT JOIN video_chunks v ON v.id = f.video_chunk_id
-    ORDER BY f.timestamp ASC
-    LIMIT ?;
-    """
+    /// Newest first, so a page is the present rather than the beginning of time.
+    /// `before` narrows it to what precedes a cursor, which is how the grid walks
+    /// backwards as you scroll.
+    private static func framesSQL(before: Bool) -> String {
+        """
+        SELECT f.id, f.timestamp,
+               COALESCE(f.app_name,''), COALESCE(f.window_name,''), COALESCE(f.browser_url,''),
+               COALESCE(f.snapshot_path,''), COALESCE(f.device_name,''),
+               COALESCE(f.capture_trigger,''), COALESCE(f.text_source,''),
+               COALESCE(length(f.full_text),0), COALESCE(f.full_text,''),
+               COALESCE(v.file_path,''), COALESCE(f.offset_index,0), COALESCE(v.fps,0)
+        FROM frames f
+        LEFT JOIN video_chunks v ON v.id = f.video_chunk_id
+        \(before ? "WHERE f.timestamp < ?" : "")
+        ORDER BY f.timestamp DESC
+        LIMIT ?;
+        """
+    }
 
     /// A line is furniture when it shows up in many different windows: "Close",
     /// "Inbox", "Recents". A line from your transcript appears in dozens of
@@ -132,9 +156,8 @@ enum ContextDB {
     /// Tabbing out to the terminal and back does not start a new conversation.
     private static let momentGap: TimeInterval = 900
 
-    private static func loadFrames(_ db: OpaquePointer, limit: Int,
-                                   meetings: [Meeting], raw: Bool) -> [Photo] {
-        let frames = readFrames(db, limit: limit)
+    private static func assemble(_ frames: [RawFrame],
+                                 meetings: [Meeting], raw: Bool) -> [Photo] {
         guard !frames.isEmpty else { return [] }
         // Raw mode keeps every capture whole — no folding, no furniture removal.
         // It exists so the difference can be seen rather than described.
@@ -145,11 +168,21 @@ enum ContextDB {
 
     // MARK: Pass 1 — read
 
-    private static func readFrames(_ db: OpaquePointer, limit: Int) -> [RawFrame] {
+    /// Returns the page in ascending order, which is what folding expects, even
+    /// though SQLite hands it over newest first.
+    private static func readFrames(_ db: OpaquePointer, limit: Int,
+                                   before: Date? = nil) -> [RawFrame] {
         var st: OpaquePointer?
-        guard sqlite3_prepare_v2(db, framesSQL, -1, &st, nil) == SQLITE_OK else { return [] }
+        let sql = framesSQL(before: before != nil)
+        guard sqlite3_prepare_v2(db, sql, -1, &st, nil) == SQLITE_OK else { return [] }
         defer { sqlite3_finalize(st) }
-        sqlite3_bind_int(st, 1, Int32(limit))
+        if let before {
+            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+            sqlite3_bind_text(st, 1, isoString(before), -1, transient)
+            sqlite3_bind_int(st, 2, Int32(limit))
+        } else {
+            sqlite3_bind_int(st, 1, Int32(limit))
+        }
 
         let excl = exclusions
         var out: [RawFrame] = []
@@ -191,6 +224,8 @@ enum ContextDB {
                 videoFPS: fps
             ))
         }
+        // SQLite handed these over newest first; folding walks time forwards.
+        out.reverse()
         return out
     }
 
@@ -487,6 +522,11 @@ enum ContextDB {
         if s.isEmpty { return nil }
         return isoFractional.date(from: s) ?? isoPlain.date(from: s)
     }
+
+    /// The cursor for paging, written the way the column stores it. The engine
+    /// writes fractional seconds, and SQLite compares these as text, so the
+    /// format has to match or the comparison walks off.
+    static func isoString(_ d: Date) -> String { isoFractional.string(from: d) }
 
     /// The accessibility walker already separates every element with a newline, so
     /// the text arrives structured — conversation, time, sender, message, one per

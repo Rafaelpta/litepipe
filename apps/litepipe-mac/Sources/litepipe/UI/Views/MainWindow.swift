@@ -3,6 +3,7 @@ import AppKit
 
 struct MainWindow: View {
     @Environment(NavigationState.self) private var nav
+    @Environment(ContextLibrary.self) private var lib
 
     var body: some View {
         @Bindable var nav = nav
@@ -18,6 +19,15 @@ struct MainWindow: View {
         }
         .navigationTitle(nav.sidebarItem.displayName)
         .frame(minWidth: 940, minHeight: 620)
+        // The archive was read once, at launch, so anything captured while the
+        // window stayed open never appeared. Only the newest page is re-read,
+        // which is cheap however far back the archive goes.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                if !Task.isCancelled { lib.refreshHead() }
+            }
+        }
     }
 }
 
