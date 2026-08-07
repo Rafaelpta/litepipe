@@ -39,7 +39,9 @@ struct FirstRunView: View {
                 .frame(width: 26, height: 12)
             Text("litepipe needs a few permissions")
                 .font(.system(size: 20, weight: .semibold))
-            Text("It captures what you were doing so you can find it again. Everything it keeps stays on this Mac.")
+            // Two sentences, two lines. Left to wrap, the second one broke after
+            // "stays on" and the promise landed on a widow.
+            Text("It captures what you were doing so you can find it again.\nEverything it keeps stays on this Mac.")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

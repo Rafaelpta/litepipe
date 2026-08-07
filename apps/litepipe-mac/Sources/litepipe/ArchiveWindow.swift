@@ -19,6 +19,27 @@ struct ArchiveWindow: View {
         self.onboarding = models.onboarding
     }
 
+    /// The ask is a short list and gets a window the size of the list. The
+    /// archive is a wall of screens and wants the room.
+    static let askSize = CGSize(width: 660, height: 580)
+    static let archiveSize = CGSize(width: 1440, height: 900)
+
+    /// Sizing the scene's own window is not something SwiftUI offers a view, so
+    /// this reaches for it and centres it on the screen it is already on.
+    static func resize(to size: CGSize) {
+        DispatchQueue.main.async {
+            guard let window = AppDelegate.archiveWindow() else { return }
+            let visible = (window.screen ?? NSScreen.main)?.visibleFrame
+            var frame = window.frame
+            frame.size = size
+            if let visible {
+                frame.origin = CGPoint(x: visible.midX - size.width / 2,
+                                       y: visible.midY - size.height / 2)
+            }
+            window.setFrame(frame, display: true, animate: true)
+        }
+    }
+
     var body: some View {
         Group {
             if onboarding.phase == .done {
@@ -31,8 +52,12 @@ struct ArchiveWindow: View {
                 // Before the grants there is nothing captured to show, so the
                 // window opens on the ask instead of an empty grid.
                 FirstRunView(model: onboarding)
-                    .frame(minWidth: 640, minHeight: 520)
             }
+        }
+        .onAppear {
+            // Only on the way in. A window that already holds the archive keeps
+            // whatever size it was left at.
+            if onboarding.phase != .done { Self.resize(to: Self.askSize) }
         }
         .onChange(of: onboarding.phase) { _, phase in
             // The delegate starts the engine on this, the same signal the notch
@@ -40,6 +65,7 @@ struct ArchiveWindow: View {
             guard phase == .done else { return }
             NotificationCenter.default.post(name: .litepipeOnboardingDone, object: nil)
             models.library.reload()
+            Self.resize(to: Self.archiveSize)
         }
     }
 }
