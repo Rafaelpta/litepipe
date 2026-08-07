@@ -98,16 +98,26 @@ enum ContextDB {
         let textSource: String
         let textLength: Int
         let lines: [String]
+        /// Set once the snapshot has been compacted away: the chunk holding this
+        /// screen, which frame of it, and the rate it was written at.
+        let videoPath: String?
+        let videoOffset: Int
+        let videoFPS: Double
     }
 
+    /// The join is what makes old screens visible at all. `snapshot_path` only
+    /// survives about ten minutes; after that the picture is a frame inside the
+    /// chunk this join brings along.
     private static let framesSQL = """
-    SELECT id, timestamp,
-           COALESCE(app_name,''), COALESCE(window_name,''), COALESCE(browser_url,''),
-           COALESCE(snapshot_path,''), COALESCE(device_name,''),
-           COALESCE(capture_trigger,''), COALESCE(text_source,''),
-           COALESCE(length(full_text),0), COALESCE(full_text,'')
-    FROM frames
-    ORDER BY timestamp ASC
+    SELECT f.id, f.timestamp,
+           COALESCE(f.app_name,''), COALESCE(f.window_name,''), COALESCE(f.browser_url,''),
+           COALESCE(f.snapshot_path,''), COALESCE(f.device_name,''),
+           COALESCE(f.capture_trigger,''), COALESCE(f.text_source,''),
+           COALESCE(length(f.full_text),0), COALESCE(f.full_text,''),
+           COALESCE(v.file_path,''), COALESCE(f.offset_index,0), COALESCE(v.fps,0)
+    FROM frames f
+    LEFT JOIN video_chunks v ON v.id = f.video_chunk_id
+    ORDER BY f.timestamp ASC
     LIMIT ?;
     """
 
@@ -159,6 +169,8 @@ enum ContextDB {
 
             let snap = text(st, 5)
             let monitor = text(st, 6)
+            let chunk = text(st, 11)
+            let fps = sqlite3_column_double(st, 13)
             out.append(RawFrame(
                 id: sqlite3_column_int64(st, 0),
                 at: ts,
@@ -171,7 +183,12 @@ enum ContextDB {
                 trigger: text(st, 7),
                 textSource: text(st, 8),
                 textLength: Int(sqlite3_column_int64(st, 9)),
-                lines: splitLines(text(st, 10))
+                lines: splitLines(text(st, 10)),
+                // A chunk with no rate cannot be seeked into, so it counts as no
+                // picture rather than as a picture that lands on the wrong screen.
+                videoPath: (chunk.isEmpty || fps <= 0) ? nil : chunk,
+                videoOffset: Int(sqlite3_column_int64(st, 12)),
+                videoFPS: fps
             ))
         }
         return out
@@ -220,10 +237,23 @@ enum ContextDB {
         var seen: Set<String> = []
         var content: [String] = []
         var snapshot: String?
+        /// Every screen of this moment that can still be shown, in order.
+        var shots: [Shot] = []
+        /// How many captures each trigger accounts for, so the inspector can say
+        /// "mostly you paused typing" instead of quoting the first frame.
+        var triggers: [String: Int] = [:]
         init(_ f: RawFrame) {
             first = f
             lastAt = f.at
             snapshot = f.snapshot
+        }
+
+        func take(_ f: RawFrame) {
+            if !f.trigger.isEmpty { triggers[f.trigger, default: 0] += 1 }
+            guard f.snapshot != nil || f.videoPath != nil else { return }
+            shots.append(Shot(frameId: f.id, at: f.at, jpgPath: f.snapshot,
+                              videoPath: f.videoPath, offset: f.videoOffset,
+                              fps: f.videoFPS))
         }
     }
 
@@ -242,6 +272,7 @@ enum ContextDB {
             out.append(Photo(
                 id: UUID(), frameId: f.id, date: f.at, app: f.app, window: f.window,
                 url: f.url, host: f.host, snapshotPath: m.snapshot,
+                shots: m.shots, triggers: m.triggers,
                 excerpt: m.content.prefix(60).joined(separator: "\n"),
                 textLength: f.textLength, source: kind, captureTrigger: f.trigger,
                 textSource: f.textSource, monitor: f.monitor, meetingId: meetingId,
@@ -266,6 +297,7 @@ enum ContextDB {
             m.captures += 1
             m.rawLines += f.lines.count
             m.lastAt = f.at
+            m.take(f)
             if m.snapshot == nil { m.snapshot = f.snapshot }
             // The union of everything that passed through, in order of first sight.
             // Right for a chat where messages arrive and for a document that just sits.

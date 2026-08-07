@@ -53,6 +53,23 @@ enum ContextSource: String, CaseIterable {
     }
 }
 
+/// One screen the engine kept. Ten minutes after it was taken, a background
+/// worker folds its JPEG into an H.265 chunk — 18x less disk for the same pixels
+/// — deletes the file and leaves a pointer behind. From then on the screen only
+/// exists as frame `offset` of `videoPath`, and `jpgPath` is nil. That is where
+/// almost the whole archive lives: 262 captures are still JPEGs, 10,997 are
+/// inside chunks.
+struct Shot: Hashable {
+    let frameId: Int64
+    let at: Date
+    let jpgPath: String?
+    let videoPath: String?
+    let offset: Int
+    /// The chunk's own rate, which the engine varies with the capture interval.
+    /// Seeking by a constant would land on the wrong screen.
+    let fps: Double
+}
+
 /// One captured moment. Mirrors a row of `frames` in ~/.litepipe/db.sqlite.
 struct Photo: Identifiable, Hashable {
     let id: UUID
@@ -64,6 +81,14 @@ struct Photo: Identifiable, Hashable {
     /// Host only, e.g. "web.whatsapp.com". Nil for non-browser captures.
     let host: String?
     let snapshotPath: String?
+    /// Every screen this moment folded, in order. A moment is not one picture: you
+    /// sat on this window for two minutes and the engine kept forty of them. The
+    /// detail view walks them; the grid shows the first.
+    let shots: [Shot]
+    /// What set off each capture, counted across the whole moment. The first
+    /// frame's trigger alone would describe one capture out of sixty and read as
+    /// if it described all of them.
+    let triggers: [String: Int]
     /// First few hundred characters of what was on screen.
     let excerpt: String
     let textLength: Int
@@ -91,7 +116,9 @@ struct Photo: Identifiable, Hashable {
 
     /// Stable seed for the generated card, so a frame always looks the same.
     var seed: UInt64 { UInt64(bitPattern: Int64(frameId &* 2_654_435_761)) }
-    var hasImage: Bool { snapshotPath != nil }
+    var hasImage: Bool { !shots.isEmpty }
+    /// The screen that stands for the moment in the grid.
+    var coverShot: Shot? { shots.first }
     var dwell: TimeInterval { lastSeen.timeIntervalSince(date) }
     /// Where the capture happened, digitally — used as the day-section subtitle.
     var place: String? { host ?? (app.isEmpty ? nil : app) }

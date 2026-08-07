@@ -12,6 +12,9 @@ struct ThumbnailCell: View {
     @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
     @State private var hovering = false
+    /// The screen itself, once it has been pulled out of its chunk. Nil until
+    /// then, and nil forever for the captures that kept no picture.
+    @State private var screen: NSImage?
 
     private var isSelected: Bool { sel.selection.contains(photo.id) }
     private var heroOwnedByDetail: Bool { nav.openedPhotoID == photo.id && nav.heroActive }
@@ -42,15 +45,39 @@ struct ThumbnailCell: View {
         .contextMenu { menuItems }
     }
 
+    /// The screen at rest, the text on hover. A wall of real screens is read at a
+    /// glance — you recognise the conversation before you can read a word of it —
+    /// but the text is what the archive is actually for, so it is one pointer
+    /// move away rather than gone.
     private var square: some View {
         Color.clear
             .aspectRatio(1, contentMode: .fit)
             .overlay {
-                Image(nsImage: Thumbs.shared.image(for: photo, bucket: .grid))
-                    .resizable()
-                    .scaledToFill()
+                if let screen {
+                    Image(nsImage: screen)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    // Also the permanent state for a capture with no picture.
+                    Image(nsImage: Thumbs.shared.card(for: photo, bucket: .grid))
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .overlay {
+                if hovering, screen != nil {
+                    Image(nsImage: Thumbs.shared.card(for: photo, bucket: .grid))
+                        .resizable()
+                        .scaledToFill()
+                        .transition(.opacity)
+                }
             }
             .clipped()
+            // Cancelled when the cell scrolls away, so the store never works on
+            // screens nobody is looking at any more.
+            .task(id: photo.id) {
+                screen = await Thumbs.shared.screen(for: photo, bucket: .grid)
+            }
     }
 
     /// A collapsed run of identical captures reads as time spent on one screen.

@@ -22,7 +22,9 @@ struct InspectorView: View {
                 ContentUnavailableView("No Capture Selected", systemImage: "info.circle")
             }
         }
-        .inspectorColumnWidth(min: 260, ideal: 320, max: 460)
+        // Wide enough that a captured line does not wrap every few words: this
+        // column carries whole comment threads and transcripts, not a field list.
+        .inspectorColumnWidth(min: 300, ideal: 460, max: 640)
     }
 
     private func info(_ photo: Photo) -> some View {

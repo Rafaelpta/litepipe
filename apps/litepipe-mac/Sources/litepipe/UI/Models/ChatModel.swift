@@ -24,9 +24,9 @@ final class ChatModel {
 
     /// Openers built from the archive, so the empty state is never generic.
     func suggestions(_ lib: ContextLibrary) -> [String] {
-        var out = ["O que eu fiz ontem?", "Resumo da semana"]
-        if !lib.meetings.isEmpty { out.append("Minhas reuniões") }
-        if let host = lib.notebookNames.first { out.append("O que eu vi em \(host)?") }
+        var out = ["What did I do yesterday?", "Recap my week"]
+        if !lib.meetings.isEmpty { out.append("My meetings") }
+        if let host = lib.notebookNames.first { out.append("What did I read on \(host)?") }
         return out
     }
 
@@ -54,7 +54,7 @@ final class ChatModel {
         let all = lib.items.filter { !$0.isDeleted && !$0.isHidden }
         guard !all.isEmpty else {
             return ChatTurn(role: .assistant,
-                            text: "Não há nada capturado neste arquivo ainda.")
+                            text: "Nothing has been captured in this archive yet.")
         }
         let lower = q.lowercased()
 
@@ -87,7 +87,7 @@ final class ChatModel {
         let items = all.filter { cal.isDate($0.date, inSameDayAs: day) }
         guard !items.isEmpty else {
             return ChatTurn(role: .assistant,
-                            text: "Nada foi capturado em \(Self.dayName(day)).",
+                            text: "Nothing was captured on \(Self.dayName(day)).",
                             searchedCount: all.count)
         }
         var text = "**\(Self.dayName(day))** — \(Self.span(items)).\n\n"
@@ -102,11 +102,11 @@ final class ChatModel {
     private func weekRecap(_ all: [Photo], lib: ContextLibrary) -> ChatTurn {
         let cal = Calendar.current
         let byDay = Dictionary(grouping: all) { cal.startOfDay(for: $0.date) }
-        var text = "Tenho \(all.count) momentos em \(byDay.count) dias.\n\n"
+        var text = "\(all.count) moments across \(byDay.count) days.\n\n"
         for day in byDay.keys.sorted() {
             let items = byDay[day]!
             let apps = topApps(items, limit: 3).map(\.0).joined(separator: ", ")
-            text += "**\(Self.dayName(day))** · \(Self.span(items)) · \(items.count) momentos"
+            text += "**\(Self.dayName(day))** · \(Self.span(items)) · \(items.count) moments"
             text += apps.isEmpty ? "\n" : " — \(apps)\n"
         }
         if let t = taskLine(all) { text += "\n" + t }
@@ -117,12 +117,12 @@ final class ChatModel {
     private func meetingsAnswer(_ all: [Photo], lib: ContextLibrary) -> ChatTurn {
         guard !lib.meetings.isEmpty else {
             return ChatTurn(role: .assistant,
-                            text: "Nenhuma reunião foi detectada neste arquivo.",
+                            text: "No meetings were detected in this archive.",
                             searchedCount: all.count)
         }
         var text = ""
         for m in lib.meetings {
-            let title = m.title ?? "Reunião sem título"
+            let title = m.title ?? "Untitled meeting"
             let mins = m.end.map { Int($0.timeIntervalSince(m.start) / 60) }
             let lines = lib.transcripts[m.id]?.count ?? 0
             text += "**\(title)** — \(Self.dayName(m.start)), "
@@ -131,9 +131,9 @@ final class ChatModel {
             text += ".\n"
             if lines > 0 {
                 let mine = lib.transcripts[m.id]?.filter(\.isMe).count ?? 0
-                text += "\(lines) trechos de áudio, \(mine) do seu microfone.\n"
+                text += "\(lines) audio segments, \(mine) from your microphone.\n"
                 if mine == lines || lines - mine <= 1 {
-                    text += "_O outro lado praticamente não foi gravado._\n"
+                    text += "_The other side was barely recorded._\n"
                 }
             }
             text += "\n"
@@ -159,17 +159,17 @@ final class ChatModel {
         }
         guard !found.isEmpty else {
             return ChatTurn(role: .assistant,
-                            text: "Não encontrei nada sobre isso nos \(all.count) momentos guardados.",
+                            text: "Nothing about that in the \(all.count) moments kept.",
                             searchedCount: all.count)
         }
-        var text = "Achei **\(found.count)** momentos sobre isso"
+        var text = "**\(found.count)** moments about that"
         if let first = found.first, let last = found.last {
-            text += ", de \(Self.dayName(first.date)) a \(Self.dayName(last.date))"
+            text += ", from \(Self.dayName(first.date)) to \(Self.dayName(last.date))"
         }
         text += ".\n\n"
         text += appLine(found)
         if let snippet = found.compactMap({ hits[$0.frameId] }).first(where: { !$0.isEmpty }) {
-            text += "\n\nTrecho que casou:\n_\(snippet.replacingOccurrences(of: "\n", with: " "))_"
+            text += "\n\nMatched text:\n_\(snippet.replacingOccurrences(of: "\n", with: " "))_"
         }
         return ChatTurn(role: .assistant, text: text,
                         citations: Array(found.suffix(6).reversed()), searchedCount: all.count)
@@ -181,15 +181,15 @@ final class ChatModel {
         let apps = topApps(items, limit: 4)
         guard !apps.isEmpty else { return "" }
         let parts = apps.map { "\($0.0) (\($0.1))" }
-        return "Onde você esteve: " + parts.joined(separator: ", ") + "."
+        return "Where you were: " + parts.joined(separator: ", ") + "."
     }
 
     private func meetingLine(_ items: [Photo], lib: ContextLibrary) -> String? {
         let ids = Set(items.compactMap(\.meetingId))
         guard !ids.isEmpty else { return nil }
         let names = lib.meetings.filter { ids.contains($0.id) }
-            .map { $0.title ?? "reunião sem título" }
-        return "Reuniões: " + names.joined(separator: ", ") + "."
+            .map { $0.title ?? "untitled meeting" }
+        return "Meetings: " + names.joined(separator: ", ") + "."
     }
 
     /// Claude Code writes the task name into the terminal title, which turns the
@@ -206,7 +206,7 @@ final class ChatModel {
             if task.count > 6, !task.contains("▸"), !tasks.contains(task) { tasks.append(task) }
         }
         guard !tasks.isEmpty else { return nil }
-        return "No terminal: " + tasks.prefix(5).joined(separator: " · ") + "."
+        return "In the terminal: " + tasks.prefix(5).joined(separator: " · ") + "."
     }
 
     private func siteLine(_ items: [Photo]) -> String? {
@@ -240,15 +240,15 @@ final class ChatModel {
 
     static func dayName(_ d: Date) -> String {
         let cal = Calendar.current
-        if cal.isDateInToday(d) { return "Hoje" }
-        if cal.isDateInYesterday(d) { return "Ontem" }
+        if cal.isDateInToday(d) { return "Today" }
+        if cal.isDateInYesterday(d) { return "Yesterday" }
         return d.formatted(.dateTime.weekday(.wide).day().month(.wide))
     }
 
     static func span(_ items: [Photo]) -> String {
         guard let a = items.map(\.date).min(), let b = items.map(\.lastSeen).max() else { return "" }
         let f = Date.FormatStyle(date: .omitted, time: .shortened)
-        return "\(a.formatted(f)) às \(b.formatted(f))"
+        return "\(a.formatted(f)) to \(b.formatted(f))"
     }
 
     static func duration(_ secs: TimeInterval) -> String {

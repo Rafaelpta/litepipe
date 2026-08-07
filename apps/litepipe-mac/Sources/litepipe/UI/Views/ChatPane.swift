@@ -116,8 +116,7 @@ struct ChatPane: View {
                 ForEach(turn.citations) { p in
                     Button { jump(to: p) } label: {
                         VStack(alignment: .leading, spacing: 0) {
-                            Image(nsImage: Thumbs.shared.image(for: p, bucket: .grid))
-                                .resizable()
+                            ScreenImage(photo: p)
                                 .scaledToFill()
                                 .frame(width: 132, height: 84)
                                 .clipped()

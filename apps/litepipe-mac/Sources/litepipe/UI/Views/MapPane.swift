@@ -94,8 +94,7 @@ struct MapPane: View {
     private func pinView(_ pin: Pin) -> some View {
         VStack(spacing: 3) {
         ZStack(alignment: .topTrailing) {
-            Image(nsImage: Thumbs.shared.image(for: pin.photo, bucket: .grid))
-                .resizable()
+            ScreenImage(photo: pin.photo)
                 .scaledToFill()
                 .frame(width: 52, height: 52)
                 .clipShape(RoundedRectangle(cornerRadius: 8))

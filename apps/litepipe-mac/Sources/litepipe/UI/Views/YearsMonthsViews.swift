@@ -76,8 +76,7 @@ private struct CollageCard: View {
                 if let hero {
                     Color.clear
                         .overlay {
-                            Image(nsImage: Thumbs.shared.image(for: hero, bucket: .card))
-                                .resizable()
+                            ScreenImage(photo: hero, bucket: .card)
                                 .scaledToFill()
                         }
                 }

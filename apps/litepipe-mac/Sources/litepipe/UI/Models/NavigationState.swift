@@ -10,7 +10,10 @@ final class NavigationState {
     /// Turned off during prev/next crossfades so the outgoing image doesn't fly back to its cell.
     var heroActive = true
     var zoomLevel: Double = 0.42
-    var showInspector = false
+    /// Open from the start. The picture is half of a capture and the text read
+    /// off it is the other half; keeping that behind a toolbar button made the
+    /// app look like a picture viewer.
+    var showInspector = true
     var searchText = ""
     var favoritesOnly = false
     /// Moments (folded, furniture removed) vs the raw capture stream.
