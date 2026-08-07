@@ -64,8 +64,21 @@ struct MenuBarMenu: View {
     /// comes forward somewhere the user cannot see. `canBecomeMain` picks the
     /// document window out of the set, and if it is not on the screen the
     /// pointer is on, it is moved there — "open" should mean open in front of me.
+    /// Set by the app. Closing the window destroys it, and only the scene that
+    /// declared it can build another, so ordering an existing window forward is
+    /// not enough: a closed one has to be recreated first. Without this, "Open
+    /// litepipe" and the Dock icon both do nothing once the window is closed.
+    /// The prototype leaves it nil, where the window is never destroyed.
+    static var reopen: (() -> Void)?
+
     static func activate() {
         NSApp.activate(ignoringOtherApps: true)
+        reopen?()
+        // The scene needs a turn of the runloop to produce the window.
+        DispatchQueue.main.async { front() }
+    }
+
+    private static func front() {
         // canBecomeMain picks the document window out of the set: the menu bar
         // item owns NSStatusBarWindows of its own, and those never can.
         guard let window = NSApp.windows.first(where: { $0.canBecomeMain }) else { return }

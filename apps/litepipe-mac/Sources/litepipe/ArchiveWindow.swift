@@ -48,6 +48,12 @@ struct ArchiveWindow: View {
 /// engine decides whether capture is running, and the pill follows it.
 @MainActor
 final class ArchiveModels {
+    /// One instance, deliberately. `@State`'s initial expression is evaluated
+    /// every time the App struct is built, so writing `ArchiveModels(engine:)`
+    /// there constructed a throwaway on each pass: each one read twelve thousand
+    /// captures out of SQLite and attached its own subscription to the engine.
+    static let shared = ArchiveModels(engine: .shared)
+
     let library: ContextLibrary
     let nav = NavigationState()
     let selection = SelectionModel()

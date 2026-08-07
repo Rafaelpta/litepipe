@@ -1,9 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// The app runs a SwiftUI scene for the archive window and an AppKit delegate for
-/// everything that came before it: the engine process, the notch companion, the
-/// onboarding panel. Neither one owns the other, and the notch is untouched.
+/// Two scenes over one archive: the window and the menu bar item. The AppKit
+/// delegate keeps what predates them, which is now just the engine process and
+/// the drag helper the permission flow needs.
 @main
 struct LitepipeApp: App {
     static let archiveWindowID = "archive"
@@ -12,7 +12,7 @@ struct LitepipeApp: App {
     /// Held here rather than inside a view: the window and the menu bar item are
     /// two scenes reading one archive, and the menu has to know whether capture
     /// is running before anybody opens the window.
-    @State private var models = ArchiveModels(engine: .shared)
+    @State private var models = ArchiveModels.shared
 
     var body: some Scene {
         Window("litepipe", id: Self.archiveWindowID) {
@@ -29,7 +29,42 @@ struct LitepipeApp: App {
                 .environment(models.library)
                 .environment(models.nav)
         } label: {
-            Image(nsImage: MenuBarIcon.image(paused: models.nav.capturePaused))
+            MenuBarLabel(paused: models.nav.capturePaused)
+        }
+    }
+}
+
+/// The mark in the menu bar, and the one place the app can get hold of
+/// `openWindow`.
+///
+/// Building a window is something only its scene can do, and both the Dock
+/// delegate and the menu live outside the scene graph. This label lives inside
+/// it and is rendered for as long as the app runs, so it hands the action out
+/// to them. Without it, closing the window left no way back in: the Dock icon
+/// and "Open litepipe" both looked for a window that no longer existed.
+private struct MenuBarLabel: View {
+    let paused: Bool
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Image(nsImage: MenuBarIcon.image(paused: paused))
+            .onAppear {
+                let open = { openWindow(id: LitepipeApp.archiveWindowID) }
+                ArchiveOpener.open = open
+                MenuBarMenu.reopen = open
+            }
+    }
+}
+
+enum ArchiveOpener {
+    static var open: (() -> Void)?
+
+    /// Bring the archive up whether or not a window still exists.
+    static func run() {
+        NSApp.activate(ignoringOtherApps: true)
+        open?()
+        DispatchQueue.main.async {
+            AppDelegate.archiveWindow()?.makeKeyAndOrderFront(nil)
         }
     }
 }
@@ -117,10 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     // Dock click: bring the archive forward. A regular app with no visible
     // window would otherwise do nothing at all.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if let archive = Self.archiveWindow() {
-            archive.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-        }
+        ArchiveOpener.run()
         return false
     }
 
