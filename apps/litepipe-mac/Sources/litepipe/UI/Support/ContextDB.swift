@@ -285,7 +285,11 @@ enum ContextDB {
 
         for f in frames {
             // Raw mode gives every capture its own key, so nothing ever merges.
-            let key = fold ? f.app + "\u{1}" + f.window : String(f.id)
+            // The display is part of the key: with two monitors the engine writes
+            // one row per screen at the same instant, both carrying the focused
+            // window's text. Folding them together produced a moment whose picture
+            // was one display and whose text was the window on the other.
+            let key = fold ? f.app + "\u{1}" + f.window + "\u{1}" + (f.monitor ?? "") : String(f.id)
             var moment = open[key]
             if let m = moment, f.at.timeIntervalSince(m.lastAt) > momentGap {
                 close(m)

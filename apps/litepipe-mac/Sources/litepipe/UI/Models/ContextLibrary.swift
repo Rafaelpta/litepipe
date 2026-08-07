@@ -83,7 +83,17 @@ final class ContextLibrary {
 
     // MARK: - Filtering
 
-    func photos(for item: SidebarItem?, search: String, favoritesOnly: Bool) -> [Photo] {
+    /// Displays seen in the archive, in a stable order, for the picker.
+    var monitors: [String] {
+        Array(Set(items.compactMap(\.monitor))).sorted()
+    }
+
+    /// Pass a display to see only that screen. With two monitors the engine
+    /// writes a row per screen at the same instant, both carrying the focused
+    /// window's text — so without this the grid shows every window twice, once
+    /// under a picture of the other display.
+    func photos(for item: SidebarItem?, search: String, favoritesOnly: Bool,
+                monitor: String? = nil) -> [Photo] {
         var base: [Photo]
         if item == .recentlyDeleted {
             base = items.filter { $0.isDeleted }
@@ -155,6 +165,7 @@ final class ContextLibrary {
             }
         }
         if favoritesOnly { base = base.filter { $0.isFavorite } }
+        if let monitor { base = base.filter { $0.monitor == monitor } }
 
         let q = search.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return base }

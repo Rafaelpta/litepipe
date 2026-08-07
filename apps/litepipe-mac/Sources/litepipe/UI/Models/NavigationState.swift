@@ -16,6 +16,9 @@ final class NavigationState {
     var showInspector = true
     var searchText = ""
     var favoritesOnly = false
+    /// Which display to show, or nil for all of them. Only surfaced when the
+    /// archive holds more than one.
+    var monitor: String?
     /// Moments (folded, furniture removed) vs the raw capture stream.
     /// The two side by side are the clearest way to show what the folding buys.
     var rawMode = false

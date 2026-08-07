@@ -28,11 +28,22 @@ struct ContentColumn: View {
     @Environment(ChatModel.self) private var chat
     @Namespace private var heroNS
 
+    /// `monitor_1` is the engine's name for it, not a person's.
+    private func displayName(_ raw: String) -> String {
+        switch raw.lowercased() {
+        case "monitor_1": "Main display"
+        case "monitor_2": "Second display"
+        case "monitor_3": "Third display"
+        default: raw
+        }
+    }
+
     private var isTimeline: Bool { nav.sidebarItem == .timeline }
     private var inTrash: Bool { nav.sidebarItem == .recentlyDeleted }
 
     private var currentPhotos: [Photo] {
-        lib.photos(for: nav.sidebarItem, search: nav.searchText, favoritesOnly: nav.favoritesOnly)
+        lib.photos(for: nav.sidebarItem, search: nav.searchText,
+                   favoritesOnly: nav.favoritesOnly, monitor: nav.monitor)
     }
 
     var body: some View {
@@ -204,6 +215,23 @@ struct ContentColumn: View {
             .pickerStyle(.segmented)
             .fixedSize()
             .help("Show folded moments or every capture as recorded")
+            }
+
+            // Only worth the space on a machine with more than one screen. The
+            // engine captures every display at once, so without this every window
+            // appears twice: once under a picture of the display it was not on.
+            if lib.monitors.count > 1, nav.sidebarItem != .assistant {
+                Picker("Display", selection: Binding(
+                    get: { nav.monitor },
+                    set: { nav.monitor = $0; sel.clear() }
+                )) {
+                    Text("All displays").tag(String?.none)
+                    ForEach(lib.monitors, id: \.self) { m in
+                        Text(displayName(m)).tag(String?.some(m))
+                    }
+                }
+                .fixedSize()
+                .help("A capture's text comes from the window in focus, its picture from a whole screen. On the screen that did not hold the focused window the two will not match.")
             }
 
             if nav.sidebarItem != .places, nav.sidebarItem != .assistant,
