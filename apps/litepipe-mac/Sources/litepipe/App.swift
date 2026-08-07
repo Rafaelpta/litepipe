@@ -6,10 +6,44 @@ final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+/// The app runs a SwiftUI scene for the archive window and an AppKit delegate for
+/// everything that came before it: the engine process, the notch companion, the
+/// onboarding panel. Neither one owns the other, and the notch is untouched.
+@main
+struct LitepipeApp: App {
+    static let archiveWindowID = "archive"
+
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+
+    var body: some Scene {
+        Window("litepipe", id: Self.archiveWindowID) {
+            ArchiveWindow(engine: delegate.engine)
+        }
+        .defaultSize(width: 1280, height: 800)
+        .commands { ArchiveCommands() }
+    }
+}
+
+/// Reopening a closed window needs `openWindow`, which only exists inside the
+/// scene graph — hence a Commands type rather than a call from the delegate.
+struct ArchiveCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(after: .windowArrangement) {
+            Button("litepipe Archive") {
+                openWindow(id: LitepipeApp.archiveWindowID)
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            .keyboardShortcut("0", modifiers: .command)
+        }
+    }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var panel: NSPanel?
     private let dragHelper = DragHelperController()
-    private let engine = EngineController()
+    let engine = EngineController()
     private lazy var companion = NotchCompanionController(engine: engine)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -18,7 +52,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the first instance; hand focus to it and quit.
         let others = NSRunningApplication.runningApplications(
             withBundleIdentifier: Bundle.main.bundleIdentifier ?? "ai.ottic.litepipe"
-        ).filter { $0 != NSRunningApplication.current }
+        ).filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
+        // A launch that ends in silence is impossible to tell from a crash, and
+        // this guard is the one place the app quits before doing anything.
+        litepipeLog("launch: bundle=\(Bundle.main.bundleIdentifier ?? "nil") "
+                    + "path=\(Bundle.main.bundlePath) others=\(others.count)")
         if !others.isEmpty {
             others.first?.activate()
             NSApp.terminate(nil)
@@ -29,11 +67,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Never trust the sticky "complete" flag alone: permissions can be revoked
         // or reset after onboarding finished. Capture only runs with live grants.
+        litepipeLog("launch: onboarded=\(UserDefaults.standard.bool(forKey: "onboarding.complete.v1")) "
+                    + "permissions=\(Permissions.allRequiredGranted())")
         if UserDefaults.standard.bool(forKey: "onboarding.complete.v1"),
            Permissions.allRequiredGranted() {
             engine.start()
             companion.show()
         } else {
+            // The archive window is restored by the scene before this runs, and
+            // a grid of captures behind the onboarding panel is the wrong first
+            // impression. Nothing has been captured yet anyway.
+            closeArchiveWindow()
             showOnboarding()
         }
 
@@ -67,21 +111,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// The app is a capture engine that happens to have a window, not a document
+    /// app. Closing the archive leaves the notch and the engine running, and
+    /// under the SwiftUI lifecycle the default is the opposite: the last window
+    /// closing takes the whole process with it, silently.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
     // Without this the posix_spawned engine child outlives the app (holding port
     // 3030 and re-prompting for permissions on the next launch).
     func applicationWillTerminate(_ notification: Notification) {
         engine.stop()
     }
 
-    // Dock click: re-front whichever panel is active (a .regular app with no
-    // standard windows would otherwise do nothing visible).
+    // Dock click: onboarding first if it is still up, otherwise the archive,
+    // falling back to the notch when the window has been closed.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if let panel {
             panel.orderFrontRegardless()
+        } else if let archive = Self.archiveWindow() {
+            archive.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
         } else {
             companion.show()
         }
         return false
+    }
+
+    /// The scene's window, picked out of the set the app owns. The notch and the
+    /// onboarding panel are NSPanels and never become main, which is what tells
+    /// them apart from the document window.
+    static func archiveWindow() -> NSWindow? {
+        NSApp.windows.first { $0.canBecomeMain && !($0 is NSPanel) }
+    }
+
+    private func closeArchiveWindow() {
+        Self.archiveWindow()?.close()
     }
 
     private func showOnboarding() {
@@ -120,7 +186,3 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-let app = NSApplication.shared
-let delegate = AppDelegate()
-app.delegate = delegate
-app.run()

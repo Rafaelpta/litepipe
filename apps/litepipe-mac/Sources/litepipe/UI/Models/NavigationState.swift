@@ -51,11 +51,32 @@ final class NavigationState {
         return until > Date()
     }
 
+    /// Set by the app so these controls drive the capture engine instead of only
+    /// the display. Left nil by the prototype, which has no engine to drive:
+    /// there the pill is a mock and says so by doing nothing to the machine.
+    var onPause: ((TimeInterval?) -> Void)?
+    var onResume: (() -> Void)?
+
     /// Pass nil to pause until the next launch. The duration is kept so the
     /// pause can expire on its own; the pill deliberately does not show it.
     func pauseCapture(for seconds: TimeInterval?) {
         pausedUntil = seconds.map { Date().addingTimeInterval($0) } ?? .distantFuture
+        onPause?(seconds)
     }
 
-    func resumeCapture() { pausedUntil = nil }
+    func resumeCapture() {
+        pausedUntil = nil
+        onResume?()
+    }
+
+    /// The engine is the authority on whether capture is running: the chord, the
+    /// notch and a crash all change it behind the UI's back. The app mirrors it
+    /// here rather than letting two truths drift apart.
+    func reflectEngine(paused: Bool) {
+        if paused {
+            if pausedUntil == nil { pausedUntil = .distantFuture }
+        } else {
+            pausedUntil = nil
+        }
+    }
 }
