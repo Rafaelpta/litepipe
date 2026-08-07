@@ -12,13 +12,35 @@ import Combine
 /// only ever use the notch.
 struct ArchiveWindow: View {
     let models: ArchiveModels
+    @ObservedObject private var onboarding: OnboardingModel
+
+    init(models: ArchiveModels) {
+        self.models = models
+        self.onboarding = models.onboarding
+    }
 
     var body: some View {
-        MainWindow()
-            .environment(models.library)
-            .environment(models.nav)
-            .environment(models.selection)
-            .environment(models.chat)
+        Group {
+            if onboarding.phase == .done {
+                MainWindow()
+                    .environment(models.library)
+                    .environment(models.nav)
+                    .environment(models.selection)
+                    .environment(models.chat)
+            } else {
+                // Before the grants there is nothing captured to show, so the
+                // window opens on the ask instead of an empty grid.
+                FirstRunView(model: onboarding)
+                    .frame(minWidth: 640, minHeight: 520)
+            }
+        }
+        .onChange(of: onboarding.phase) { _, phase in
+            // The delegate starts the engine on this, the same signal the notch
+            // panel used to send when it finished.
+            guard phase == .done else { return }
+            NotificationCenter.default.post(name: .litepipeOnboardingDone, object: nil)
+            models.library.reload()
+        }
     }
 }
 
@@ -30,6 +52,9 @@ final class ArchiveModels {
     let nav = NavigationState()
     let selection = SelectionModel()
     let chat = ChatModel()
+    /// Owns the permission flow. It reads the live grants at startup and decides
+    /// whether this window opens on the archive or on the ask.
+    let onboarding = OnboardingModel()
 
     private let engine: EngineController
     private var statusSink: AnyCancellable?
@@ -41,6 +66,7 @@ final class ArchiveModels {
     init(engine: EngineController) {
         self.engine = engine
         library = ContextLibrary()
+        onboarding.bootstrap()
 
         nav.onPause = { [weak self] seconds in
             guard let self else { return }

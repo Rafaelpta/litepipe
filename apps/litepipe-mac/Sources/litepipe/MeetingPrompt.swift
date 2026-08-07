@@ -2,6 +2,14 @@ import AppKit
 import Combine
 import SwiftUI
 
+/// The screen that physically has the notch, so a banner pinned to the top lands
+/// on the laptop display rather than on whichever monitor happens to be main.
+/// It outlived the notch companion, which is where it used to live.
+func litepipeNotchScreen() -> NSScreen? {
+    for s in NSScreen.screens where s.safeAreaInsets.top > 0 { return s }
+    return NSScreen.main ?? NSScreen.screens.last
+}
+
 // Floating dark banner under the notch asking to transcribe a detected meeting:
 // litepipe icon beside the meeting app's icon, No / Yes actions, and a row of
 // capability chips. Shown while MeetingWatcher.suspected is true.
