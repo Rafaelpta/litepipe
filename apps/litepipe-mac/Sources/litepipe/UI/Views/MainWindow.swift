@@ -82,6 +82,10 @@ struct ContentColumn: View {
             ChatPane()
         } else if nav.sidebarItem == .places {
             MapPane(photos: photos)
+        } else if nav.sidebarItem == .agentMemory {
+            UnbuiltPage.agentMemory
+        } else if nav.sidebarItem == .firewall {
+            UnbuiltPage.firewall
         } else {
             gridModes(photos)
         }

@@ -97,6 +97,10 @@ struct SidebarView: View {
                         .tag(SidebarItem.sharedContexts)
                 }
 
+                // Back, now that it leads somewhere honest: a page saying it is
+                // not built and where to start if you want to build it.
+                row(.firewall, "lock.shield")
+
                 row(.requests, "tray.and.arrow.down")
             }
         }
