@@ -92,7 +92,6 @@ struct ContentColumn: View {
             case .firewall: UnbuiltPage.firewall
             case .sharedContexts: UnbuiltPage.sharedContexts
             case .pipesRoot: UnbuiltPage.workflows
-            case .requests: ContributionsPage()
             default: UnbuiltPage.agentMemory
             }
         } else {

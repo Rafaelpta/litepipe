@@ -210,8 +210,6 @@ enum SidebarItem: Hashable {
             .sharedContexts
         case .pipesRoot, .pipe:
             .pipesRoot
-        case .requests:
-            .requests
         default:
             nil
         }
@@ -269,7 +267,7 @@ enum SidebarItem: Hashable {
         case .firewallRules: "Rules"
         case .connectedApps: "Connected Apps"
         case .blocked: "Blocked"
-        case .requests: "Contributions"
+        case .requests: "Requests"
         }
     }
 }

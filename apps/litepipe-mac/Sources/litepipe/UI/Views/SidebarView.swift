@@ -87,7 +87,6 @@ struct SidebarView: View {
                 // not built and where to start if you want to build it.
                 row(.firewall, "lock.shield")
 
-                row(.requests, "tray.and.arrow.down")
             }
         }
         .listStyle(.sidebar)
