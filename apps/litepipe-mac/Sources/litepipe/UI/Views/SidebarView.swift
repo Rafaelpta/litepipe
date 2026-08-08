@@ -17,24 +17,11 @@ struct SidebarView: View {
             Section("Capture") {
                 row(.timeline, "clock")
                 row(.highlights, "sparkles")
-                row(.places, "map")
-                row(.today, "calendar")
-                HStack {
-                    Label("Recently Deleted", systemImage: "trash")
-                    Spacer()
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
-                }
-                .tag(SidebarItem.recentlyDeleted)
             }
 
             Section("Collections") {
-                row(.dayRecaps, "note.text")
                 row(.people, "person.crop.circle")
                 row(.meetings, "person.2.wave.2")
-                row(.sessions, "timeline.selection")
-                row(.activity, "bolt")
 
                 DisclosureGroup(isExpanded: $nav.extractedExpanded) {
                     row(.decisions, "checkmark.seal", nested: true)
