@@ -12,7 +12,12 @@ struct MainWindow: View {
         } detail: {
             ContentColumn()
                 .searchable(text: $nav.searchText, placement: .toolbar, prompt: "Search")
-                .inspector(isPresented: $nav.showInspector) {
+                // Nothing to inspect on a page. An empty "No Capture Selected"
+                // beside it takes half the window and reads as a broken screen.
+                .inspector(isPresented: Binding(
+                    get: { nav.showInspector && !nav.sidebarItem.isPage },
+                    set: { nav.showInspector = $0 }
+                )) {
                     InspectorView()
                 }
                 .toolbarBackground(.visible, for: .windowToolbar)

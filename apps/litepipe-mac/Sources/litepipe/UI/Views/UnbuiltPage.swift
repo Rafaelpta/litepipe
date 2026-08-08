@@ -20,16 +20,29 @@ struct UnbuiltPage: View {
 
     var body: some View {
         ScrollView {
-            HStack(alignment: .top, spacing: 40) {
-                illustration
-                    .frame(width: 340, height: 430)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                copy
-                    .frame(maxWidth: 430, alignment: .leading)
-                Spacer(minLength: 0)
+            // Side by side while there is room for both to be readable; stacked
+            // once there is not. A text column squeezed to 200pt truncates its
+            // own buttons, which is worse than a taller page.
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 40) {
+                    art(width: 320, height: 400)
+                    copy.frame(width: 440, alignment: .leading)
+                    Spacer(minLength: 0)
+                }
+                VStack(alignment: .leading, spacing: 28) {
+                    art(width: 300, height: 300)
+                    copy.frame(maxWidth: 440, alignment: .leading)
+                }
             }
-            .padding(44)
+            .padding(40)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private func art(width: CGFloat, height: CGFloat) -> some View {
+        illustration
+            .frame(width: width, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private var copy: some View {
@@ -39,6 +52,7 @@ struct UnbuiltPage: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.tertiary)
                     .tracking(0.8)
+                    .fixedSize()
                 Text("NOT BUILT YET")
                     .font(.system(size: 10, weight: .semibold))
                     .tracking(0.6)
@@ -96,6 +110,9 @@ struct UnbuiltPage: View {
                     }
                     .controlSize(.large)
                 }
+                // Buttons that shorten their own labels to "Open the r…" are
+                // worse than a wider column.
+                .fixedSize()
                 .padding(.top, 6)
             }
         }

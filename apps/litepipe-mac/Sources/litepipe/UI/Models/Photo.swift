@@ -196,6 +196,15 @@ enum SidebarItem: Hashable {
     case firewall, firewallRules, connectedApps, blocked
     case requests
 
+    /// Sections that are a written page rather than a view over captures. They
+    /// have nothing to select, so the inspector stays out of their way.
+    var isPage: Bool {
+        switch self {
+        case .agentMemory, .firewall: true
+        default: false
+        }
+    }
+
     var displayName: String {
         switch self {
         case .assistant: "Chat"
