@@ -70,11 +70,6 @@ struct GridView: View {
                         spacing: spacing,
                         pinnedViews: showsHeaders ? [.sectionHeaders] : []
                     ) {
-                        // The grid opens at the bottom, where the present is, so
-                        // the past is up: reaching the top is the ask for more.
-                        if lib.hasMore, !inTrash {
-                            olderSpinner
-                        }
                         ForEach(sections) { section in
                             Section {
                                 ForEach(section.photos) { photo in
@@ -86,6 +81,10 @@ struct GridView: View {
                                 if showsHeaders { SectionHeader(section: section) }
                             }
                         }
+                        // Below the oldest day on screen. Coming into view is the
+                        // ask for the page behind it, so scrolling into the past
+                        // loads the past.
+                        if lib.hasMore, !inTrash { olderSpinner }
                     }
                     .padding(.horizontal, 10)
 
@@ -96,7 +95,8 @@ struct GridView: View {
                         .padding(.vertical, 26)
                 }
             }
-            .defaultScrollAnchor(.bottom)
+            // Opens at the top, which is now where today is. It used to open at
+            // the bottom because the grid ran oldest first.
             .background(Color(nsColor: .textBackgroundColor))
             .background {
                 GeometryReader { geo in

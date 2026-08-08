@@ -311,8 +311,12 @@ final class ContextLibrary {
             if buckets[day] == nil { order.append(day) }
             buckets[day, default: []].append(p)
         }
-        return order.map { day in
-            let ps = buckets[day]!
+        // Newest first, all the way down: today at the top, and inside it the
+        // capture from a minute ago before the one from this morning. Scrolling
+        // down is going back in time, which is also the direction the archive
+        // pages in.
+        return order.sorted(by: >).map { day in
+            let ps = buckets[day]!.reversed().map { $0 }
             let places = ps.compactMap(\.place)
             let top = Dictionary(grouping: places, by: { $0 }).max { $0.value.count < $1.value.count }?.key
             return DaySection(id: day, title: Self.dayTitle(day), subtitle: top, photos: ps)
