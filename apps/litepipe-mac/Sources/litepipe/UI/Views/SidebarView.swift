@@ -97,15 +97,6 @@ struct SidebarView: View {
                         .tag(SidebarItem.sharedContexts)
                 }
 
-                DisclosureGroup(isExpanded: $nav.firewallExpanded) {
-                    row(.firewallRules, "slider.horizontal.3", nested: true)
-                    row(.connectedApps, "puzzlepiece.extension", nested: true)
-                    row(.blocked, "hand.raised", nested: true)
-                } label: {
-                    Label("Firewall", systemImage: "lock.shield")
-                        .tag(SidebarItem.firewall)
-                }
-
                 row(.requests, "tray.and.arrow.down")
             }
         }
