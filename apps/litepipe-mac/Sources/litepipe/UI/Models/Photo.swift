@@ -196,14 +196,29 @@ enum SidebarItem: Hashable {
     case firewall, firewallRules, connectedApps, blocked
     case requests
 
-    /// Sections that are a written page rather than a view over captures. They
-    /// have nothing to select, so the inspector stays out of their way.
-    var isPage: Bool {
+    /// The written page this row belongs to, if any. Children answer with their
+    /// parent: Facts and SOPs are names for parts of a thing that has not been
+    /// built either, so sending them to a filtered grid would dress the same
+    /// emptiness up as three different features.
+    var page: SidebarItem? {
         switch self {
-        case .agentMemory, .firewall: true
-        default: false
+        case .agentMemory, .facts, .playbooks, .sops, .memoryTarget:
+            .agentMemory
+        case .firewall, .firewallRules, .connectedApps, .blocked:
+            .firewall
+        case .sharedContexts, .accessLog, .share:
+            .sharedContexts
+        case .pipesRoot, .pipe:
+            .pipesRoot
+        case .requests:
+            .requests
+        default:
+            nil
         }
     }
+
+    /// Nothing to select on a page, so the inspector stays out of its way.
+    var isPage: Bool { page != nil }
 
     var displayName: String {
         switch self {
@@ -240,7 +255,7 @@ enum SidebarItem: Hashable {
         case .design: "Design"
         case .notebooksRoot: "Notebooks"
         case .notebook(let name): name
-        case .pipesRoot: "Pipes"
+        case .pipesRoot: "Workflows"
         case .pipe(let name): name
         case .agentMemory: "Agent Memory"
         case .facts: "Facts"
@@ -254,7 +269,7 @@ enum SidebarItem: Hashable {
         case .firewallRules: "Rules"
         case .connectedApps: "Connected Apps"
         case .blocked: "Blocked"
-        case .requests: "Requests"
+        case .requests: "Contributions"
         }
     }
 }

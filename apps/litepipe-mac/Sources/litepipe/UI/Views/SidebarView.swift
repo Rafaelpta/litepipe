@@ -53,23 +53,9 @@ struct SidebarView: View {
                         .tag(SidebarItem.sources)
                 }
 
-                DisclosureGroup(isExpanded: $nav.notebooksExpanded) {
-                    ForEach(lib.notebookNames, id: \.self) { name in
-                        row(.notebook(name), "rectangle.stack", nested: true)
-                    }
-                } label: {
-                    Label("Notebooks", systemImage: "folder")
-                        .tag(SidebarItem.notebooksRoot)
-                }
-
-                DisclosureGroup(isExpanded: $nav.pipesExpanded) {
-                    ForEach(lib.pipeNames, id: \.self) { name in
-                        row(.pipe(name), "wand.and.rays", nested: true)
-                    }
-                } label: {
-                    Label("Pipes", systemImage: "folder")
-                        .tag(SidebarItem.pipesRoot)
-                }
+                // No disclosure and no children: the three names under it were
+                // invented, and what would go here has not been found yet.
+                row(.pipesRoot, "wand.and.rays")
             }
 
             Section("Memory") {

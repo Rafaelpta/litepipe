@@ -87,10 +87,14 @@ struct ContentColumn: View {
             ChatPane()
         } else if nav.sidebarItem == .places {
             MapPane(photos: photos)
-        } else if nav.sidebarItem == .agentMemory {
-            UnbuiltPage.agentMemory
-        } else if nav.sidebarItem == .firewall {
-            UnbuiltPage.firewall
+        } else if let page = nav.sidebarItem.page {
+            switch page {
+            case .firewall: UnbuiltPage.firewall
+            case .sharedContexts: UnbuiltPage.sharedContexts
+            case .pipesRoot: UnbuiltPage.workflows
+            case .requests: ContributionsPage()
+            default: UnbuiltPage.agentMemory
+            }
         } else {
             gridModes(photos)
         }

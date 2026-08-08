@@ -158,6 +158,47 @@ extension UnbuiltPage {
         )
     }
 
+    static var workflows: UnbuiltPage {
+        UnbuiltPage(
+            eyebrow: "WORKFLOWS",
+            title: "The things you do over and over, found rather than declared",
+            blurb: """
+                   You move between the same few windows in the same order most of \
+                   the day. That shape is already in the archive: which app followed \
+                   which, how often, at what hour. This is where those routines would \
+                   be named and collected — not workflows you set up, workflows you \
+                   were seen doing.
+                   """,
+            points: [
+                ("Found, not configured", "Nothing to define up front. The archive is the evidence, and it is already there."),
+                ("One card per routine", "The screens it passes through, how many times, how long it takes you."),
+                ("Where automation would start", "You cannot hand off a routine you have never named.")
+            ],
+            startingPoint: "start at Sources/litepipe/UI/Support/ContextDB.swift",
+            illustration: AnyView(WorkflowIllustration())
+        )
+    }
+
+    static var sharedContexts: UnbuiltPage {
+        UnbuiltPage(
+            eyebrow: "SHARED CONTEXTS",
+            title: "Handing one slice of the archive to someone else",
+            blurb: """
+                   Everything litepipe keeps stays on this Mac. This is where the \
+                   deliberate exception would live: a named slice — a project, a \
+                   week, a single app — handed to a person or a tool, and nothing \
+                   around it.
+                   """,
+            points: [
+                ("A slice, never the whole thing", "Scoped by time, by app, by project. The archive itself never travels."),
+                ("Read it before it goes", "A share is assembled and shown to you first. No surprises after the fact."),
+                ("Take it back", "Withdrawing a share is as ordinary as making one, and the log says who opened it.")
+            ],
+            startingPoint: "start at crates/screenpipe-engine/src/routes/",
+            illustration: AnyView(ShareIllustration())
+        )
+    }
+
     static var firewall: UnbuiltPage {
         UnbuiltPage(
             eyebrow: "FIREWALL",
@@ -217,6 +258,84 @@ private struct MemoryIllustration: View {
                     }
                     .frame(width: w * 0.52, height: h * 0.22)
                     .offset(y: h * 0.26)
+            }
+        }
+    }
+}
+
+/// The same three windows, in the same order, again: a loop drawn as a loop.
+private struct WorkflowIllustration: View {
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width, h = geo.size.height
+            let ink = Color(red: 0.10, green: 0.11, blue: 0.13)
+            let paper = Color(red: 0.80, green: 0.66, blue: 0.82)
+            let deep = Color(red: 0.55, green: 0.40, blue: 0.62)
+            let r = min(w, h) * 0.30
+
+            ZStack {
+                paper
+
+                // The circuit the three windows sit on.
+                Circle()
+                    .stroke(ink, style: StrokeStyle(lineWidth: 3, dash: [9, 7]))
+                    .frame(width: r * 2, height: r * 2)
+
+                // Three stops, evenly spaced, because a routine is a small set
+                // repeated rather than a long list done once.
+                ForEach(0..<3, id: \.self) { i in
+                    let angle = Double(i) / 3 * 2 * .pi - .pi / 2
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(i == 0 ? deep : paper)
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ink, lineWidth: 3))
+                        .frame(width: w * 0.26, height: w * 0.19)
+                        .offset(x: cos(angle) * r, y: sin(angle) * r)
+                }
+            }
+        }
+    }
+}
+
+/// One thing crossing a boundary while the rest stays put: the whole idea of a
+/// share, and the opposite of the wall next door, which lets nothing through.
+private struct ShareIllustration: View {
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width, h = geo.size.height
+            let ink = Color(red: 0.10, green: 0.11, blue: 0.13)
+            let paper = Color(red: 0.85, green: 0.72, blue: 0.55)
+            let deep = Color(red: 0.72, green: 0.53, blue: 0.33)
+
+            ZStack {
+                paper
+
+                // The archive, held together on the near side.
+                ForEach(0..<4, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(deep)
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ink, lineWidth: 2.5))
+                        .frame(width: w * 0.30, height: w * 0.21)
+                        .rotationEffect(.degrees(-6 + Double(i) * 4))
+                        .offset(x: -w * 0.18 + Double(i) * w * 0.03,
+                                y: h * 0.20 - Double(i) * h * 0.045)
+                }
+
+                // The one that was chosen, outlined and on its own, past the edge.
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(paper)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ink, lineWidth: 3))
+                    .frame(width: w * 0.32, height: w * 0.23)
+                    .rotationEffect(.degrees(10))
+                    .offset(x: w * 0.22, y: -h * 0.24)
+
+                // The hand it went to, reduced to the gesture: an open bracket.
+                Path { p in
+                    p.move(to: CGPoint(x: w * 0.80, y: h * 0.14))
+                    p.addLine(to: CGPoint(x: w * 0.92, y: h * 0.14))
+                    p.addLine(to: CGPoint(x: w * 0.92, y: h * 0.40))
+                    p.addLine(to: CGPoint(x: w * 0.80, y: h * 0.40))
+                }
+                .stroke(ink, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
             }
         }
     }
