@@ -172,11 +172,18 @@ struct ScreenImage: View {
     @State private var screen: NSImage?
 
     var body: some View {
-        Image(nsImage: screen ?? Thumbs.shared.card(for: photo, bucket: bucket))
-            .resizable()
-            .task(id: photo.id) {
-                screen = await Thumbs.shared.screen(for: photo, bucket: bucket)
+        Group {
+            if let screen {
+                Image(nsImage: screen).resizable()
+            } else if photo.hasImage {
+                Rectangle().fill(.quaternary)
+            } else {
+                Image(nsImage: Thumbs.shared.card(for: photo, bucket: bucket)).resizable()
             }
+        }
+        .task(id: photo.id) {
+            screen = await Thumbs.shared.screen(for: photo, bucket: bucket)
+        }
     }
 }
 

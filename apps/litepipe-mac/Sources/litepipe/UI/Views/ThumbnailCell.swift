@@ -45,10 +45,10 @@ struct ThumbnailCell: View {
         .contextMenu { menuItems }
     }
 
-    /// The screen at rest, the text on hover. A wall of real screens is read at a
-    /// glance — you recognise the conversation before you can read a word of it —
-    /// but the text is what the archive is actually for, so it is one pointer
-    /// move away rather than gone.
+    /// The screen, and nothing drawn over it. A generated card standing in for a
+    /// screenshot is a picture of something that never existed, so it appears
+    /// only where there is genuinely no screen to show — and never on hover, on
+    /// top of the real one.
     private var square: some View {
         Color.clear
             .aspectRatio(1, contentMode: .fit)
@@ -57,19 +57,17 @@ struct ThumbnailCell: View {
                     Image(nsImage: screen)
                         .resizable()
                         .scaledToFill()
+                } else if photo.hasImage {
+                    // Waiting on the chunk. A plain fill rather than a rendered
+                    // card: it costs nothing and does not flash something false
+                    // in the moment before the screen arrives.
+                    Rectangle().fill(.quaternary)
                 } else {
-                    // Also the permanent state for a capture with no picture.
+                    // The capture kept no picture at all. The card is the only
+                    // thing there is to show, and it says so.
                     Image(nsImage: Thumbs.shared.card(for: photo, bucket: .grid))
                         .resizable()
                         .scaledToFill()
-                }
-            }
-            .overlay {
-                if hovering, screen != nil {
-                    Image(nsImage: Thumbs.shared.card(for: photo, bucket: .grid))
-                        .resizable()
-                        .scaledToFill()
-                        .transition(.opacity)
                 }
             }
             .clipped()
