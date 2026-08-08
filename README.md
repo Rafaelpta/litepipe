@@ -22,8 +22,17 @@ It remembers your work. It stays on your Mac. It feeds your AI.
 
 ---
 
+<p align="center">
+  <img src="docs/assets/archive-window.png" alt="The litepipe window: a day of captures on the left, and what was on the selected screen on the right" width="900">
+</p>
+
+<p align="center">
+  <sub>A Monday, as it was kept. Every tile is a screen the engine held on to, and
+  the panel is the text it read off the one selected.</sub>
+</p>
+
 <!-- demo GIF goes here: banner "Transcribe this meeting?" appears over a call,
-     click Yes, notch panel shows Transcribing meeting, transcript opens at the end.
+     click Yes, the menu bar mark shows it is recording, transcript opens at the end.
      Caption: litepipe asks before it records. One click, and the meeting becomes
      a transcript on your disk. -->
 
