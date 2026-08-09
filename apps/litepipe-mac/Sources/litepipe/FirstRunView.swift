@@ -65,23 +65,24 @@ struct FirstRunView: View {
                     .font(.system(size: 11.5))
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
-                // Screen Recording is read once at launch, so a fresh grant is
-                // invisible until the app comes back. Saying so beats leaving
-                // the row stuck on "missing" while the switch is already on.
-                if p.needsRestart, !granted, !skipped {
-                    Button("Enabled it? Restart to apply") { model.restart() }
-                        .buttonStyle(.link)
-                        .font(.system(size: 11))
-                        .padding(.top, 2)
-                }
             }
 
             Spacer(minLength: 8)
 
             if !granted && !skipped {
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 5) {
                     Button(p.action) { model.request(p) }
                         .controlSize(.small)
+                    // These two are decided when the process starts and never
+                    // revisited, so the switch can be on in Settings while the
+                    // row still reads as missing. It was a small grey link and
+                    // people sat on this screen with the permission already
+                    // granted, which is a dead end, not a hint.
+                    if p.needsRestart {
+                        Button("Restart to apply") { model.restart() }
+                            .controlSize(.small)
+                            .buttonStyle(.borderedProminent)
+                    }
                     if p.skippable {
                         Button("Skip") { model.skip(p) }
                             .buttonStyle(.link)

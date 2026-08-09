@@ -48,9 +48,11 @@ enum Permission: String, CaseIterable {
     // Drag-capable permissions get the "drag me into the list" helper.
     var dragHint: Bool { self == .screen || self == .accessibility }
 
-    // Screen Recording only takes effect after the app relaunches (macOS caches
-    // CGPreflight at launch), so this step needs a "restart to apply" affordance.
-    var needsRestart: Bool { self == .screen }
+    // Neither Screen Recording nor Accessibility takes effect until the app
+    // relaunches: macOS decides both when the process starts and does not revisit
+    // them. Accessibility was missing from this list, so granting it left the row
+    // stuck on "missing" with no way forward, and onboarding could not finish.
+    var needsRestart: Bool { self == .screen || self == .accessibility }
 }
 
 enum Permissions {
