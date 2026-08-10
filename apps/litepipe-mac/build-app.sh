@@ -14,6 +14,12 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp ".build/$CONFIG/litepipe" "$APP/Contents/MacOS/litepipe"
 chmod +x "$APP/Contents/MacOS/litepipe"
 
+# The bridge an agent connects through. It sits beside the app rather than in
+# Resources because a client spawns it as a program; shipping it here is what makes
+# Connect work on a machine that is not the one it was written on.
+cp ".build/$CONFIG/litepipe-mcp" "$APP/Contents/MacOS/litepipe-mcp"
+chmod +x "$APP/Contents/MacOS/litepipe-mcp"
+
 # Bundle the capture engine binary if present (built separately, see Engine.swift).
 if [ -f "Resources/screenpipe" ]; then
   cp "Resources/screenpipe" "$APP/Contents/Resources/screenpipe"

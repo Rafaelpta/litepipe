@@ -7,9 +7,12 @@ struct ChatTurn: Identifiable, Hashable {
     enum Role { case you, assistant }
     let id = UUID()
     let role: Role
-    let text: String
+    var text: String
     var citations: [Photo] = []
     var searchedCount: Int = 0
+    /// A failure is not an answer. Rendering it as one taught people that the
+    /// chat gives strange replies, when what it gave was an error.
+    var isError = false
 }
 
 /// Answers questions over the whole archive. Retrieval is real — the same FTS
@@ -40,8 +43,21 @@ final class ChatModel {
     /// thing on the machine, so the resting state is nobody reading it, and
     /// turning that off is a deliberate act by the person who owns it.
     var agentAvailable: Bool { AgentBridge.isAvailable }
-    var agentEnabled = false
+
+    /// Kept across launches. Asking someone to opt in again every time they open
+    /// the window reads as the setting not having worked.
+    var agentEnabled: Bool = UserDefaults.standard.bool(forKey: "chat.agentEnabled") {
+        didSet { UserDefaults.standard.set(agentEnabled, forKey: "chat.agentEnabled") }
+    }
+
     var usingAgent: Bool { agentAvailable && agentEnabled }
+
+    /// What the agent is doing right now, shown while the answer is being built.
+    var activity: String?
+
+    /// The thread this conversation belongs to, so a follow up question knows what
+    /// "it" refers to. Cleared when the conversation is.
+    private var sessionID: String?
 
     func ask(_ question: String, lib: ContextLibrary) {
         let q = question.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -49,26 +65,57 @@ final class ChatModel {
         turns.append(ChatTurn(role: .you, text: q))
         draft = ""
         pending = true
+        activity = "Starting"
 
         // Nothing can compose an answer without a model, and the pane locks
         // itself in that state, so reaching here means something bypassed it.
         guard usingAgent else {
             turns.removeLast()
             pending = false
+            activity = nil
             return
         }
 
+        let resume = sessionID
         Task { @MainActor in
             do {
-                turns.append(ChatTurn(role: .assistant, text: try await AgentBridge.ask(q)))
+                let answer = try await AgentBridge.ask(q, resuming: resume) { update in
+                    Task { @MainActor in
+                        switch update {
+                        case .activity(let what): self.activity = what
+                        // The first words arriving is the signal that the archive
+                        // work is over and the answer has started.
+                        case .text: self.activity = nil
+                        }
+                    }
+                }
+                sessionID = answer.sessionID
+                turns.append(ChatTurn(role: .assistant, text: answer.text))
             } catch {
-                turns.append(ChatTurn(role: .assistant, text: error.localizedDescription))
+                turns.append(ChatTurn(role: .assistant,
+                                      text: error.localizedDescription, isError: true))
             }
+            activity = nil
             pending = false
         }
     }
 
-    func reset() { turns = []; draft = "" }
+    /// Stops the run in flight. The question stays on screen: it was asked, and
+    /// hiding it would make the window look like it lost the message.
+    func stop() {
+        AgentBridge.cancel()
+        activity = nil
+        pending = false
+    }
+
+    func reset() {
+        AgentBridge.cancel()
+        turns = []
+        draft = ""
+        activity = nil
+        pending = false
+        sessionID = nil
+    }
 
     // MARK: - Answering
 

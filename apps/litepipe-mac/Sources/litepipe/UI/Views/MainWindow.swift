@@ -29,7 +29,11 @@ struct MainWindow: View {
         // which is cheap however far back the archive goes.
         .task {
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(60))
+                // An empty archive is somebody's first minutes with litepipe,
+                // sitting in front of a page deciding whether it works at all.
+                // That one is re-read at conversation speed; once there is
+                // something to show, a minute is soon enough.
+                try? await Task.sleep(for: .seconds(lib.items.isEmpty ? 4 : 60))
                 if !Task.isCancelled { lib.refreshHead() }
             }
         }

@@ -143,12 +143,21 @@ final class ArchiveModels {
         // The chord, the notch and a crashed engine all change capture without
         // going through this window. Mirror the engine so the pill never lies.
         nav.reflectEngine(paused: engine.status != .recording && engine.status != .starting)
+        nav.engineTrouble = Self.trouble(engine.status)
         statusSink = engine.$status
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 let running = status == .recording || status == .starting
                 self?.nav.reflectEngine(paused: !running)
+                // An engine that stopped on its own reads as "paused" without
+                // this, which sends someone hunting for a pause they never hit.
+                self?.nav.engineTrouble = Self.trouble(status)
                 if running { self?.resumeWork?.cancel(); self?.resumeWork = nil }
             }
+    }
+
+    private static func trouble(_ status: EngineStatus) -> String? {
+        if case .error(let why) = status { return why }
+        return nil
     }
 }

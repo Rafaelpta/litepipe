@@ -141,7 +141,18 @@ struct GridView: View {
         }
     }
 
-    private var emptyState: some View {
+    @ViewBuilder private var emptyState: some View {
+        // An empty archive is a fresh install, not a filter that missed: every
+        // filter is empty at that point, so whichever one is on screen, the
+        // honest answer is that capture has only just started.
+        if lib.items.isEmpty && nav.searchText.isEmpty {
+            WaitingForCaptures()
+        } else {
+            filterEmptyState
+        }
+    }
+
+    private var filterEmptyState: some View {
         ContentUnavailableView(
             nav.searchText.isEmpty ? "No Captures" : "No Results",
             systemImage: nav.searchText.isEmpty ? "clock.badge.questionmark" : "magnifyingglass",

@@ -1,0 +1,1 @@
+../litepipe/UI/Models/Photo.swift

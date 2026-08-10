@@ -158,10 +158,20 @@ struct ConnectAgentsView: View {
             Text("Or wire it up yourself")
                 .font(.system(size: 12.5, weight: .semibold))
                 .padding(.top, 8)
-            Text("Registers a read-only MCP server over the engine on 127.0.0.1:3030. Eight tools: search, activity summary, meetings, transcripts, frame context, element search, raw query, health.")
+            Text("Registers a read only server that opens the archive file directly: no port, no key, and it answers with litepipe closed. Six tools: search, activity summary, meetings, transcripts, frame context, and SQL for anything those do not cover.")
                 .font(.system(size: 11.5))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            // A dev build has no bundle, so the line below points at a build
+            // directory. Saying so beats letting someone paste a path that will
+            // not exist on the machine they paste it into.
+            if !AgentConnector.isBundled {
+                Text("Development build: an installed litepipe registers the copy inside litepipe.app.")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             HStack(alignment: .top, spacing: 8) {
                 Text(AgentConnector.claudeCodeCommand)

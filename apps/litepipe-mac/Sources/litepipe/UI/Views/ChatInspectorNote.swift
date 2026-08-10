@@ -29,9 +29,10 @@ struct ChatInspectorNote: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("""
-                         The archive and the timeline are finished work. This pane is \
-                         not: attaching a model takes a step that only lands on some \
-                         machines, and until it does the questions here go nowhere.
+                         The archive and the timeline are finished work. Asking here \
+                         works now: the agent you attached reads the archive, says what \
+                         it is doing while it does it, and follow up questions keep the \
+                         thread. What is missing is what surrounds a conversation.
                          """)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
@@ -40,9 +41,9 @@ struct ChatInspectorNote: View {
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    line("The bridge a model connects through is not in the download yet.")
                     line("With nothing attached the field is locked on purpose, not stuck.")
-                    line("Answers arrive whole, with no way to follow along or stop.")
+                    line("The thread lasts as long as the window: closing it loses the conversation.")
+                    line("You can watch it work and stop it, but not see what it read.")
                 }
 
                 Button("Read what is left to do") {

@@ -69,6 +69,12 @@ final class NavigationState {
         onResume?()
     }
 
+    /// Why capture stopped when nobody asked it to: a missing permission, a
+    /// crashed engine. Nil while capturing and nil during a deliberate pause, so
+    /// an empty archive can tell "off because you said so" apart from "off, and
+    /// there is something for you to fix".
+    var engineTrouble: String?
+
     /// The engine is the authority on whether capture is running: the chord, the
     /// notch and a crash all change it behind the UI's back. The app mirrors it
     /// here rather than letting two truths drift apart.

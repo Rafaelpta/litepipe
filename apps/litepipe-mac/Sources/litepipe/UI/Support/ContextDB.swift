@@ -4,7 +4,12 @@ import SQLite3
 /// Read-only reader over the live litepipe archive. Opens with SQLITE_OPEN_READONLY
 /// and never writes, so it is safe to run while the engine is capturing.
 enum ContextDB {
-    static let defaultPath = NSHomeDirectory() + "/.litepipe/db.sqlite"
+    /// LITEPIPE_DB points the reader at a different archive. The window never
+    /// writes, so this costs nothing to ship, and it is the only way to see what
+    /// a fresh install looks like from a Mac that has been capturing for weeks:
+    /// an empty archive cannot be faked on a full one.
+    static let defaultPath = ProcessInfo.processInfo.environment["LITEPIPE_DB"]
+        ?? NSHomeDirectory() + "/.litepipe/db.sqlite"
 
     struct TranscriptLine: Identifiable, Hashable {
         let id: Int64

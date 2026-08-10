@@ -171,6 +171,25 @@ struct ChatPane: View {
                                 in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                     .textSelection(.enabled)
             }
+        } else if turn.isError {
+            // Dressed as a notice, not as an answer. The same text in an answer
+            // bubble taught people the chat says strange things, when what it was
+            // saying was that it had failed.
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 1)
+                Text(turn.text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(.quaternary.opacity(0.5),
+                        in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         } else {
             VStack(alignment: .leading, spacing: 12) {
                 Text(markdown(turn.text))
@@ -225,12 +244,22 @@ struct ChatPane: View {
         }
     }
 
+    /// A spinner says only that something has not finished. This says what is
+    /// being done, changes as the agent moves through the archive, and offers the
+    /// way out: twenty seconds of no information is what made the pane feel stuck.
     private var thinking: some View {
         HStack(spacing: 8) {
             ProgressView().controlSize(.small)
-            Text("Reading the archive…")
+            Text((chat.activity ?? "Working") + "…")
                 .font(.system(size: 12.5))
                 .foregroundStyle(.secondary)
+                .contentTransition(.opacity)
+                .animation(Anim.crossfade, value: chat.activity)
+            Button("Stop") { chat.stop() }
+                .buttonStyle(.plain)
+                .font(.system(size: 11.5))
+                .foregroundStyle(.tertiary)
+            Spacer(minLength: 0)
         }
     }
 

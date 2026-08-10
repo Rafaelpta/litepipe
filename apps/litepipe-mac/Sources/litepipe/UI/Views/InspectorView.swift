@@ -19,6 +19,17 @@ struct InspectorView: View {
                 ChatInspectorNote()
             } else if let photo = target {
                 info(photo)
+            } else if lib.items.isEmpty {
+                // Nothing has been captured, so there is nothing to have failed
+                // to select. Saying what the column is for beats reporting a
+                // missing selection beside a window that is still filling.
+                Text("The text on screen, and what was said around it, shows up here.")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .padding(.horizontal, 24)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if sel.selection.count > 1 {
                 ContentUnavailableView("\(sel.selection.count) Captures Selected",
                                        systemImage: "square.stack")

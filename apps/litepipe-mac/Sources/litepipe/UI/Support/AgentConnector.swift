@@ -51,42 +51,53 @@ enum AgentConnector {
     /// themselves. Registering it with the CLI rather than editing a file means
     /// it survives the CLI moving its config, which it has done before.
     static var claudeCodeCommand: String {
-        let key = UserDefaults.standard.string(forKey: "engine.apikey") ?? "$(litepipe key)"
-        let node = nodePath ?? "node"
-        return "claude mcp add litepipe -e LITEPIPE_API_KEY=\(key) -- \(node) \(serverPath)"
+        "claude mcp add litepipe -- \(serverPath)"
     }
 
     // MARK: - Requirements
 
-    /// The MCP server is a Node script, so Node has to exist. GUI apps do not
-    /// inherit a shell PATH, hence the hunt.
-    static var nodePath: String? {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node",
-                "\(home)/.local/bin/node"]
-            .first { FileManager.default.isExecutableFile(atPath: $0) }
+    /// The bridge is a second executable inside this bundle, next to the app's own.
+    ///
+    /// It used to be a Node script under ~/.litepipe, which meant Connect wrote a
+    /// path that existed on one machine in the world. Reading it out of the bundle
+    /// means it is there for anyone who dragged the app to Applications, it moves
+    /// with the app, and it is covered by the same signature and notarisation.
+    /// Whether the bridge being registered is the one inside the app, or the one a
+    /// `swift build` left in a build directory.
+    static var isBundled: Bool {
+        FileManager.default.isExecutableFile(atPath: bundledServerPath)
+    }
+
+    private static var bundledServerPath: String {
+        Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/litepipe-mcp").path
     }
 
     static var serverPath: String {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".litepipe/mcp/src/index.js").path
+        let bundled = bundledServerPath
+        if FileManager.default.isExecutableFile(atPath: bundled) { return bundled }
+        // A dev build has no bundle around it, so fall back to the sibling the
+        // same `swift build` produced. Without this the connect flow can only be
+        // tried by assembling an app first, which is the slowest way to find out
+        // it is wrong.
+        return Bundle.main.executableURL?.deletingLastPathComponent()
+            .appendingPathComponent("litepipe-mcp").path ?? bundled
     }
 
+    /// The bridge exists unless the app was assembled wrong, which is worth
+    /// checking rather than assuming: a `swift run` from a checkout has no bundle.
     static var isReady: Bool {
-        nodePath != nil && FileManager.default.fileExists(atPath: serverPath)
+        FileManager.default.isExecutableFile(atPath: serverPath)
     }
 
     // MARK: - Connect
 
     @discardableResult
     static func connect(_ target: Target) -> Bool {
-        guard let node = nodePath else { return false }
-        let key = UserDefaults.standard.string(forKey: "engine.apikey") ?? ""
-        let entry: [String: Any] = [
-            "command": node,
-            "args": [serverPath],
-            "env": ["LITEPIPE_API_KEY": key],
-        ]
+        guard isReady else { return false }
+        // No key and no port: the bridge opens the archive file directly, so it
+        // answers with the app closed and there is no secret to leak into a
+        // config file that other tools read.
+        let entry: [String: Any] = ["command": serverPath, "args": [] as [String]]
 
         var root = readJSON(target.configPath) ?? [:]
         var servers = root["mcpServers"] as? [String: Any] ?? [:]
