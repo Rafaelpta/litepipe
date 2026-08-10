@@ -70,7 +70,11 @@ struct ConnectAgentsView: View {
                      : "Answers in its own window")
                     .font(.system(size: 11.5))
                     .foregroundStyle(.tertiary)
-                if target.isConnected {
+                // Only where a restart is the next thing to do. A client that
+                // answers in this window is driven per question and picks the
+                // wiring up on the next one, so telling its owner to restart it
+                // is an instruction with no task behind it.
+                if target.isConnected && !target.answersHere {
                     Text("Restart \(target.name) for it to notice.")
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
