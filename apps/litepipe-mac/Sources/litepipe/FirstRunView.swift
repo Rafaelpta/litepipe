@@ -78,7 +78,12 @@ struct FirstRunView: View {
                     // row still reads as missing. It was a small grey link and
                     // people sat on this screen with the permission already
                     // granted, which is a dead end, not a hint.
-                    if p.needsRestart {
+                    //
+                    // It waits for the grant button to have been pressed. Before
+                    // that it offers a restart for a permission nobody has given
+                    // yet, beside the button that would give it, and the person
+                    // has to guess which of two prominent actions comes first.
+                    if p.needsRestart && model.asked.contains(p) {
                         Button("Restart to apply") { model.restart() }
                             .controlSize(.small)
                             .buttonStyle(.borderedProminent)
