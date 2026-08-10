@@ -114,10 +114,16 @@ enum AgentConnector {
         _ = writeJSON(root, to: target.configPath)
     }
 
+    /// Connected means wired to this app's bridge, not merely that something once
+    /// claimed the name. An entry left by an older version points at a Node script
+    /// that is no longer shipped, and reporting that as connected shows a green
+    /// tick above a client that fails on every question.
     static func isConnected(_ target: Target) -> Bool {
         guard let root = readJSON(target.configPath),
-              let servers = root["mcpServers"] as? [String: Any] else { return false }
-        return servers["litepipe"] != nil
+              let servers = root["mcpServers"] as? [String: Any],
+              let entry = servers["litepipe"] as? [String: Any],
+              let command = entry["command"] as? String else { return false }
+        return command == serverPath
     }
 
     // MARK: - Files
