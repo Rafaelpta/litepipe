@@ -269,18 +269,24 @@ struct Err: LocalizedError {
 /// while the engine writes underneath it.
 enum Archive {
     static func rows(_ sql: String, _ binds: [String], withHeader: Bool = false) throws -> [[String]] {
-        var db: OpaquePointer?
-        let uri = "file:\(ContextDB.defaultPath)?mode=ro"
-        guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK, let db else {
-            sqlite3_close(db)
-            throw Err("No archive at \(ContextDB.defaultPath). Open litepipe once to create it.")
+        // Through the window's opener, which knows the one case where asking for
+        // read only makes the archive unreadable: a WAL database with nobody else
+        // holding it open, which is exactly the state an agent asks in.
+        guard let db = ContextDB.open() else {
+            throw Err("Could not open the archive at \(ContextDB.defaultPath). Open litepipe once to create it.")
         }
         defer { sqlite3_close(db) }
-        sqlite3_busy_timeout(db, 3000)
 
         var st: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &st, nil) == SQLITE_OK, let st else {
-            throw Err(String(cString: sqlite3_errmsg(db)))
+            let why = String(cString: sqlite3_errmsg(db))
+            // Reading a WAL database needs a shared memory file beside it, so a
+            // folder nobody may write to cannot be read either. SQLite reports
+            // that as a write error, which reads like a bug in a read only tool.
+            if why.contains("readonly") {
+                throw Err("The archive folder is not writable, and reading this database needs to place a lock file beside it. Nothing is being written to the archive itself.")
+            }
+            throw Err(why)
         }
         defer { sqlite3_finalize(st) }
         for (i, b) in binds.enumerated() {

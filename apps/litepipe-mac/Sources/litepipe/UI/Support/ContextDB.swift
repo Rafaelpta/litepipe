@@ -4,6 +4,37 @@ import SQLite3
 /// Read-only reader over the live litepipe archive. Opens with SQLITE_OPEN_READONLY
 /// and never writes, so it is safe to run while the engine is capturing.
 enum ContextDB {
+    /// Opens the archive for reading, and copes with the one case where asking
+    /// for read only makes reading impossible.
+    ///
+    /// The engine writes in WAL mode. A WAL database needs a shared memory file
+    /// beside it, and SQLite deletes that file when the last connection closes
+    /// cleanly. A read only connection is not allowed to recreate it, so opening
+    /// the archive fails with "unable to open database file" precisely when
+    /// nothing else has it open: engine stopped, app closed, which is the state
+    /// an agent asks a question in.
+    ///
+    /// So: read only first, which is right whenever capture is running, and on
+    /// failure open normally so SQLite may lay the file back down. Nothing here
+    /// writes a row either way; only SELECT is ever prepared.
+    static func open(_ path: String = defaultPath) -> OpaquePointer? {
+        var db: OpaquePointer?
+        let readOnly = "file:\(path)?mode=ro&immutable=0"
+        if sqlite3_open_v2(readOnly, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK,
+           let db, sqlite3_exec(db, "SELECT 1 FROM sqlite_master LIMIT 1;", nil, nil, nil) == SQLITE_OK {
+            sqlite3_busy_timeout(db, 3000)
+            return db
+        }
+        sqlite3_close(db)
+        db = nil
+        guard sqlite3_open_v2(path, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK, let opened = db else {
+            sqlite3_close(db)
+            return nil
+        }
+        sqlite3_busy_timeout(opened, 3000)
+        return opened
+    }
+
     /// LITEPIPE_DB points the reader at a different archive. The window never
     /// writes, so this costs nothing to ship, and it is the only way to see what
     /// a fresh install looks like from a Mac that has been capturing for weeks:
@@ -68,12 +99,8 @@ enum ContextDB {
             out.error = "No archive at \(path)"
             return out
         }
-        var db: OpaquePointer?
-        let uri = "file:\(path)?mode=ro&immutable=0"
-        guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK,
-              let db else {
-            out.error = "Could not open the archive read-only"
-            sqlite3_close(db)
+        guard let db = open(path) else {
+            out.error = "Could not open the archive"
             return out
         }
         defer { sqlite3_close(db) }
@@ -389,12 +416,8 @@ enum ContextDB {
     static func search(_ query: String, path: String = defaultPath, limit: Int = 400) -> [Int64: String] {
         let terms = query.trimmingCharacters(in: .whitespaces)
         guard terms.count >= 2 else { return [:] }
-        var db: OpaquePointer?
-        let uri = "file:\(path)?mode=ro"
-        guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK,
-              let db else { sqlite3_close(db); return [:] }
+        guard let db = open(path) else { return [:] }
         defer { sqlite3_close(db) }
-        sqlite3_busy_timeout(db, 3000)
 
         // Quote each word and add a prefix wildcard, so "climb" also matches "climbing".
         let match = terms.split(separator: " ")
