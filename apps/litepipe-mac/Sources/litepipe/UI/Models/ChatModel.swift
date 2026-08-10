@@ -22,13 +22,26 @@ final class ChatModel {
     var pending = false
     var draft = ""
 
-    /// Openers built from the archive, so the empty state is never generic.
+    /// Openers that show what the archive is for, not what it contains. A recap
+    /// proves it is watching; the other three are the reason to keep it — work
+    /// the archive can do because it saw the week, which nothing else on the
+    /// machine can say.
     func suggestions(_ lib: ContextLibrary) -> [String] {
-        var out = ["What did I do yesterday?", "Recap my week"]
-        if !lib.meetings.isEmpty { out.append("My meetings") }
-        if let host = lib.notebookNames.first { out.append("What did I read on \(host)?") }
-        return out
+        [
+            "What did I do yesterday?",
+            "What are my top five open loops right now?",
+            "Find one repeated, costly workflow that could become a useful low-risk automation",
+            "Generate a small batch of LinkedIn post drafts based on my recent activity",
+        ]
     }
+
+    /// Whether an agent could answer, and whether it may. Finding one installed
+    /// is not permission to send it anything: the archive is the most private
+    /// thing on the machine, so the resting state is nobody reading it, and
+    /// turning that off is a deliberate act by the person who owns it.
+    var agentAvailable: Bool { AgentBridge.isAvailable }
+    var agentEnabled = false
+    var usingAgent: Bool { agentAvailable && agentEnabled }
 
     func ask(_ question: String, lib: ContextLibrary) {
         let q = question.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -37,11 +50,20 @@ final class ChatModel {
         draft = ""
         pending = true
 
-        // A beat of thinking, so the answer does not snap in before the question
-        // has been read. Retrieval itself is fast enough to be invisible.
+        // Nothing can compose an answer without a model, and the pane locks
+        // itself in that state, so reaching here means something bypassed it.
+        guard usingAgent else {
+            turns.removeLast()
+            pending = false
+            return
+        }
+
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(450))
-            turns.append(answer(to: q, lib: lib))
+            do {
+                turns.append(ChatTurn(role: .assistant, text: try await AgentBridge.ask(q)))
+            } catch {
+                turns.append(ChatTurn(role: .assistant, text: error.localizedDescription))
+            }
             pending = false
         }
     }
