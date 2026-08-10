@@ -13,7 +13,11 @@ struct InspectorView: View {
 
     var body: some View {
         Group {
-            if let photo = target {
+            if nav.sidebarItem == .assistant {
+                // The chat has nothing to select, so the column says what it is
+                // instead of what is missing.
+                ChatInspectorNote()
+            } else if let photo = target {
                 info(photo)
             } else if sel.selection.count > 1 {
                 ContentUnavailableView("\(sel.selection.count) Captures Selected",
