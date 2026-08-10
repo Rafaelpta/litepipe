@@ -69,7 +69,16 @@ struct FirstRunView: View {
 
             Spacer(minLength: 8)
 
-            if !granted && !skipped {
+            if model.restarting {
+                // The app is closing itself to pick the grant up. Saying so beats
+                // the window vanishing while somebody is still reading the row.
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text("Reopening to apply")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.secondary)
+                }
+            } else if !granted && !skipped {
                 VStack(alignment: .trailing, spacing: 5) {
                     Button(p.action) { model.request(p) }
                         .controlSize(.small)

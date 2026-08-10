@@ -24,6 +24,10 @@ final class OnboardingModel: ObservableObject {
     /// the button is a second action competing with the first.
     @Published var asked: Set<Permission> = []
 
+    /// Set once a relaunch is already on its way, so a poll landing during the
+    /// wait does not queue a second one.
+    @Published private(set) var restarting = false
+
     private var timer: Timer?
     private var initial: [Permission: Bool] = [:]
 
@@ -137,6 +141,20 @@ final class OnboardingModel: ObservableObject {
             let g = Permissions.isGranted(p)
             let was = granted[p] ?? false
             granted[p] = g
+
+            // A grant that only takes effect at launch is not something to ask
+            // somebody to act on. The app noticed; the app restarts itself. The
+            // button stays as the way out when the system never tells us, which
+            // is the case for screen recording on some versions.
+            if g && !was && p.needsRestart && !restarting {
+                restarting = true
+                hideHelper()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                    self?.restart()
+                }
+                return
+            }
+
             if g && !was && !(initial[p] ?? false) {
                 hideHelper()
                 celebrating = p
