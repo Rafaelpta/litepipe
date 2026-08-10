@@ -14,16 +14,6 @@ final class OnboardingModel: ObservableObject {
     @Published var skipped: Set<Permission> = []
     @Published var celebrating: Permission?
 
-    /// Which permissions this person has already been sent to System Settings for.
-    ///
-    /// macOS decides Screen Recording and Accessibility when a process launches
-    /// and never revisits it, so granting them with the app open changes nothing
-    /// until it restarts, and the API answers "not granted" in both cases. The app
-    /// cannot tell those apart. It can tell that the person went to grant it, and
-    /// that is the moment a restart button starts meaning something. Before it,
-    /// the button is a second action competing with the first.
-    @Published var asked: Set<Permission> = []
-
     /// Set once a relaunch is already on its way, so a poll landing during the
     /// wait does not queue a second one.
     @Published private(set) var restarting = false
@@ -100,7 +90,6 @@ final class OnboardingModel: ObservableObject {
     }
 
     func request(_ p: Permission) {
-        asked.insert(p)
         Permissions.request(p)
         if p.dragHint {
             NotificationCenter.default.post(name: .litepipeShowDragHelper, object: nil)

@@ -82,21 +82,11 @@ struct FirstRunView: View {
                 VStack(alignment: .trailing, spacing: 5) {
                     Button(p.action) { model.request(p) }
                         .controlSize(.small)
-                    // These two are decided when the process starts and never
-                    // revisited, so the switch can be on in Settings while the
-                    // row still reads as missing. It was a small grey link and
-                    // people sat on this screen with the permission already
-                    // granted, which is a dead end, not a hint.
-                    //
-                    // It waits for the grant button to have been pressed. Before
-                    // that it offers a restart for a permission nobody has given
-                    // yet, beside the button that would give it, and the person
-                    // has to guess which of two prominent actions comes first.
-                    if p.needsRestart && model.asked.contains(p) {
-                        Button("Restart to apply") { model.restart() }
-                            .controlSize(.small)
-                            .buttonStyle(.borderedProminent)
-                    }
+                    // No restart button. Screen Recording and Accessibility only
+                    // take effect at launch, and this row used to hand that back
+                    // to the person as a second prominent action. The poll sees
+                    // the grant land and the app reopens itself, verified on a
+                    // clean install.
                     if p.skippable {
                         Button("Skip") { model.skip(p) }
                             .buttonStyle(.link)
