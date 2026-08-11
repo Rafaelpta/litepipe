@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>litepipe</title>
+<meta name="description" content="A memory of your work that nobody else owns. Everything you have seen, said and heard at your computer, kept in one file on your own disk. Open source, MIT, no account, no cloud.">
+<link rel="icon" href="assets/litepipe-icon.png">
+<meta property="og:title" content="litepipe">
+<meta property="og:description" content="A memory of your work that nobody else owns. One file, on your own disk. Open source, MIT.">
+<meta property="og:image" content="https://rafaelpta.github.io/litepipe/assets/archive-window.png">
+<meta property="og:url" content="https://rafaelpta.github.io/litepipe/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #F1F0EC;
+    --paper: #FAF9F6;
+    --white: #FFFFFF;
+    --ink: #0B1015;
+    --ink-2: #3B444C;
+    --muted: #6B747C;
+    --faint: #9BA3AA;
+    --rule: rgba(11, 16, 21, 0.10);
+    --rule-2: rgba(11, 16, 21, 0.18);
+    --tint: #E2E9F3;
+    --accent: #0E7C66;
+    --accent-soft: #6FD9BC;
+    --accent-wash: #D9EDE6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { color-scheme: light; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; } }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  ::selection { background: var(--ink); color: var(--ground); }
+  a { color: inherit; text-decoration: none; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  img { display: block; max-width: 100%; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; }
+
+  .in { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  @media (min-width: 900px) { .in { padding: 0 40px; } }
+
+  /* ---------- nav ---------- */
+  .bar { position: sticky; top: 0; z-index: 40; background: rgba(241, 240, 236, 0.86); backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule); }
+  nav { height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  nav .lg { display: flex; align-items: center; gap: 9px; }
+  nav .lg img { width: 21px; height: 21px; border-radius: 5px; }
+  nav .lg b { font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 500; letter-spacing: -0.03em; }
+  nav .links { display: none; gap: 28px; font-size: 14px; color: var(--muted); }
+  nav .links a:hover { color: var(--ink); }
+  @media (min-width: 920px) { nav .links { display: flex; } }
+  nav .acts { display: flex; align-items: center; gap: 10px; }
+  .pill { display: inline-flex; align-items: center; height: 34px; padding: 0 18px; border-radius: 99px; font-size: 14px; font-weight: 500; transition: .15s ease; }
+  .pill.ghost { border: 1px solid var(--rule-2); color: var(--ink-2); }
+  .pill.ghost:hover { border-color: var(--ink); color: var(--ink); }
+  .pill.solid { background: var(--ink); color: var(--ground); }
+  .pill.solid:hover { background: #1c242b; }
+  @media (max-width: 540px) { nav .acts .ghost { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 76px 0 0; text-align: center; }
+  @media (min-width: 800px) { .hero { padding-top: 104px; } }
+  .tagline {
+    display: inline-flex; align-items: center; gap: 9px; margin-bottom: 30px;
+    padding: 6px 14px 6px 8px; border-radius: 99px; background: var(--white);
+    border: 1px solid var(--rule); font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  }
+  .tagline i { width: 6px; height: 6px; border-radius: 99px; background: var(--accent); font-style: normal; animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
+
+  h1 { font-family: "Space Grotesk", sans-serif; font-weight: 500; max-width: 17ch; margin: 0 auto 26px; font-size: 46px; line-height: 1.0; letter-spacing: -2.4px; text-wrap: balance; }
+  @media (min-width: 700px) { h1 { font-size: 68px; letter-spacing: -3.8px; } }
+  @media (min-width: 1050px) { h1 { font-size: 78px; letter-spacing: -4.4px; } }
+  .sub { max-width: 34rem; margin: 0 auto 34px; font-size: 18px; line-height: 1.62; color: var(--ink-2); text-wrap: pretty; }
+  @media (min-width: 700px) { .sub { font-size: 19px; } }
+  .cta { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  @media (min-width: 640px) { .cta { flex-direction: row; gap: 22px; } }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 50px; padding: 0 30px; border-radius: 99px; background: var(--ink); color: var(--ground); font-size: 15.5px; font-weight: 500; transition: .15s ease; }
+  .btn:hover { background: #1c242b; }
+  .quiet { display: inline-flex; align-items: center; gap: 12px; font-size: 15px; color: var(--muted); }
+  .quiet a { border-bottom: 1px solid var(--rule-2); padding-bottom: 1px; }
+  .quiet a:hover { color: var(--ink); border-color: var(--ink); }
+  .fine { margin-top: 20px; font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--faint); }
+
+  .frame { margin-top: 56px; border-radius: 10px; background: var(--white); border: 1px solid var(--rule-2); overflow: hidden; box-shadow: 0 30px 70px rgba(11, 16, 21, 0.10); }
+  @media (min-width: 800px) { .frame { margin-top: 70px; } }
+  .frame .chrome { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid var(--rule); background: var(--paper); }
+  .frame .chrome i { width: 9px; height: 9px; border-radius: 99px; background: var(--rule-2); font-style: normal; }
+  .frame .chrome span { margin-left: 8px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); }
+  .frame img { width: 100%; }
+
+  /* ---------- the day tape ---------- */
+  .tape-band { background: var(--ink); color: var(--ground); padding: 64px 0 56px; }
+  @media (min-width: 800px) { .tape-band { padding: 84px 0 72px; } }
+  .tape-head { display: flex; flex-wrap: wrap; gap: 14px 40px; align-items: baseline; justify-content: space-between; margin-bottom: 34px; }
+  .tape-head h2 { font-size: 26px; letter-spacing: -1px; max-width: 22ch; }
+  @media (min-width: 700px) { .tape-head h2 { font-size: 32px; letter-spacing: -1.4px; } }
+  .tape-head p { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #7E8A92; }
+  .tape svg { width: 100%; height: auto; display: block; fill: var(--accent-soft); }
+  .tape .axis { margin-top: 12px; display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #6B747C; }
+  .tape-legend { margin-top: 30px; display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 760px) { .tape-legend { grid-template-columns: repeat(3, 1fr); gap: 40px; } }
+  .tape-legend div { border-top: 1px solid rgba(255,255,255,.14); padding-top: 16px; }
+  .tape-legend b { display: block; font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 26px; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .tape-legend span { font-size: 14px; color: #97A0A7; }
+
+  /* ---------- the demo ---------- */
+  .demo-top { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: flex-start; justify-content: space-between; }
+  .demo-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dtab {
+    appearance: none; cursor: pointer; border: 1px solid var(--rule-2); background: transparent;
+    color: var(--ink-2); border-radius: 99px; padding: 9px 18px;
+    font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; transition: .16s ease;
+  }
+  .dtab:hover { border-color: var(--ink); color: var(--ink); }
+  .dtab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+  .dtab:focus-visible, .ppill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .demo-caption { max-width: 25rem; font-size: 15px; line-height: 1.65; color: var(--muted); text-wrap: pretty; }
+  @media (min-width: 900px) { .demo-caption { text-align: right; } }
+
+  .panel { margin-top: 24px; background: var(--tint); border-radius: 16px; padding: 18px; }
+  @media (min-width: 800px) { .panel { padding: 34px; } }
+  .stage { background: var(--white); border: 1px solid rgba(11,16,21,.10); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 44px rgba(11,16,21,.12); }
+  .stage .chrome { display: flex; align-items: center; gap: 7px; padding: 11px 16px; border-bottom: 1px solid var(--rule); background: var(--paper); }
+  .stage .chrome i { width: 9px; height: 9px; border-radius: 99px; background: var(--rule-2); font-style: normal; }
+  .stage .chrome span { margin-left: 8px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); }
+  .stage .body { padding: 24px 22px 24px; min-height: 420px; display: flex; flex-direction: column; gap: 20px; }
+  @media (min-width: 700px) { .stage .body { padding: 30px 32px 30px; min-height: 400px; } }
+
+  .qline { display: flex; gap: 12px; align-items: flex-start; }
+  .qline .who { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 99px; background: var(--ink); color: var(--ground); font-size: 9.5px; display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace; margin-top: 3px; }
+  .qline .txt { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 20px; letter-spacing: -0.5px; line-height: 1.35; }
+  @media (min-width: 700px) { .qline .txt { font-size: 23px; } }
+  .caret { display: inline-block; width: 2px; height: 1em; background: var(--accent); vertical-align: -0.14em; margin-left: 2px; animation: caret 1s steps(2) infinite; }
+  @keyframes caret { 50% { opacity: 0; } }
+  .caret.done { display: none; }
+
+  .steps { display: flex; flex-direction: column; gap: 8px; }
+  .steps div {
+    display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(4px);
+    font-size: 13.5px; color: var(--ink-2); transition: opacity .3s ease, transform .3s ease;
+  }
+  .steps div.on { opacity: 1; transform: none; }
+  .steps .tick { width: 13px; height: 13px; flex: 0 0 auto; border-radius: 99px; border: 1.4px solid var(--accent); position: relative; }
+  .steps div.on .tick::after { content: ""; position: absolute; inset: 3px; border-radius: 99px; background: var(--accent); }
+  .steps em { font-style: normal; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); margin-left: auto; }
+
+  .sections { display: flex; flex-direction: column; gap: 20px; }
+  .sec { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
+  .sec.on { opacity: 1; transform: none; }
+  .lab { font-family: "JetBrains Mono", monospace; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--faint); margin-bottom: 9px; }
+  .sec p { font-size: 15.5px; line-height: 1.72; color: var(--ink-2); max-width: 46rem; }
+  .sec ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .sec li { display: flex; gap: 11px; align-items: flex-start; font-size: 15.5px; line-height: 1.55; color: var(--ink-2); }
+  .sec li i { flex: 0 0 auto; width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--rule-2); margin-top: 3px; position: relative; font-style: normal; }
+  .sec li.done i { background: var(--accent); border-color: var(--accent); }
+  .sec li.done i::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px; border-right: 1.7px solid #fff; border-bottom: 1.7px solid #fff; transform: rotate(42deg); }
+
+  .moments { margin-top: auto; padding-top: 6px; opacity: 0; transition: opacity .45s ease; }
+  .moments.on { opacity: 1; }
+  .mrow { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+  .moment { flex: 0 0 auto; width: 118px; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper); }
+  .moment .thumb { height: 56px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; justify-content: center; background: var(--white); border-bottom: 1px solid var(--rule); }
+  .moment .thumb i { display: block; height: 4px; border-radius: 2px; background: rgba(11,16,21,.13); font-style: normal; }
+  .moment .meta { padding: 8px 10px; font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: var(--faint); line-height: 1.6; }
+  .moment .meta b { display: block; color: var(--ink); font-weight: 500; font-size: 10.5px; }
+
+  .prompts { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .ppill {
+    appearance: none; cursor: pointer; border: 1px solid transparent;
+    padding: 7px 14px; border-radius: 99px; background: rgba(11,16,21,.04);
+    font-family: "DM Sans", sans-serif; font-size: 13.5px; color: var(--muted); transition: .16s ease;
+  }
+  .ppill:hover { color: var(--ink); background: rgba(11,16,21,.07); }
+  .ppill[aria-selected="true"] { background: transparent; border-color: var(--ink); color: var(--ink); }
+  .stage-note { margin-top: 18px; font-size: 13px; color: var(--muted); max-width: 44rem; }
+
+  .grounded { margin-top: 40px; border: 1px solid var(--rule-2); border-radius: 12px; overflow: hidden; background: var(--white); }
+  .grounded .gh {
+    padding: 14px 20px; border-bottom: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between;
+  }
+  .grounded .gh em { font-style: normal; color: var(--accent); }
+  .gstats { display: grid; grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 700px) { .gstats { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1000px) { .gstats { grid-template-columns: repeat(6, 1fr); } }
+  .gstats div { padding: 20px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .gstats div:last-child { border-right: none; }
+  .gstats b { display: block; font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 26px; letter-spacing: -1.2px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .gstats span { display: block; margin-top: 7px; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+  .gstats div.zero b { color: var(--accent); }
+  .grounded .gf { padding: 15px 20px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+  /* ---------- section shell ---------- */
+  .band { border-top: 1px solid var(--rule); }
+  .band.paper { background: var(--paper); }
+  .band.tint { background: var(--tint); border-top-color: rgba(11,16,21,.06); }
+  .band.dark { background: var(--ink); color: var(--ground); border-top: none; }
+  section { padding: 78px 0; }
+  @media (min-width: 800px) { section { padding: 110px 0; } }
+
+  .eyebrow { font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); margin-bottom: 18px; }
+  .band.dark .eyebrow, .tape-band .eyebrow { color: #7E8A92; }
+  h2 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 34px; line-height: 1.06; letter-spacing: -1.5px; max-width: 20ch; text-wrap: balance; }
+  @media (min-width: 700px) { h2 { font-size: 46px; letter-spacing: -2.2px; } }
+  .say { margin-top: 22px; max-width: 38rem; font-size: 17px; line-height: 1.72; color: var(--ink-2); text-wrap: pretty; }
+  .band.dark .say { color: #B9C1C7; }
+  .say strong { font-weight: 500; color: var(--ink); }
+
+  /* three phases with drawings */
+  .three { margin-top: 54px; display: grid; grid-template-columns: 1fr; gap: 40px; }
+  @media (min-width: 900px) { .three { grid-template-columns: repeat(3, 1fr); gap: 52px; } }
+  .three article { position: relative; }
+  .three .art { height: 132px; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; background: var(--white); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .three .art svg { width: 100%; height: 100%; }
+  .three .step { display: flex; align-items: center; gap: 10px; padding-top: 20px; border-top: 2px solid var(--ink); }
+  .three .no { font-family: "JetBrains Mono", monospace; font-size: 10.5px; letter-spacing: 0.1em; color: var(--ground); background: var(--ink); border-radius: 99px; padding: 3px 8px; }
+  .three .k { font-family: "JetBrains Mono", monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+  .three h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 22px; letter-spacing: -0.7px; line-height: 1.2; margin: 14px 0 12px; text-wrap: balance; }
+  .three p { font-size: 15.5px; line-height: 1.75; color: var(--ink-2); }
+  .three p + p { margin-top: 12px; }
+  .three .then { font-size: 14.5px; color: var(--accent); }
+  @media (min-width: 900px) {
+    .three article + article::before {
+      content: ""; position: absolute; left: -34px; top: 60px; width: 16px; height: 16px;
+      border-top: 1.6px solid var(--rule-2); border-right: 1.6px solid var(--rule-2);
+      transform: rotate(45deg); opacity: .9;
+    }
+  }
+
+  /* terminal */
+  .term { margin-top: 44px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(11,16,21,.45); background: var(--ink); }
+  .term .top { display: flex; align-items: center; gap: 7px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .term .top i { width: 9px; height: 9px; border-radius: 99px; background: rgba(255,255,255,.18); font-style: normal; }
+  .term .top span { margin-left: 8px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: rgba(255,255,255,.4); }
+  .term pre { margin: 0; padding: 20px 22px; overflow-x: auto; font-family: "JetBrains Mono", monospace; font-size: 13px; line-height: 1.85; color: #C7CFD5; }
+  .term pre b { color: var(--accent-soft); font-weight: 400; }
+  .term pre .c { color: #6B747C; }
+  .term pre .p { color: var(--faint); }
+
+  /* two big illustrated cards */
+  .duo { margin-top: 54px; display: grid; grid-template-columns: 1fr; gap: 22px; }
+  @media (min-width: 860px) { .duo { grid-template-columns: 1fr 1fr; gap: 28px; } }
+  .dcard { background: var(--white); border: 1px solid var(--rule); border-radius: 10px; padding: 26px; }
+  .dcard.us { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+  .dcard .lbl { font-family: "JetBrains Mono", monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+  .dcard.us .lbl { color: #7E8A92; }
+  .dcard h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 21px; letter-spacing: -0.7px; margin: 12px 0 24px; }
+  .dcard .art { height: 150px; }
+  .dcard .art svg { width: 100%; height: 100%; }
+  .dcard .note { margin-top: 24px; font-size: 14.5px; line-height: 1.7; color: var(--ink-2); }
+  .dcard.us .note { color: #B9C1C7; }
+
+  /* misses */
+  ul.misses { margin-top: 52px; display: grid; max-width: 52rem; }
+  @media (min-width: 760px) { ul.misses { grid-template-columns: 1fr 1fr; column-gap: 48px; } }
+  ul.misses li { list-style: none; padding: 15px 0; border-bottom: 1px solid var(--rule); font-size: 15.5px; color: var(--ink-2); }
+
+  .measure { margin-top: 52px; max-width: 44rem; display: flex; gap: 28px; align-items: flex-start; }
+  .measure .n { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 62px; letter-spacing: -3px; line-height: .88; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .measure p { font-size: 15.5px; line-height: 1.75; color: var(--ink-2); }
+
+  /* nots */
+  .nots { margin-top: 52px; display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 860px) { .nots { grid-template-columns: 1fr 1fr; column-gap: 56px; } }
+  .nots article { padding: 26px 0; border-top: 1px solid var(--rule-2); }
+  .nots h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 19px; letter-spacing: -0.5px; line-height: 1.25; margin-bottom: 10px; text-wrap: balance; }
+  .nots p { font-size: 15px; line-height: 1.75; color: var(--ink-2); }
+
+  /* compare */
+  .tablewrap { margin-top: 52px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 46rem; font-size: 15.5px; }
+  th, td { text-align: left; padding: 20px 24px 20px 0; vertical-align: top; }
+  thead th { font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.16em; color: var(--faint); border-bottom: 2px solid rgba(255,255,255,.3); padding-bottom: 14px; }
+  thead th.us { color: var(--accent-soft); }
+  tbody th { width: 14rem; font-weight: 500; font-size: 15.5px; color: var(--ground); }
+  tbody td { color: #97A0A7; line-height: 1.65; }
+  tbody td.us { color: var(--ground); }
+  tbody tr + tr th, tbody tr + tr td { border-top: 1px solid rgba(255,255,255,.1); }
+
+  .srcnote { margin-top: 22px; max-width: 46rem; font-size: 13px; line-height: 1.75; color: #7E8A92; }
+  .srcnote a { color: #B9C1C7; border-bottom: 1px solid rgba(255,255,255,.22); }
+  .srcnote a:hover { color: var(--ground); border-color: var(--ground); }
+  .concede { margin-top: 44px; max-width: 46rem; padding: 26px 28px; border-radius: 10px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+  .concede h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 18px; letter-spacing: -0.4px; margin-bottom: 12px; }
+  .concede p { font-size: 15px; line-height: 1.8; color: #B9C1C7; }
+
+  .agent-tools { margin-top: 40px; display: grid; grid-template-columns: 1fr; max-width: 46rem; }
+  @media (min-width: 700px) { .agent-tools { grid-template-columns: 1fr 1fr; column-gap: 44px; } }
+  .agent-tools div { padding: 13px 0; border-bottom: 1px solid var(--rule); display: flex; gap: 12px; align-items: baseline; }
+  .agent-tools code { font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--accent); }
+  .agent-tools span { font-size: 14.5px; color: var(--ink-2); }
+
+  footer { background: var(--ink); color: var(--faint); padding: 44px 0 56px; }
+  footer .row { display: flex; flex-wrap: wrap; gap: 14px 32px; justify-content: space-between; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+  footer a:hover { color: var(--ground); }
+
+  /* shared drawing bits */
+  .stroke { fill: none; stroke: currentColor; stroke-width: 1.4; }
+  .dash { stroke-dasharray: 4 4; }
+  .fillsoft { fill: currentColor; opacity: .12; }
+  .blink { animation: blink 2.6s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  .sweep { animation: sweep 4.5s linear infinite; }
+  @keyframes sweep { 0% { transform: translateX(0); } 50% { transform: translateX(58px); } 100% { transform: translateX(0); } }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="in">
+    <nav>
+      <a class="lg" href="./">
+        <img src="assets/litepipe-icon.png" alt="" width="21" height="21">
+        <b>litepipe</b>
+      </a>
+      <div class="links">
+        <a href="#what">What it does</a>
+        <a href="#why">Why local</a>
+        <a href="#agent">Your agent</a>
+        <a href="#compare">Compare</a>
+      </div>
+      <div class="acts">
+        <a class="pill ghost" href="https://github.com/Rafaelpta/litepipe">Source</a>
+        <a class="pill solid" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">Download</a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<div class="in hero">
+  <span class="tagline"><i></i>Open source &middot; MIT &middot; macOS</span>
+  <h1>A memory of your work that nobody else owns.</h1>
+  <p class="sub">Everything you have seen, said and heard at your computer, kept in one file on your own disk. No account. No cloud. No telemetry.</p>
+  <div class="cta">
+    <a class="btn" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 1.5v8.5m0 0L4.75 6.75M8 10l3.25-3.25M2.5 12v2h11v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Download for Mac
+    </a>
+    <span class="quiet">
+      <a href="https://github.com/Rafaelpta/litepipe">read the source</a>
+      <span>&middot;</span>
+      <a href="install/">installation guide</a>
+    </span>
+  </div>
+  <p class="fine">Free &middot; Apple silicon, macOS 13 or later &middot; signed and notarized by Apple</p>
+
+  <div class="frame">
+    <div class="chrome"><i></i><i></i><i></i><span>~/.litepipe</span></div>
+    <img src="assets/archive-window.png" width="1289" height="913" alt="The litepipe window: a day of moments on the left, and what was on the selected screen on the right">
+  </div>
+</div>
+
+<div class="tape-band">
+  <div class="in">
+    <div class="tape-head">
+      <h2>This is one day, drawn from the file.</h2>
+      <p>7 August &middot; 7,232 moments</p>
+    </div>
+    <div class="tape">
+      <svg viewBox="0 0 1092.8 88" preserveAspectRatio="none" role="img" aria-label="A bar for every ten minutes of one captured day, taller where more was happening">
+        <rect x="0.0" y="84.8" width="6.0" height="3.2" rx="1.4" opacity="0.38"/>
+<rect x="7.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="15.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="22.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="30.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="38.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="45.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="53.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="60.8" y="78.9" width="6.0" height="9.1" rx="1.4" opacity="0.43"/>
+<rect x="68.4" y="31.1" width="6.0" height="56.9" rx="1.4" opacity="0.77"/>
+<rect x="76.0" y="31.8" width="6.0" height="56.2" rx="1.4" opacity="0.77"/>
+<rect x="83.6" y="32.6" width="6.0" height="55.4" rx="1.4" opacity="0.76"/>
+<rect x="91.2" y="29.6" width="6.0" height="58.4" rx="1.4" opacity="0.78"/>
+<rect x="98.8" y="19.6" width="6.0" height="68.4" rx="1.4" opacity="0.84"/>
+<rect x="106.4" y="36.4" width="6.0" height="51.6" rx="1.4" opacity="0.74"/>
+<rect x="114.0" y="39.2" width="6.0" height="48.8" rx="1.4" opacity="0.72"/>
+<rect x="121.6" y="41.9" width="6.0" height="46.1" rx="1.4" opacity="0.7"/>
+<rect x="129.2" y="0.0" width="6.0" height="88.0" rx="1.4" opacity="0.96"/>
+<rect x="136.8" y="52.4" width="6.0" height="35.6" rx="1.4" opacity="0.63"/>
+<rect x="144.4" y="82.8" width="6.0" height="5.2" rx="1.4" opacity="0.4"/>
+<rect x="152.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="159.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="167.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="174.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="182.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="190.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="197.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="205.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="212.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="220.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="228.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="235.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="243.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="250.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="258.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="266.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="273.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="281.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="288.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="296.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="304.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="311.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="319.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="326.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="334.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="342.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="349.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="357.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="364.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="372.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="380.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="387.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="395.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="402.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="410.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="418.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="425.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="433.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="440.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="448.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="456.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="463.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="471.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="478.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="486.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="494.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="501.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="509.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="516.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="524.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="532.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="539.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="547.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="554.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="562.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="570.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="577.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="585.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="592.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="600.4" y="39.2" width="6.0" height="48.8" rx="1.4" opacity="0.72"/>
+<rect x="608.0" y="64.2" width="6.0" height="23.8" rx="1.4" opacity="0.55"/>
+<rect x="615.6" y="73.4" width="6.0" height="14.6" rx="1.4" opacity="0.48"/>
+<rect x="623.2" y="46.3" width="6.0" height="41.7" rx="1.4" opacity="0.67"/>
+<rect x="630.8" y="46.0" width="6.0" height="42.0" rx="1.4" opacity="0.67"/>
+<rect x="638.4" y="25.9" width="6.0" height="62.1" rx="1.4" opacity="0.8"/>
+<rect x="646.0" y="25.4" width="6.0" height="62.6" rx="1.4" opacity="0.81"/>
+<rect x="653.6" y="32.6" width="6.0" height="55.4" rx="1.4" opacity="0.76"/>
+<rect x="661.2" y="17.3" width="6.0" height="70.7" rx="1.4" opacity="0.86"/>
+<rect x="668.8" y="4.2" width="6.0" height="83.8" rx="1.4" opacity="0.94"/>
+<rect x="676.4" y="9.4" width="6.0" height="78.6" rx="1.4" opacity="0.9"/>
+<rect x="684.0" y="39.2" width="6.0" height="48.8" rx="1.4" opacity="0.72"/>
+<rect x="691.6" y="24.3" width="6.0" height="63.7" rx="1.4" opacity="0.81"/>
+<rect x="699.2" y="35.3" width="6.0" height="52.7" rx="1.4" opacity="0.74"/>
+<rect x="706.8" y="24.3" width="6.0" height="63.7" rx="1.4" opacity="0.81"/>
+<rect x="714.4" y="69.4" width="6.0" height="18.6" rx="1.4" opacity="0.51"/>
+<rect x="722.0" y="28.3" width="6.0" height="59.7" rx="1.4" opacity="0.79"/>
+<rect x="729.6" y="40.8" width="6.0" height="47.2" rx="1.4" opacity="0.71"/>
+<rect x="737.2" y="48.6" width="6.0" height="39.4" rx="1.4" opacity="0.66"/>
+<rect x="744.8" y="30.8" width="6.0" height="57.2" rx="1.4" opacity="0.77"/>
+<rect x="752.4" y="37.1" width="6.0" height="50.9" rx="1.4" opacity="0.73"/>
+<rect x="760.0" y="50.3" width="6.0" height="37.7" rx="1.4" opacity="0.65"/>
+<rect x="767.6" y="21.9" width="6.0" height="66.1" rx="1.4" opacity="0.83"/>
+<rect x="775.2" y="47.2" width="6.0" height="40.8" rx="1.4" opacity="0.67"/>
+<rect x="782.8" y="12.5" width="6.0" height="75.5" rx="1.4" opacity="0.89"/>
+<rect x="790.4" y="40.6" width="6.0" height="47.4" rx="1.4" opacity="0.71"/>
+<rect x="798.0" y="44.4" width="6.0" height="43.6" rx="1.4" opacity="0.69"/>
+<rect x="805.6" y="19.8" width="6.0" height="68.2" rx="1.4" opacity="0.84"/>
+<rect x="813.2" y="42.5" width="6.0" height="45.5" rx="1.4" opacity="0.7"/>
+<rect x="820.8" y="64.6" width="6.0" height="23.4" rx="1.4" opacity="0.55"/>
+<rect x="828.4" y="71.3" width="6.0" height="16.7" rx="1.4" opacity="0.5"/>
+<rect x="836.0" y="79.9" width="6.0" height="8.1" rx="1.4" opacity="0.42"/>
+<rect x="843.6" y="76.9" width="6.0" height="11.1" rx="1.4" opacity="0.45"/>
+<rect x="851.2" y="71.3" width="6.0" height="16.7" rx="1.4" opacity="0.5"/>
+<rect x="858.8" y="79.4" width="6.0" height="8.6" rx="1.4" opacity="0.43"/>
+<rect x="866.4" y="81.6" width="6.0" height="6.4" rx="1.4" opacity="0.41"/>
+<rect x="874.0" y="34.3" width="6.0" height="53.7" rx="1.4" opacity="0.75"/>
+<rect x="881.6" y="40.8" width="6.0" height="47.2" rx="1.4" opacity="0.71"/>
+<rect x="889.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="896.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="904.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="912.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="919.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="927.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="934.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="942.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="950.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="957.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="965.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="972.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="980.4" y="27.9" width="6.0" height="60.1" rx="1.4" opacity="0.79"/>
+<rect x="988.0" y="33.1" width="6.0" height="54.9" rx="1.4" opacity="0.76"/>
+<rect x="995.6" y="73.4" width="6.0" height="14.6" rx="1.4" opacity="0.48"/>
+<rect x="1003.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="1010.8" y="54.2" width="6.0" height="33.8" rx="1.4" opacity="0.62"/>
+<rect x="1018.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
+<rect x="1026.0" y="36.6" width="6.0" height="51.4" rx="1.4" opacity="0.74"/>
+<rect x="1033.6" y="68.2" width="6.0" height="19.8" rx="1.4" opacity="0.52"/>
+<rect x="1041.2" y="75.5" width="6.0" height="12.5" rx="1.4" opacity="0.46"/>
+<rect x="1048.8" y="85.0" width="6.0" height="3.0" rx="1.4" opacity="0.37"/>
+<rect x="1056.4" y="82.8" width="6.0" height="5.2" rx="1.4" opacity="0.4"/>
+<rect x="1064.0" y="71.3" width="6.0" height="16.7" rx="1.4" opacity="0.5"/>
+<rect x="1071.6" y="76.4" width="6.0" height="11.6" rx="1.4" opacity="0.45"/>
+<rect x="1079.2" y="60.5" width="6.0" height="27.5" rx="1.4" opacity="0.58"/>
+<rect x="1086.8" y="79.4" width="6.0" height="8.6" rx="1.4" opacity="0.43"/>
+      </svg>
+      <div class="axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+    </div>
+    <div class="tape-legend">
+      <div><b>7,232</b><span>moments kept that day, one bar per ten minutes</span></div>
+      <div><b>3</b><span>screens watched at once, not the window in front</span></div>
+      <div><b>0</b><span>bytes uploaded, because there is nowhere to send them</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="band" id="use">
+  <div class="in">
+    <section>
+      <p class="eyebrow">The point of keeping it</p>
+      <h2>What you do once you have it</h2>
+      <p class="say">A memory is only worth the work it saves. Point your agent at the archive and the writing up, the hunting and the remembering stop being your job.</p>
+
+      <div class="demo-top">
+        <div class="demo-tabs" role="tablist" aria-label="Things you can ask">
+          <button class="dtab scene-btn" role="tab" aria-selected="true" data-i="0" aria-controls="stage">Yesterday</button>
+          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="1" aria-controls="stage">Left hanging</button>
+          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="2" aria-controls="stage">Repeated work</button>
+          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="3" aria-controls="stage">This week, as posts</button>
+        </div>
+        <p class="demo-caption" id="caption"></p>
+      </div>
+
+      <div class="panel">
+        <div class="stage" id="stage" role="tabpanel" aria-live="polite">
+          <div class="chrome"><i></i><i></i><i></i><span>litepipe &middot; chat &middot; your agent, your account</span></div>
+          <div class="body">
+            <div class="qline">
+              <span class="who">you</span>
+              <span class="txt"><span id="q"></span><span class="caret" id="caret"></span></span>
+            </div>
+            <div class="steps" id="steps"></div>
+            <div class="sections" id="sections"></div>
+            <div class="moments" id="moments">
+              <p class="lab">Moments behind this answer</p>
+              <div class="mrow" id="mrow"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompts" role="tablist" aria-label="More things you can ask">
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="4" aria-controls="stage">Catch me up, I was out Thursday.</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="5" aria-controls="stage">Who was I talking to when this came up?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="6" aria-controls="stage">How much of last week went to this client?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="7" aria-controls="stage">What did I say I would send, and to whom?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="8" aria-controls="stage">Find the dashboard I had open on Tuesday.</button>
+      </div>
+
+      <p class="stage-note">The tool names are the real ones the bridge exposes. The answers are illustrative, written in the shape the archive returns them.</p>
+
+      <div class="grounded">
+        <div class="gh">
+          <span>What every answer is grounded in</span>
+          <span><em>one real archive, nine days in</em></span>
+        </div>
+        <div class="gstats">
+          <div><b>17,406</b><span>moments kept</span></div>
+          <div><b>3</b><span>screens watched</span></div>
+          <div><b>1,057</b><span>things said in meetings</span></div>
+          <div><b>24</b><span>apps, none of them connected</span></div>
+          <div><b>6.0 GB</b><span>on your own disk</span></div>
+          <div class="zero"><b>0</b><span>bytes uploaded</span></div>
+        </div>
+        <p class="gf">Your own screens and calls, and nothing else. No account was created to make this, and no integration was authorised.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band paper" id="what">
+  <div class="in">
+    <section>
+      <p class="eyebrow">No euphemism</p>
+      <h2>What it actually does</h2>
+      <p class="say">Most tools in this category describe themselves carefully, because the description is the part that has to travel. Here is the blunt version, in the order it happens.</p>
+
+      <div class="three">
+        <article>
+          <div class="art">
+            <svg viewBox="0 0 220 132" fill="none" aria-hidden="true" style="color:var(--ink)">
+              <rect class="stroke" x="16" y="26" width="118" height="74" rx="4"/>
+              <rect class="stroke" x="96" y="44" width="108" height="66" rx="4" fill="var(--white)"/>
+              <g opacity=".22"><rect x="106" y="56" width="60" height="4" rx="2" fill="currentColor"/><rect x="106" y="66" width="80" height="4" rx="2" fill="currentColor"/><rect x="106" y="76" width="44" height="4" rx="2" fill="currentColor"/></g>
+              <circle cx="190" cy="98" r="5" fill="#C0392B" class="blink"/>
+              <g opacity=".5"><rect x="28" y="38" width="42" height="3" rx="1.5" fill="currentColor"/><rect x="28" y="46" width="66" height="3" rx="1.5" fill="currentColor"/><rect x="28" y="54" width="30" height="3" rx="1.5" fill="currentColor"/></g>
+            </svg>
+          </div>
+          <div class="step"><span class="no">01</span><span class="k">You do nothing</span></div>
+          <h3>It records your screens.</h3>
+          <p>All of them, not the one window in front. No integrations to wire up, no folders to tidy, nothing to remember to save. Moments are screenshots, kept as video on your disk.</p>
+          <p>Meetings are transcribed too, but only after you accept. Say no and the microphone never opens.</p>
+        </article>
+        <article>
+          <div class="art">
+            <svg viewBox="0 0 220 132" fill="none" aria-hidden="true" style="color:var(--ink)">
+              <rect class="stroke" x="20" y="20" width="180" height="92" rx="4"/>
+              <g opacity=".45"><rect x="34" y="36" width="60" height="4" rx="2" fill="currentColor"/><rect x="34" y="48" width="46" height="4" rx="2" fill="currentColor"/><rect x="34" y="60" width="62" height="4" rx="2" fill="currentColor"/><rect x="34" y="72" width="38" height="4" rx="2" fill="currentColor"/></g>
+              <rect x="112" y="32" width="74" height="52" rx="3" fill="var(--ink)"/>
+              <path d="M140 50l14 8-14 8z" fill="var(--accent-soft)"/>
+              <g><rect x="120" y="90" width="42" height="4" rx="2" fill="var(--accent)"/><rect x="120" y="99" width="58" height="4" rx="2" fill="var(--accent)" opacity=".6"/></g>
+              <text x="34" y="103" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".45">tree</text>
+              <text x="168" y="103" font-family="JetBrains Mono, monospace" font-size="8" fill="var(--accent)">ocr</text>
+            </svg>
+          </div>
+          <div class="step"><span class="no">02</span><span class="k">You stop explaining</span></div>
+          <h3>You never catch your AI up again.</h3>
+          <p>The pasting, the screenshots dragged into a chat, the paragraph of backstory before every question: that was you being the memory. Your agent opens the archive itself and starts already knowing.</p>
+          <p class="then">Read two ways, the accessibility layer plus OCR, so what you saw is not missing from what it knows.</p>
+        </article>
+        <article>
+          <div class="art">
+            <svg viewBox="0 0 220 132" fill="none" aria-hidden="true" style="color:var(--ink)">
+              <g opacity=".28">
+                <rect class="stroke" x="14" y="46" width="34" height="24" rx="3"/>
+                <rect class="stroke" x="22" y="54" width="34" height="24" rx="3"/>
+              </g>
+              <rect class="stroke" x="30" y="62" width="34" height="24" rx="3" fill="var(--white)"/>
+              <path d="M72 74h22" stroke="currentColor" stroke-width="1.4" opacity=".45"/>
+              <path d="M88 69l7 5-7 5" stroke="currentColor" stroke-width="1.4" fill="none" opacity=".45" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="104" y="26" width="98" height="84" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
+              <g><rect x="116" y="40" width="52" height="4" rx="2" fill="var(--accent)"/><rect x="116" y="52" width="72" height="4" rx="2" fill="currentColor" opacity=".28"/><rect x="116" y="62" width="64" height="4" rx="2" fill="currentColor" opacity=".28"/><rect x="116" y="72" width="70" height="4" rx="2" fill="currentColor" opacity=".28"/><rect x="116" y="82" width="40" height="4" rx="2" fill="currentColor" opacity=".28"/></g>
+              <circle cx="182" cy="94" r="11" fill="var(--accent-wash)" stroke="var(--accent)" stroke-width="1.2"/>
+              <path d="M176 94l4 4 8-9" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="step"><span class="no">03</span><span class="k">It comes back written</span></div>
+          <h3>The writing up stops being your job.</h3>
+          <p>The standup, the monthly update, the follow up you promised on a call three weeks ago. Asked once and answered in your own words, with the moment behind every claim so you can check it before you send it.</p>
+          <p class="then">Your agent, your account, reading a file that never moves.</p>
+        </article>
+      </div>
+
+      <p class="say" style="margin-top:54px"><strong>None of it leaves the machine.</strong> You do not have to take that on faith. One process listens, on the loopback address, and it is the app talking to its own engine.</p>
+
+      <div class="term">
+        <div class="top"><i></i><i></i><i></i><span>zsh</span></div>
+<pre><span class="p">$</span> lsof -nP -iTCP -sTCP:LISTEN | grep screenpipe
+<b>screenpipe  TCP 127.0.0.1:3030 (LISTEN)</b>
+
+<span class="c"># and the archive itself, in plain SQLite</span>
+<span class="p">$</span> sqlite3 ~/.litepipe/db.sqlite "select count(*) from frames;"</pre>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band tint" id="why">
+  <div class="in">
+    <section>
+      <p class="eyebrow">Why it sees more</p>
+      <h2>The context no integration has</h2>
+      <p class="say">Connectors hand you what an API is willing to give, one app at a time. A memory built from the screen picks up the work that no integration was ever written for.</p>
+
+      <div class="duo">
+        <div class="dcard">
+          <p class="lbl">The hosted kind</p>
+          <h3>One window, on a clock</h3>
+          <div class="art">
+            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ink)">
+              <g opacity=".26">
+                <rect class="stroke" x="10" y="30" width="80" height="54" rx="3"/><path class="stroke" d="M50 84v14M34 98h32"/>
+                <rect class="stroke" x="230" y="30" width="80" height="54" rx="3"/><path class="stroke" d="M270 84v14M254 98h32"/>
+              </g>
+              <rect x="110" y="22" width="100" height="66" rx="3" fill="var(--white)" stroke="currentColor" stroke-width="1.6"/>
+              <path class="stroke" d="M160 88v14M144 102h32"/>
+              <g opacity=".38"><rect x="122" y="36" width="46" height="4" rx="2" fill="currentColor"/><rect x="122" y="46" width="66" height="4" rx="2" fill="currentColor"/><rect x="122" y="56" width="34" height="4" rx="2" fill="currentColor"/></g>
+              <g opacity=".55">
+                <circle cx="160" cy="128" r="9" class="stroke"/><path class="stroke" d="M160 123v5l3 2"/>
+              </g>
+              <text x="176" y="132" font-family="JetBrains Mono, monospace" font-size="9" fill="currentColor" opacity=".5">every few seconds</text>
+            </svg>
+          </div>
+          <p class="note">Whatever happened to be in front, sampled on a timer. The other screens were never looked at.</p>
+        </div>
+        <div class="dcard us">
+          <p class="lbl">litepipe</p>
+          <h3>Every screen, on the moment you act</h3>
+          <div class="art">
+            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ground)">
+              <rect x="10" y="30" width="80" height="54" rx="3" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/><path class="stroke" d="M50 84v14M34 98h32" opacity=".5"/>
+              <rect x="110" y="22" width="100" height="66" rx="3" fill="rgba(111,217,188,.2)" stroke="var(--accent-soft)" stroke-width="1.6"/><path class="stroke" d="M160 88v14M144 102h32" opacity=".5"/>
+              <rect x="230" y="30" width="80" height="54" rx="3" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/><path class="stroke" d="M270 84v14M254 98h32" opacity=".5"/>
+              <g opacity=".5"><rect x="122" y="36" width="46" height="4" rx="2" fill="var(--ground)"/><rect x="122" y="46" width="66" height="4" rx="2" fill="var(--ground)"/><rect x="122" y="56" width="34" height="4" rx="2" fill="var(--ground)"/></g>
+              <path d="M14 132h50l6-12 8 22 7-16 5 6h44l6-14 8 24 7-18 5 8h48l6-10 7 18 6-14 5 4h72" stroke="var(--accent-soft)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="note">All monitors at once, triggered by a click, a pause in typing or a change on screen rather than by a clock.</p>
+        </div>
+      </div>
+
+      <ul class="misses">
+        <li>The thread in WhatsApp, on the web, in a tab</li>
+        <li>The terminal, and what the command actually printed</li>
+        <li>The document somebody shared on a call and then closed</li>
+        <li>The dashboard behind a login nothing else can reach</li>
+        <li>The tab that was open at the moment a decision got made</li>
+        <li>The internal tool that will never have a public API</li>
+      </ul>
+
+      <div class="measure">
+        <div class="n">1 in 5</div>
+        <p>Measured on a real archive over three days: roughly one moment in five holds text that only the image could give. A tool reading the accessibility layer alone would have found those moments empty.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="agent">
+  <div class="in">
+    <section>
+      <p class="eyebrow">Bring your own model</p>
+      <h2>Point your own agent at it</h2>
+      <p class="say">The bridge ships inside the app. Claude Desktop, Claude Code and Cursor spawn it as a local process that opens a local file. There is no server in the middle, no account to sign into, and no monthly fee for the privilege of reading your own archive.</p>
+
+      <div class="duo">
+        <div class="dcard">
+          <p class="lbl">The hosted kind</p>
+          <h3>Out of the machine, and back</h3>
+          <div class="art">
+            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ink)">
+              <rect class="stroke dash" x="8" y="18" width="150" height="114" rx="8" opacity=".45"/>
+              <text x="16" y="34" font-family="JetBrains Mono, monospace" font-size="8.5" fill="currentColor" opacity=".45">YOUR MACHINE</text>
+              <rect class="stroke" x="32" y="60" width="70" height="44" rx="4"/>
+              <g opacity=".3"><rect x="42" y="72" width="34" height="3.5" rx="1.75" fill="currentColor"/><rect x="42" y="81" width="48" height="3.5" rx="1.75" fill="currentColor"/></g>
+              <path class="stroke dash" d="M104 82h152" opacity=".55"/>
+              <path d="M246 76l10 6-10 6" stroke="currentColor" stroke-width="1.4" fill="none" opacity=".55"/>
+              <path class="stroke" d="M258 60h44a10 10 0 0 1 0 20h-8" opacity=".7"/>
+              <rect class="stroke" x="250" y="74" width="60" height="34" rx="5"/>
+              <g opacity=".35"><rect x="258" y="86" width="30" height="3.5" rx="1.75" fill="currentColor"/><rect x="258" y="95" width="44" height="3.5" rx="1.75" fill="currentColor"/></g>
+              <g><rect x="180" y="106" width="66" height="22" rx="11" fill="#C0392B" opacity=".1"/><text x="196" y="121" font-family="JetBrains Mono, monospace" font-size="10" fill="#C0392B">$42/mo</text></g>
+            </svg>
+          </div>
+          <p class="note">A hosted server, an account to log into, and a paid tier before your own agent may read your own memory.</p>
+        </div>
+        <div class="dcard us">
+          <p class="lbl">litepipe</p>
+          <h3>It never crosses the line</h3>
+          <div class="art">
+            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ground)">
+              <rect x="8" y="18" width="304" height="114" rx="8" fill="none" stroke="var(--accent-soft)" stroke-width="1.4" stroke-dasharray="4 4" opacity=".6"/>
+              <text x="16" y="34" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--accent-soft)" opacity=".8">YOUR MACHINE</text>
+              <rect x="28" y="62" width="66" height="44" rx="4" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/>
+              <text x="38" y="88" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--accent-soft)">db.sqlite</text>
+              <path d="M96 84h30" stroke="var(--accent-soft)" stroke-width="1.6"/>
+              <rect x="128" y="66" width="64" height="36" rx="4" fill="rgba(111,217,188,.2)" stroke="var(--accent-soft)" stroke-width="1.4"/>
+              <text x="139" y="88" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--accent-soft)">bridge</text>
+              <path d="M194 84h30" stroke="var(--accent-soft)" stroke-width="1.6"/>
+              <rect x="226" y="62" width="66" height="44" rx="4" fill="none" stroke="var(--ground)" stroke-width="1.4" opacity=".75"/>
+              <text x="238" y="88" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--ground)" opacity=".8">agent</text>
+              <circle cx="112" cy="84" r="3" fill="var(--accent-soft)" class="blink"/>
+              <circle cx="210" cy="84" r="3" fill="var(--accent-soft)" class="blink"/>
+            </svg>
+          </div>
+          <p class="note">A second program inside the app, spawned by your client, reading a file that never moves. Nothing to log into, nothing to pay.</p>
+        </div>
+      </div>
+
+      <div class="term">
+        <div class="top"><i></i><i></i><i></i><span>zsh</span></div>
+<pre><span class="p">$</span> claude mcp add litepipe -- <span class="c">\</span>
+    /Applications/litepipe.app/Contents/MacOS/litepipe-mcp
+<b>Added stdio MCP server litepipe</b></pre>
+      </div>
+
+      <div class="agent-tools">
+        <div><code>search_content</code><span>find anything that was on screen</span></div>
+        <div><code>activity_summary</code><span>how a day actually went</span></div>
+        <div><code>list_meetings</code><span>every call that was detected</span></div>
+        <div><code>meeting_transcript</code><span>what was said, with speakers</span></div>
+        <div><code>frame_context</code><span>open one moment and its neighbours</span></div>
+        <div><code>query</code><span>your own read only SQL</span></div>
+      </div>
+
+      <p class="say" style="margin-top:44px">The chat panel inside the window runs whatever agent you already pay for, on your own account and under your own credentials. It ships switched off, and turning it on is a deliberate act.</p>
+    </section>
+  </div>
+</div>
+
+<div class="band paper" id="not">
+  <div class="in">
+    <section>
+      <p class="eyebrow">Before you download</p>
+      <h2>Do not download this if</h2>
+      <p class="say">Four reasons this is the wrong tool for you. Better to know now than after twenty gigabytes.</p>
+
+      <div class="nots">
+        <article>
+          <h3>You are on Windows, or you want it on your phone.</h3>
+          <p>macOS only, on Apple silicon. There is no Windows build and no mobile app, and neither is planned this quarter.</p>
+        </article>
+        <article>
+          <h3>You want your meeting notes written for you.</h3>
+          <p>You get a transcript with speakers and times. No summary, no action items, no owners. The transcript is real and the document on top of it does not exist yet.</p>
+        </article>
+        <article>
+          <h3>You need the archive encrypted at rest without opening a terminal.</h3>
+          <p>The encryption is built and works: a password locks the whole archive from the command line. It has no switch in the app yet, so if you will not use a terminal, treat the archive as readable by anyone holding the laptop.</p>
+        </article>
+        <article>
+          <h3>Your employer needs a certified vendor.</h3>
+          <p>There is no SOC 2 here, no auditor and no company to sign a contract. What there is instead is the source, under MIT, and every claim on this page written so you can check it. That is a different kind of answer, and it is not always the one being asked for.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band dark" id="compare">
+  <div class="in">
+    <section>
+      <p class="eyebrow">litepipe vs Littlebird</p>
+      <h2>The same job, built the other way</h2>
+      <p class="say">Littlebird is the best funded version of this idea and it is a genuinely good product: it pays attention to your work, writes your meeting notes and delivers a briefing on a schedule, all of which this does not do. It also keeps your memory on its servers, which is what makes that version work and what makes it theirs. The comparison is not really about features. It is about where the copy of your working life sleeps.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">&nbsp;</th>
+              <th scope="col">Littlebird</th>
+              <th scope="col" class="us">litepipe</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Where the memory lives</th>
+              <td>Their cloud, on AWS in the US East region, encrypted at rest and in transit</td>
+              <td class="us">One SQLite file in your home folder. There is no second copy anywhere, and no account that could hold one</td>
+            </tr>
+            <tr>
+              <th scope="row">How much of the screen</th>
+              <td>The active window, read every few seconds</td>
+              <td class="us">Every monitor at once, triggered by what you do: a click, a pause in typing, a change on screen</td>
+            </tr>
+            <tr>
+              <th scope="row">How the text is read</th>
+              <td>The accessibility layer</td>
+              <td class="us">The accessibility layer, plus OCR for what it cannot see</td>
+            </tr>
+            <tr>
+              <th scope="row">Whether pixels are kept</th>
+              <td>No. They state plainly that they are not a screen recorder and keep no video, which is the lighter touch of the two</td>
+              <td class="us">Yes. Moments are screenshots, kept as video on your disk, so you can look at one instead of only reading it</td>
+            </tr>
+            <tr>
+              <th scope="row">Encrypted at rest</th>
+              <td>Yes, by default, with keys managed for you</td>
+              <td class="us">Only from the command line today. There is no switch in the app yet, and this is the one place they are straightforwardly safer</td>
+            </tr>
+            <tr>
+              <th scope="row">Connecting your own agent</th>
+              <td>A hosted server you sign into, on the Power and Pro plans, which start at 42 dollars a month</td>
+              <td class="us">A local process reading a local file. Included, with nothing to log into</td>
+            </tr>
+            <tr>
+              <th scope="row">Who supplies the model</th>
+              <td>They do, metered in credits, on plans from free to over 100 dollars a month</td>
+              <td class="us">You do, on the account you already have. Free, with nothing metered</td>
+            </tr>
+            <tr>
+              <th scope="row">Where it runs</th>
+              <td>Mac, Windows in beta, plus iPhone and Android</td>
+              <td class="us">macOS on Apple silicon, and nothing else</td>
+            </tr>
+            <tr>
+              <th scope="row">Whether you can check</th>
+              <td>SOC 2 certification and an independent audit, which is the answer a security team asks for</td>
+              <td class="us">The source, under MIT, and the commands on this page. A different kind of answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="srcnote">Every row on Littlebird's side was read from their own pages on 11 August 2026:
+        <a href="https://support.littlebird.ai/docs/context/">context</a>,
+        <a href="https://support.littlebird.ai/docs/privacy-security/">privacy and security</a>,
+        <a href="https://support.littlebird.ai/docs/mcp/">MCP server</a> and
+        <a href="https://littlebird.ai/pricing">pricing</a>. If any of it has changed, tell us and it gets fixed.</p>
+
+      <div class="concede">
+        <h3>Use Littlebird instead when you want</h3>
+        <p>An assistant on Windows or on your phone. Meeting notes written up for you, with decisions, owners and open questions. A briefing that arrives on a schedule without being asked. Integrations with Gmail, Calendar, Notion, GitHub and Linear that work the moment you connect them. A certified vendor your security team can approve, and somebody to call when it breaks. Those are all real, and this does not have any of them.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="install">
+  <div class="in">
+    <section>
+      <p class="eyebrow">Install</p>
+      <h2>One file, on your machine</h2>
+      <p class="say">Download, drag it to Applications, launch. It asks for the permissions it needs and starts filling the archive within a few seconds.</p>
+      <div class="cta" style="justify-content:flex-start; margin-top:38px">
+        <a class="btn" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 1.5v8.5m0 0L4.75 6.75M8 10l3.25-3.25M2.5 12v2h11v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Download for Mac
+        </a>
+        <span class="quiet"><a href="install/">the three steps, with pictures</a></span>
+      </div>
+
+      <p class="say" style="margin-top:48px">Or the engine alone, with no app. It captures into <span class="mono">~/.litepipe</span>, serves a local API, and stops with control C. No meeting banner and no microphone gate: the permissions go to your terminal.</p>
+      <div class="term">
+        <div class="top"><i></i><i></i><i></i><span>zsh</span></div>
+<pre><span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash</pre>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <div class="in">
+    <div class="row">
+      <span>Everything stays on your Mac &middot; MIT licensed</span>
+      <a href="https://github.com/Rafaelpta/litepipe">github.com/Rafaelpta/litepipe</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var S = [
+    { cap: "Ask what a day actually went to, and get it back in sentences instead of a timeline.",
+      q: "Walk me through yesterday.",
+      steps: [["Looking at how the day went", "activity_summary"], ["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
+      secs: [
+        { lab: "The shape of it", p: "Two blocks. The morning went to the auth migration, finished and merged just before lunch. The afternoon was the launch post, rewritten four times, and the call with Ana." },
+        { lab: "Decided on the call", p: "The permissions step becomes one action per line, and the app restarts on its own instead of asking." },
+        { lab: "Left open", items: [["the pricing redirect, half done since Thursday", 0], ["Marco, still waiting on the invoice reply", 0]] }
+      ],
+      mom: [["Terminal", "09:14"], ["Chrome", "14:02"], ["Meet", "15:40"], ["Gmail", "18:20"]] },
+
+    { cap: "Everything you started or promised and never closed, oldest first.",
+      q: "What have I left hanging?",
+      steps: [["Searching what was on screen", "search_content"], ["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"]],
+      secs: [
+        { lab: "Five, oldest first", items: [["Marco's invoice, asked five days ago", 0], ["the advisory letter, still missing a name", 0], ["the pricing redirect, half written", 0], ["the reply to Prerna about the paperwork", 0], ["the design review blocking the permissions copy", 0]] },
+        { lab: "Why you can trust it", p: "Each one points back at the moment it was promised, so you can reread what you actually said before you answer." }
+      ],
+      mom: [["Gmail", "5 days"], ["Slack", "3 days"], ["Terminal", "Thu"], ["WhatsApp", "Mon"]] },
+
+    { cap: "The chore you repeat without noticing, found by how often the same screens come back.",
+      q: "What am I doing over and over that a script could do?",
+      steps: [["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"], ["Opening a moment", "frame_context"]],
+      secs: [
+        { lab: "Found it", p: "The weekly client report. Eleven times in three weeks, always the same shape: open the dashboard, copy four numbers into a doc, rewrite last week's paragraph, paste the whole thing into an email." },
+        { lab: "What it costs", p: "About forty minutes each time, and it never varies. Nothing in it needs judgement until the final paragraph." },
+        { lab: "Why it is low risk", p: "The output is a draft you read before sending, and every number in it traces back to the screen it came from." }
+      ],
+      mom: [["Dashboard", "11 runs"], ["Docs", "~40 min"], ["Gmail", "3 weeks"]] },
+
+    { cap: "Drafts that sound like you, because they are built out of your own sentences.",
+      q: "Turn what I shipped this week into three posts.",
+      steps: [["Looking at how the day went", "activity_summary"], ["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
+      secs: [
+        { lab: "Three drafts", items: [["the permission flow that cost an hour, and why the fix was one action per line", 1], ["what shipping a notarised Mac app alone teaches you", 1], ["the pricing conversation, written as the lesson rather than the deal", 1]] },
+        { lab: "In your voice", p: "Built from your own sentences in your own threads, so it reads like you and not like a model." }
+      ],
+      mom: [["Terminal", "14 days"], ["LinkedIn", "your drafts"], ["Meet", "8 Aug"]] },
+
+    { cap: "One day away, summarised by what actually moved rather than by what got posted.",
+      q: "Catch me up, I was out Thursday.",
+      steps: [["Looking at how the day went", "activity_summary"], ["Reading a transcript", "meeting_transcript"], ["Searching what was on screen", "search_content"]],
+      secs: [
+        { lab: "The call at eleven", p: "Ana walked the team through the new permissions flow and agreed to ship it behind a flag. Your name came up once, on the redirect." },
+        { lab: "Waiting on you", items: [["Marco resent the invoice", 0], ["design asked whether the copy change blocks their review", 0]] }
+      ],
+      mom: [["Meet", "Thu 11:04"], ["Slack", "Thu 14:20"], ["Gmail", "Thu 16:50"]] },
+
+    { cap: "The same sentence, everywhere it was said, and who was in the room each time.",
+      q: "Who was I talking to when this came up?",
+      steps: [["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"], ["Opening a moment", "frame_context"]],
+      secs: [
+        { lab: "Twice", p: "First on the call with Ana on 29 July, at minute fourteen. Then again in the thread with Marco three days later, where you repeated it almost word for word." },
+        { lab: "Which one counts", p: "The first. That is where the number was agreed, and the doc still has not caught up." }
+      ],
+      mom: [["Meet", "29 Jul"], ["WhatsApp", "1 Aug"], ["Notion", "stale"]] },
+
+    { cap: "Hours counted from the work itself, not from a timer you forgot to start.",
+      q: "How much of last week went to this client?",
+      steps: [["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"]],
+      secs: [
+        { lab: "Eleven hours forty", p: "Across four days last week, counted from the work rather than from a stopwatch." },
+        { lab: "Where it went", items: [["six hours in the doc and the deck", 1], ["three on two calls", 1], ["the rest split between the inbox and the dashboard", 1]] },
+        { lab: "The shape of it", p: "Tuesday carried most of it. On Friday you did not touch it at all." }
+      ],
+      mom: [["Docs", "6h"], ["Meet", "3h"], ["Gmail", "1h20"], ["Chrome", "1h20"]] },
+
+    { cap: "What you said you would send, to whom, and whether it ever went.",
+      q: "What did I say I would send, and to whom?",
+      steps: [["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
+      secs: [
+        { lab: "Four promises, three still open", items: [["the pricing sheet to John, promised for Friday", 0], ["the org chart to Isabela, promised in the thread", 0], ["the advisory draft to Michael, promised Monday", 0], ["the deck to Ana, already sent", 1]] },
+        { lab: "The receipt", p: "Each links back to the sentence where you promised it, so you can see whether you said Friday or next week." }
+      ],
+      mom: [["Meet", "4 Aug"], ["Slack", "6 Aug"], ["WhatsApp", "7 Aug"]] },
+
+    { cap: "A page behind a login, still readable a week after you closed the tab.",
+      q: "Find the dashboard I had open on Tuesday.",
+      steps: [["Searching what was on screen", "search_content"], ["Opening a moment", "frame_context"]],
+      secs: [
+        { lab: "Found", p: "Tuesday at 16:40, the analytics dashboard behind your work login. Nothing else on this machine could reach that page." },
+        { lab: "Still here", p: "The screen can be opened and read a week later, with the tab title and everything that was around it." }
+      ],
+      mom: [["Chrome", "Tue 16:40"], ["OCR", "read it"]] }
+  ];
+
+  var qEl = document.getElementById("q"),
+      caret = document.getElementById("caret"),
+      capEl = document.getElementById("caption"),
+      stepsEl = document.getElementById("steps"),
+      secsEl = document.getElementById("sections"),
+      momEl = document.getElementById("moments"),
+      mrow = document.getElementById("mrow"),
+      btns = [].slice.call(document.querySelectorAll(".scene-btn")),
+      stage = document.getElementById("stage");
+  if (!qEl || !btns.length) return;
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timers = [], idx = -1, auto = true, visible = false;
+  var BARS = [[70, 45, 88], [55, 80, 38], [82, 60, 50], [48, 72, 64]];
+
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  function paint(s) {
+    capEl.textContent = s.cap;
+    stepsEl.innerHTML = s.steps.map(function (t) {
+      return '<div><span class="tick"></span>' + t[0] + "<em>" + t[1] + "</em></div>";
+    }).join("");
+    secsEl.innerHTML = s.secs.map(function (b) {
+      var inner = b.items
+        ? "<ul>" + b.items.map(function (it) {
+            return '<li class="' + (it[1] ? "done" : "") + '"><i></i><span>' + it[0] + "</span></li>";
+          }).join("") + "</ul>"
+        : "<p>" + b.p + "</p>";
+      return '<div class="sec"><p class="lab">' + b.lab + "</p>" + inner + "</div>";
+    }).join("");
+    mrow.innerHTML = s.mom.map(function (m, k) {
+      var b = BARS[k % BARS.length];
+      return '<div class="moment"><div class="thumb">' +
+        '<i style="width:' + b[0] + '%"></i><i style="width:' + b[1] + '%"></i><i style="width:' + b[2] + '%"></i>' +
+        '</div><div class="meta"><b>' + m[0] + "</b>" + m[1] + "</div></div>";
+    }).join("");
+  }
+
+  function showAll() {
+    [].forEach.call(stepsEl.children, function (n) { n.classList.add("on"); });
+    [].forEach.call(secsEl.children, function (n) { n.classList.add("on"); });
+    momEl.classList.add("on");
+  }
+
+  function run(i, fromClick) {
+    clearTimers();
+    idx = i;
+    if (fromClick) auto = false;
+    btns.forEach(function (b, k) { b.setAttribute("aria-selected", k === i ? "true" : "false"); });
+
+    var s = S[i];
+    paint(s);
+    momEl.classList.remove("on");
+    caret.classList.remove("done");
+    qEl.textContent = "";
+
+    if (reduced) { qEl.textContent = s.q; caret.classList.add("done"); showAll(); return; }
+
+    var c = 0;
+    (function type() {
+      if (c <= s.q.length) {
+        qEl.textContent = s.q.slice(0, c++);
+        later(type, 16);
+      } else {
+        caret.classList.add("done");
+        s.steps.forEach(function (_, k) {
+          later(function () { stepsEl.children[k].classList.add("on"); }, 200 + k * 300);
+        });
+        var after = 200 + s.steps.length * 300 + 180;
+        s.secs.forEach(function (_, k) {
+          later(function () { secsEl.children[k].classList.add("on"); }, after + k * 380);
+        });
+        var done = after + s.secs.length * 380 + 120;
+        later(function () { momEl.classList.add("on"); }, done);
+        later(function () { if (auto && visible) run((i + 1) % 4); }, done + 4200);
+      }
+    })();
+  }
+
+  btns.forEach(function (b, i) { b.addEventListener("click", function () { run(i, true); }); });
+
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        visible = e.isIntersecting;
+        if (visible && idx === -1) run(0);
+        else if (!visible) clearTimers();
+        else if (visible && auto) run(idx);
+      });
+    }, { threshold: 0.3 }).observe(stage);
+  } else { run(0); }
+})();
+</script>
+
+</body>
+</html>
