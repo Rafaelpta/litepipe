@@ -13,7 +13,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --ground: #F1F0EC;
@@ -114,65 +114,144 @@
   .tape-legend span { font-size: 14px; color: #97A0A7; }
 
   /* ---------- the demo ---------- */
-  .demo-top { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: flex-start; justify-content: space-between; }
-  .demo-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .demo-top { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: center; justify-content: space-between; }
+  .demo-tabs { display: inline-flex; gap: 2px; padding: 4px; border-radius: 99px; background: oklch(0.955 0.002 75); border: 1px solid var(--rule); }
   .dtab {
-    appearance: none; cursor: pointer; border: 1px solid var(--rule-2); background: transparent;
-    color: var(--ink-2); border-radius: 99px; padding: 9px 18px;
-    font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; transition: .16s ease;
+    appearance: none; cursor: pointer; border: none; background: transparent;
+    color: oklch(0.45 0.01 56); border-radius: 99px; padding: 9px 20px;
+    font-family: "Geist", sans-serif; font-size: 14.5px; font-weight: 500; transition: .16s ease; white-space: nowrap;
   }
-  .dtab:hover { border-color: var(--ink); color: var(--ink); }
-  .dtab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+  .dtab:hover { color: var(--ink); }
+  .dtab[aria-selected="true"] { background: oklch(0.30 0.05 165); color: #fff; box-shadow: 0 1px 2px rgba(11,16,21,.14); }
   .dtab:focus-visible, .ppill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .demo-caption { max-width: 25rem; font-size: 15px; line-height: 1.65; color: var(--muted); text-wrap: pretty; }
+  .demo-caption { max-width: 27rem; font-size: 15px; line-height: 1.6; color: var(--muted); text-wrap: pretty; }
   @media (min-width: 900px) { .demo-caption { text-align: right; } }
 
-  .panel { margin-top: 24px; background: var(--tint); border-radius: 16px; padding: 18px; }
-  @media (min-width: 800px) { .panel { padding: 34px; } }
-  .stage { background: var(--white); border: 1px solid rgba(11,16,21,.10); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 44px rgba(11,16,21,.12); }
-  .stage .chrome { display: flex; align-items: center; gap: 7px; padding: 11px 16px; border-bottom: 1px solid var(--rule); background: var(--paper); }
-  .stage .chrome i { width: 9px; height: 9px; border-radius: 99px; background: var(--rule-2); font-style: normal; }
-  .stage .chrome span { margin-left: 8px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); }
-  .stage .body { padding: 24px 22px 24px; min-height: 420px; display: flex; flex-direction: column; gap: 20px; }
-  @media (min-width: 700px) { .stage .body { padding: 30px 32px 30px; min-height: 400px; } }
-
-  .qline { display: flex; gap: 12px; align-items: flex-start; }
-  .qline .who { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 99px; background: var(--ink); color: var(--ground); font-size: 9.5px; display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace; margin-top: 3px; }
-  .qline .txt { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 20px; letter-spacing: -0.5px; line-height: 1.35; }
-  @media (min-width: 700px) { .qline .txt { font-size: 23px; } }
-  .caret { display: inline-block; width: 2px; height: 1em; background: var(--accent); vertical-align: -0.14em; margin-left: 2px; animation: caret 1s steps(2) infinite; }
-  @keyframes caret { 50% { opacity: 0; } }
-  .caret.done { display: none; }
-
-  .steps { display: flex; flex-direction: column; gap: 8px; }
-  .steps div {
-    display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(4px);
-    font-size: 13.5px; color: var(--ink-2); transition: opacity .3s ease, transform .3s ease;
+  /* the window sits in a soft ring, the way theirs does */
+  .panel { margin-top: 22px; }
+  .stage {
+    --o-bg: oklch(0.985 0.002 75);
+    --o-fg: oklch(0.147 0.004 49);
+    --o-border: oklch(0.923 0.003 75);
+    --o-muted: oklch(0.553 0.013 58);
+    --o-faint: oklch(0.709 0.01 56);
+    --o-soft: oklch(0.970 0.001 75);
+    font-family: "Geist", -apple-system, sans-serif;
+    background: #fff; color: var(--o-fg);
+    border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--o-border);
+    box-shadow: 0 0 0 8px rgba(255,255,255,.55), 0 26px 60px rgba(11,16,21,.13);
   }
-  .steps div.on { opacity: 1; transform: none; }
-  .steps .tick { width: 13px; height: 13px; flex: 0 0 auto; border-radius: 99px; border: 1.4px solid var(--accent); position: relative; }
-  .steps div.on .tick::after { content: ""; position: absolute; inset: 3px; border-radius: 99px; background: var(--accent); }
-  .steps em { font-style: normal; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); margin-left: auto; }
+  .app { display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 880px) {
+    .app { grid-template-columns: 246px 1fr; height: 762px; }
+    .side { overflow: hidden; min-height: 0; }
+    .main { overflow: hidden; min-height: 0; }
+  }
+  .navlist { flex: 1; min-height: 0; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 26px), transparent 100%); mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 26px), transparent 100%); }
 
-  .sections { display: flex; flex-direction: column; gap: 20px; }
+  /* sidebar, with ottic's own nav */
+  .side { display: none; background: var(--o-bg); border-right: 1px solid var(--o-border); padding: 18px 14px 16px; flex-direction: column; }
+  @media (min-width: 880px) { .side { display: flex; } }
+  .side .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px 14px; }
+  .side .brand img { width: 20px; height: 20px; border-radius: 6px; }
+  .side .brand b { font-size: 16px; font-weight: 600; letter-spacing: -0.03em; }
+  .side .row { position: relative; display: flex; align-items: center; gap: 9px; padding: 6px 10px 6px 24px; border-radius: 7px; font-size: 13.5px; color: oklch(0.36 0.01 56); }
+  .side .row.on { background: oklch(0.94 0.002 75); color: var(--o-fg); font-weight: 500; }
+  .side .row svg { flex: 0 0 auto; color: oklch(0.55 0.11 250); }
+  .side .row.child { padding-left: 42px; font-size: 13px; color: oklch(0.44 0.01 56); }
+  .side .row.child svg { color: oklch(0.62 0.02 56); }
+  .side .row .cv { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--o-faint); }
+  .side .grp { padding: 14px 10px 5px 24px; font-size: 11.5px; color: var(--o-faint); }
+  .side .foot { margin-top: auto; padding-top: 12px; }
+  .side .ctx { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 7px; background: oklch(0.945 0.002 75); font-size: 12.5px; color: oklch(0.34 0.01 56); }
+  .side .ctx i { width: 7px; height: 7px; border-radius: 99px; background: oklch(0.62 0.16 150); font-style: normal; animation: pulse 2.4s ease-in-out infinite; }
+  .side .disk { display: flex; align-items: center; gap: 8px; padding: 10px 10px 0; font-size: 11px; line-height: 1.5; color: var(--o-faint); }
+  .side .disk b { display: block; font-size: 12px; font-weight: 500; color: oklch(0.40 0.01 56); }
+
+  .main { padding: 24px 20px 20px; min-height: 430px; display: flex; flex-direction: column; }
+  @media (min-width: 700px) { .main { padding: 30px 38px 24px; min-height: 420px; } }
+  .convo { flex: 1; display: flex; flex-direction: column; gap: 18px; }
+
+  /* empty state */
+  .empty { transition: opacity .3s ease; }
+  .empty.off { opacity: 0; pointer-events: none; position: absolute; }
+  .empty h3 { font-size: 30px; font-weight: 600; letter-spacing: -0.9px; }
+  .empty .date { margin-top: 6px; font-size: 13px; color: var(--o-faint); }
+
+  /* answered state */
+  .umsg { display: flex; justify-content: flex-end; opacity: 0; transform: translateY(12px); transition: opacity .34s ease, transform .34s cubic-bezier(.2,.7,.3,1); }
+  .umsg.on { opacity: 1; transform: none; }
+  .bubble { max-width: 80%; padding: 11px 17px; border-radius: 14px; background: oklch(0.945 0.002 75); border: 1px solid var(--o-border); font-size: 15px; line-height: 1.55; }
+
+  .status { display: flex; align-items: center; gap: 12px; padding: 2px 0; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--o-muted); opacity: 0; transition: opacity .3s ease; }
+  .status.on { opacity: 1; }
+  .mx { display: grid; grid-template-columns: repeat(5, 3px); grid-auto-rows: 3px; gap: 1px; }
+  .mx i { display: block; width: 3px; height: 3px; border-radius: .5px; background: rgb(251 146 60); opacity: .09; transition: opacity .12s linear; font-style: normal; }
+  .mx i.lit { opacity: 1; }
+  .verb { background: linear-gradient(90deg, #f97316 0%, #fb923c 20%, #f97316 40%, #f97316 100%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.5s ease-in-out infinite; min-width: 10ch; }
+  @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+  .status kbd { padding: 1px 4px; font-size: 10px; background: oklch(0.923 0.003 75); border-radius: 4px; margin: 0 2px; font-family: inherit; }
+  .status .num { font-variant-numeric: tabular-nums; color: var(--o-faint); }
+
+  /* the answer as a document: serif title, meta, segmented control, tiny labels */
+  .doc { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
+  .doc.on { opacity: 1; transform: none; }
+  .doc h4 { font-family: "Newsreader", Georgia, serif; font-weight: 400; font-size: 30px; letter-spacing: 0.2px; line-height: 1.15; color: oklch(0.24 0.008 56); }
+  @media (min-width: 700px) { .doc h4 { font-size: 34px; } }
+  .doc .meta { margin-top: 8px; font-size: 13px; color: var(--o-faint); }
+
+  .segs { display: inline-flex; gap: 2px; margin-top: 20px; padding: 4px; border-radius: 11px; background: oklch(0.955 0.002 75); border: 1px solid var(--o-border); }
+  .segs span { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; font-size: 13.5px; color: var(--o-muted); }
+  .segs span.on { background: #fff; color: var(--o-fg); box-shadow: 0 1px 2px rgba(11,16,21,.08); }
+  .segs svg { opacity: .65; }
+
+  .sections { display: flex; flex-direction: column; gap: 22px; margin-top: 26px; }
   .sec { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
   .sec.on { opacity: 1; transform: none; }
-  .lab { font-family: "JetBrains Mono", monospace; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--faint); margin-bottom: 9px; }
-  .sec p { font-size: 15.5px; line-height: 1.72; color: var(--ink-2); max-width: 46rem; }
-  .sec ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-  .sec li { display: flex; gap: 11px; align-items: flex-start; font-size: 15.5px; line-height: 1.55; color: var(--ink-2); }
-  .sec li i { flex: 0 0 auto; width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--rule-2); margin-top: 3px; position: relative; font-style: normal; }
-  .sec li.done i { background: var(--accent); border-color: var(--accent); }
-  .sec li.done i::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px; border-right: 1.7px solid #fff; border-bottom: 1.7px solid #fff; transform: rotate(42deg); }
+  .sec p.lab, p.lab { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--o-faint); margin-bottom: 12px; line-height: 1.4; }
+  .sec p { font-size: 15px; line-height: 1.65; color: oklch(0.32 0.008 56); max-width: 42rem; }
+  .sec p + p { margin-top: 10px; }
+  .sec ul { list-style: none; display: flex; flex-direction: column; gap: 13px; }
+  .sec li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 1.5; color: oklch(0.32 0.008 56); }
+  .sec li i { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid oklch(0.86 0.004 75); margin-top: 1px; position: relative; font-style: normal; background: #fff; }
+  .sec li.done i { background: oklch(0.42 0.06 165); border-color: oklch(0.42 0.06 165); }
+  .sec li.done i::after { content: ""; position: absolute; left: 5.5px; top: 2px; width: 4px; height: 8px; border-right: 1.8px solid #fff; border-bottom: 1.8px solid #fff; transform: rotate(42deg); }
 
-  .moments { margin-top: auto; padding-top: 6px; opacity: 0; transition: opacity .45s ease; }
-  .moments.on { opacity: 1; }
-  .mrow { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
-  .moment { flex: 0 0 auto; width: 118px; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper); }
-  .moment .thumb { height: 56px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; justify-content: center; background: var(--white); border-bottom: 1px solid var(--rule); }
-  .moment .thumb i { display: block; height: 4px; border-radius: 2px; background: rgba(11,16,21,.13); font-style: normal; }
-  .moment .meta { padding: 8px 10px; font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: var(--faint); line-height: 1.6; }
-  .moment .meta b { display: block; color: var(--ink); font-weight: 500; font-size: 10.5px; }
+  /* sources, as inline chips like theirs */
+  .srcs { display: flex; flex-wrap: wrap; gap: 8px; opacity: 0; transition: opacity .45s ease; }
+  .srcs.on { opacity: 1; }
+  .srcs span { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 99px; background: oklch(0.955 0.002 75); border: 1px solid var(--o-border); font-size: 13px; color: oklch(0.36 0.01 56); }
+  .srcs span i { width: 6px; height: 6px; border-radius: 99px; background: var(--accent); font-style: normal; }
+
+  /* composer, ottic's, in their layout */
+  .composer { border: 1px solid var(--o-border); background: #fff; border-radius: 14px; padding: 16px 16px 10px; box-shadow: 0 1px 2px rgba(11,16,21,.04); transition: border-color .2s ease, box-shadow .2s ease; }
+  .composer.hot { border-color: oklch(0.86 0.004 75); box-shadow: 0 6px 20px rgba(11,16,21,.07); }
+  .cline { min-height: 24px; font-size: 15px; line-height: 1.5; color: oklch(0.26 0.007 56); }
+  .cph { color: var(--o-faint); }
+  .caret { display: inline-block; width: 1.6px; height: 1.05em; background: oklch(0.26 0.007 56); vertical-align: -0.16em; margin-left: 1px; animation: caret 1s steps(2) infinite; }
+  @keyframes caret { 50% { opacity: 0; } }
+  .caret.off { display: none; }
+  .ctools { display: flex; align-items: center; gap: 14px; margin-top: 14px; color: var(--o-faint); font-size: 13.5px; }
+  .ctools .sq { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--o-border); display: flex; align-items: center; justify-content: center; }
+  .ctools .sp { flex: 1; }
+  .ctools .mode { display: inline-flex; align-items: center; gap: 5px; }
+  .send { width: 30px; height: 30px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; background: oklch(0.90 0.003 75); color: #fff; transition: background-color .18s ease, transform .15s ease; }
+  .send.hot { background: oklch(0.216 0.006 56); }
+  .send.fire { transform: scale(.88); }
+
+  /* the connect strip tucked under the composer */
+  .connect { display: flex; align-items: center; gap: 10px; margin: 0 10px; padding: 9px 14px; border-radius: 0 0 10px 10px; background: oklch(0.955 0.002 75); border: 1px solid var(--o-border); border-top: none; font-size: 13px; color: var(--o-muted); transition: opacity .3s ease; }
+  .connect.off { opacity: 0; pointer-events: none; }
+  .connect .sp { flex: 1; }
+  .connect .marks { display: flex; align-items: center; gap: 5px; }
+  .connect .marks b { width: 19px; height: 19px; border-radius: 5px; background: #fff; border: 1px solid var(--o-border); font-size: 8.5px; font-weight: 600; color: var(--o-muted); display: flex; align-items: center; justify-content: center; }
+  .connect .x { color: var(--o-faint); }
+
+  .starters { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; transition: opacity .3s ease; }
+  .starters.off { opacity: 0; pointer-events: none; }
+  .starter { border: 1px solid var(--o-border); background: #fff; border-radius: 9px; padding: 10px 16px; font-size: 14px; color: oklch(0.34 0.01 56); }
+  .starter.more { display: inline-flex; align-items: center; gap: 7px; color: var(--o-muted); }
 
   .prompts { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
   .ppill {
@@ -546,17 +625,88 @@
 
       <div class="panel">
         <div class="stage" id="stage" role="tabpanel" aria-live="polite">
-          <div class="chrome"><i></i><i></i><i></i><span>litepipe &middot; chat &middot; your agent, your account</span></div>
-          <div class="body">
-            <div class="qline">
-              <span class="who">you</span>
-              <span class="txt"><span id="q"></span><span class="caret" id="caret"></span></span>
-            </div>
-            <div class="steps" id="steps"></div>
-            <div class="sections" id="sections"></div>
-            <div class="moments" id="moments">
-              <p class="lab">Moments behind this answer</p>
-              <div class="mrow" id="mrow"></div>
+          <div class="app">
+            <aside class="side" aria-hidden="true">
+              <div class="brand"><img src="assets/litepipe-icon.png" alt="" width="20" height="20"><b>litepipe</b></div>
+              <div class="navlist">
+                <div class="row on"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.2A1.5 1.5 0 0 1 4.5 4.7h6A1.5 1.5 0 0 1 12 6.2v4.3a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3 10.5z"/><path d="M4.6 3.1h6.2"/><path d="M13.1 2l.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4z"/></svg><span>Chat</span></div>
+                <p class="grp">Capture</p>
+                <div class="row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><path d="M8 4.7v3.5l2.3 1.4"/></svg><span>Timeline</span></div>
+                <div class="row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.2 2.5l.95 2.45 2.45.95-2.45.95L6.2 9.3l-.95-2.45L2.8 5.9l2.45-.95z"/><path d="M11.7 8.7l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z"/></svg><span>Highlights</span></div>
+                <p class="grp">Collections</p>
+                <div class="row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.7"/><circle cx="8" cy="6.6" r="1.85"/><path d="M4.5 12.5c.75-1.6 2-2.4 3.5-2.4s2.75.8 3.5 2.4"/></svg><span>People</span></div>
+                <div class="row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.9" cy="6.2" r="1.95"/><path d="M2.5 12.4c.6-1.75 1.8-2.65 3.4-2.65s2.8.9 3.4 2.65"/><path d="M11.3 5.3a3 3 0 0 1 0 5.4M13.3 3.7a5.1 5.1 0 0 1 0 8.6"/></svg><span>Meetings</span></div>
+                <div class="row"><svg class="cv" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 12.6l5.2-5.2"/><path d="M9.6 6.4l1.5-1.5"/><path d="M11.1 2.4v1.9M14.6 5.9h-1.9M13.6 2.9l-1.3 1.3M13.6 8.9l-1.3-1.3M8.6 2.9l1.3 1.3"/></svg><span>Extracted</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.3l1.45 1.05 1.8-.1.55 1.7 1.5.95-.55 1.7.55 1.7-1.5.95-.55 1.7-1.8-.1L8 13.7l-1.45-1.05-1.8.1-.55-1.7-1.5-.95.55-1.7-.55-1.7 1.5-.95.55-1.7 1.8.1z"/><path d="M5.9 8.1l1.45 1.45L10.1 6.6"/></svg><span>Decisions</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.4h6.5M7 8h6.5M7 11.6h6.5"/><path d="M2.5 4.2l.9.9 1.5-1.7M2.5 7.8l.9.9 1.5-1.7"/><path d="M2.7 11.6h2"/></svg><span>Action Items</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.7 4.7A1.6 1.6 0 0 1 4.3 3.1h7.4a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H6.4l-2.7 2.2v-2.2h.4a1.6 1.6 0 0 1-1.4-1.6z"/><path d="M6.9 6.1a1.25 1.25 0 0 1 2.35.55c0 .85-1.15.95-1.15 1.8"/><path d="M8.1 9.9v.02"/></svg><span>Questions</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4.4L2.4 8l3.1 3.6M10.5 4.4L13.6 8l-3.1 3.6"/><path d="M9.3 3.3L6.7 12.7"/></svg><span>Code Snippets</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.7 9.3a2.55 2.55 0 0 0 3.6 0l1.9-1.9a2.55 2.55 0 0 0-3.6-3.6l-.85.85"/><path d="M9.3 6.7a2.55 2.55 0 0 0-3.6 0L3.8 8.6a2.55 2.55 0 0 0 3.6 3.6l.85-.85"/></svg><span>Links</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.7l5.6 9.7H2.4z"/><path d="M8 6.4v2.7"/><path d="M8 10.9v.02"/></svg><span>Errors</span></div>
+                <div class="row child"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.3 6.3A2 2 0 0 0 8 10.1a2 2 0 0 0 1.75-1.15"/><path d="M4.4 4.5C3 5.3 1.9 6.5 1.4 8c1 2.35 3.5 3.9 6.6 3.9.9 0 1.8-.15 2.6-.45"/><path d="M11.9 10.1c1.15-.6 2.1-1.3 2.7-2.1-1-2.35-3.5-3.9-6.6-3.9-.45 0-.9.03-1.35.1"/><path d="M2.6 2.6l10.8 10.8"/></svg><span>Redacted</span></div>
+                <div class="row"><svg class="cv" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h2.1l1.2 1.5H12A1.5 1.5 0 0 1 13.5 7v4A1.5 1.5 0 0 1 12 12.5H4A1.5 1.5 0 0 1 2.5 11z"/></svg><span>Sources</span></div>
+                <div class="row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 12.6l5.2-5.2"/><path d="M9.6 6.4l1.5-1.5"/><path d="M11.1 2.4v1.9M14.6 5.9h-1.9M13.6 2.9l-1.3 1.3M13.6 8.9l-1.3-1.3M8.6 2.9l1.3 1.3"/></svg><span>Workflows</span></div>
+                <p class="grp">Memory</p>
+                <div class="row"><svg class="cv" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.1a1.9 1.9 0 0 0-3.3 1 1.7 1.7 0 0 0-.9 2.9 1.9 1.9 0 0 0 .7 3 1.9 1.9 0 0 0 3.5-1z"/><path d="M8 3.1a1.9 1.9 0 0 1 3.3 1 1.7 1.7 0 0 1 .9 2.9 1.9 1.9 0 0 1-.7 3 1.9 1.9 0 0 1-3.5-1z"/></svg><span>Agent Memory</span></div>
+                <p class="grp">Sharing</p>
+                <div class="row"><svg class="cv" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.4" y="6.6" width="8.4" height="6.2" rx="1.5"/><path d="M4 4.9h5.4M5.5 3.2h2.6"/><circle cx="12.5" cy="4.4" r="2.3"/><path d="M11.3 5.6c.3-.6.7-.9 1.2-.9s.9.3 1.2.9"/><circle cx="12.5" cy="3.7" r=".75"/></svg><span>Shared Contexts</span></div>
+                <div class="row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.3l4.7 1.65v3.5c0 2.95-1.85 5.1-4.7 6.2-2.85-1.1-4.7-3.25-4.7-6.2V3.95z"/><rect x="6.35" y="7.3" width="3.3" height="2.9" rx=".8"/><path d="M6.95 7.3v-.75a1.05 1.05 0 0 1 2.1 0v.75"/></svg><span>Firewall</span></div>
+              </div>
+              <div class="foot">
+                <div class="ctx"><i></i>Context enabled</div>
+                <p class="disk"><span><b>This Mac &middot; local only</b>17,406 moments &middot; 6.0 GB</span></p>
+              </div>
+            </aside>
+
+            <div class="main">
+              <div class="convo">
+                <div class="empty" id="empty">
+                  <h3>What do you want to remember?</h3>
+                  <p class="date">Nine days of memory on this Mac</p>
+                </div>
+                <div class="umsg" id="umsg"><div class="bubble" id="bubble"></div></div>
+                <div class="status" id="status">
+                  <span class="mx" id="mx" aria-hidden="true"></span>
+                  <span class="verb" id="verb">Recalling</span>
+                  <span>(<kbd>esc</kbd>to interrupt)</span>
+                  <span class="num" id="timer">0.0s</span>
+                  <span class="num" id="tokens">&darr; 0 tokens</span>
+                </div>
+                <div class="doc" id="doc">
+                  <h4 id="dtitle"></h4>
+                  <p class="meta" id="dmeta"></p>
+                  <div class="segs">
+                    <span class="on"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5l1.3 3.2 3.2 1.3-3.2 1.3L8 11.5 6.7 8.3 3.5 7l3.2-1.3z"/></svg>Summary</span>
+                    <span><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="9" rx="1.5"/><path d="M5 6.5h6M5 9.5h4"/></svg>Moments</span>
+                    <span><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg>Timeline</span>
+                  </div>
+                </div>
+                <div class="sections" id="sections"></div>
+                <div class="srcs" id="srcs"></div>
+              </div>
+
+              <div class="composer" id="composer">
+                <p class="cline"><span id="ctext"></span><span class="cph" id="cph">Ask about anything you have seen or said&hellip;</span><span class="caret off" id="caret"></span></p>
+                <div class="ctools">
+                  <span class="sq"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v8M4 8h8"/></svg></span>
+                  <span class="sp"></span>
+                  <span class="mode">Mode <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5L8 10l4-3.5"/></svg></span>
+                  <span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.2" y="2.5" width="3.6" height="7" rx="1.8"/><path d="M4 8a4 4 0 0 0 8 0M8 12v1.5"/></svg></span>
+                  <span class="send" id="send"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12.5V4M4.5 7.5L8 4l3.5 3.5"/></svg></span>
+                </div>
+              </div>
+              <div class="connect" id="connect">
+                <span>Point your own agent at this archive</span>
+                <span class="sp"></span>
+                <span class="marks"><b>CD</b><b>CC</b><b>Cu</b></span>
+                <span class="x">&times;</span>
+              </div>
+
+              <div class="starters" id="starters">
+                <span class="starter">What did I do yesterday?</span>
+                <span class="starter">What have I left hanging?</span>
+                <span class="starter more"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3l1.2 3.1L12.5 7l-3.3 1L8 11l-1.2-3L3.5 7l3.3-.9z"/></svg>More suggestions</span>
+              </div>
             </div>
           </div>
         </div>
@@ -673,32 +823,41 @@
     <section>
       <p class="eyebrow">Why it sees more</p>
       <h2>The context no integration has</h2>
-      <p class="say">Connectors hand you what an API is willing to give, one app at a time. A memory built from the screen picks up the work that no integration was ever written for.</p>
+      <p class="say">Connectors reach the few apps with an API. The rest is peripheral context: the second screen, the tab behind this one, the terminal still running. That is usually where the answer is.</p>
 
       <div class="duo">
         <div class="dcard">
-          <p class="lbl">The hosted kind</p>
-          <h3>One window, on a clock</h3>
+          <p class="lbl">The connector only kind</p>
+          <h3>Whatever the API hands over</h3>
           <div class="art">
             <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ink)">
-              <g opacity=".26">
-                <rect class="stroke" x="10" y="30" width="80" height="54" rx="3"/><path class="stroke" d="M50 84v14M34 98h32"/>
-                <rect class="stroke" x="230" y="30" width="80" height="54" rx="3"/><path class="stroke" d="M270 84v14M254 98h32"/>
+              <g opacity=".2">
+                <rect class="stroke" x="12" y="16" width="66" height="34" rx="4"/>
+                <rect class="stroke" x="90" y="16" width="66" height="34" rx="4"/>
+                <rect class="stroke" x="246" y="16" width="62" height="34" rx="4"/>
+                <rect class="stroke" x="12" y="58" width="66" height="34" rx="4"/>
+                <rect class="stroke" x="168" y="58" width="66" height="34" rx="4"/>
+                <rect class="stroke" x="246" y="58" width="62" height="34" rx="4"/>
+                <rect class="stroke" x="90" y="100" width="66" height="34" rx="4"/>
+                <rect class="stroke" x="168" y="100" width="66" height="34" rx="4"/>
+                <rect class="stroke" x="246" y="100" width="62" height="34" rx="4"/>
               </g>
-              <rect x="110" y="22" width="100" height="66" rx="3" fill="var(--white)" stroke="currentColor" stroke-width="1.6"/>
-              <path class="stroke" d="M160 88v14M144 102h32"/>
-              <g opacity=".38"><rect x="122" y="36" width="46" height="4" rx="2" fill="currentColor"/><rect x="122" y="46" width="66" height="4" rx="2" fill="currentColor"/><rect x="122" y="56" width="34" height="4" rx="2" fill="currentColor"/></g>
-              <g opacity=".55">
-                <circle cx="160" cy="128" r="9" class="stroke"/><path class="stroke" d="M160 123v5l3 2"/>
+              <g>
+                <rect x="168" y="16" width="66" height="34" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="90" y="58" width="66" height="34" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="12" y="100" width="66" height="34" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
+                <g opacity=".5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                  <path d="M190 29h22M190 37h14"/><path d="M112 71h22M112 79h14"/><path d="M34 113h22M34 121h14"/>
+                </g>
               </g>
-              <text x="176" y="132" font-family="JetBrains Mono, monospace" font-size="9" fill="currentColor" opacity=".5">every few seconds</text>
+              <text x="12" y="10" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".45">3 OF 24 APPS REACHED</text>
             </svg>
           </div>
-          <p class="note">Whatever happened to be in front, sampled on a timer. The other screens were never looked at.</p>
+          <p class="note">Three or four tools agreed to have an API, so those are the ones it can read. Everything else you did today sits outside it.</p>
         </div>
         <div class="dcard us">
           <p class="lbl">litepipe</p>
-          <h3>Every screen, on the moment you act</h3>
+          <h3>The whole field, periphery included</h3>
           <div class="art">
             <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ground)">
               <rect x="10" y="30" width="80" height="54" rx="3" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/><path class="stroke" d="M50 84v14M34 98h32" opacity=".5"/>
@@ -708,7 +867,7 @@
               <path d="M14 132h50l6-12 8 22 7-16 5 6h44l6-14 8 24 7-18 5 8h48l6-10 7 18 6-14 5 4h72" stroke="var(--accent-soft)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <p class="note">All monitors at once, triggered by a click, a pause in typing or a change on screen rather than by a clock.</p>
+          <p class="note">The screen is the one interface every app already has. All monitors at once, triggered by a click or a pause in typing rather than by a clock.</p>
         </div>
       </div>
 
@@ -948,6 +1107,7 @@
   var S = [
     { cap: "Ask what a day actually went to, and get it back in sentences instead of a timeline.",
       q: "Walk me through yesterday.",
+      title: "Yesterday, hour by hour", meta: "Monday \u00b7 09:14 to 18:20 \u00b7 4 sources",
       steps: [["Looking at how the day went", "activity_summary"], ["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
       secs: [
         { lab: "The shape of it", p: "Two blocks. The morning went to the auth migration, finished and merged just before lunch. The afternoon was the launch post, rewritten four times, and the call with Ana." },
@@ -958,6 +1118,7 @@
 
     { cap: "Everything you started or promised and never closed, oldest first.",
       q: "What have I left hanging?",
+      title: "Five things still open", meta: "Across three weeks \u00b7 4 sources",
       steps: [["Searching what was on screen", "search_content"], ["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"]],
       secs: [
         { lab: "Five, oldest first", items: [["Marco's invoice, asked five days ago", 0], ["the advisory letter, still missing a name", 0], ["the pricing redirect, half written", 0], ["the reply to Prerna about the paperwork", 0], ["the design review blocking the permissions copy", 0]] },
@@ -967,6 +1128,7 @@
 
     { cap: "The chore you repeat without noticing, found by how often the same screens come back.",
       q: "What am I doing over and over that a script could do?",
+      title: "The weekly client report", meta: "11 runs in 3 weeks \u00b7 3 sources",
       steps: [["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"], ["Opening a moment", "frame_context"]],
       secs: [
         { lab: "Found it", p: "The weekly client report. Eleven times in three weeks, always the same shape: open the dashboard, copy four numbers into a doc, rewrite last week's paragraph, paste the whole thing into an email." },
@@ -977,6 +1139,7 @@
 
     { cap: "Drafts that sound like you, because they are built out of your own sentences.",
       q: "Turn what I shipped this week into three posts.",
+      title: "Three drafts from your week", meta: "14 days of work \u00b7 3 sources",
       steps: [["Looking at how the day went", "activity_summary"], ["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
       secs: [
         { lab: "Three drafts", items: [["the permission flow that cost an hour, and why the fix was one action per line", 1], ["what shipping a notarised Mac app alone teaches you", 1], ["the pricing conversation, written as the lesson rather than the deal", 1]] },
@@ -986,6 +1149,7 @@
 
     { cap: "One day away, summarised by what actually moved rather than by what got posted.",
       q: "Catch me up, I was out Thursday.",
+      title: "Thursday, while you were out", meta: "One day \u00b7 3 sources",
       steps: [["Looking at how the day went", "activity_summary"], ["Reading a transcript", "meeting_transcript"], ["Searching what was on screen", "search_content"]],
       secs: [
         { lab: "The call at eleven", p: "Ana walked the team through the new permissions flow and agreed to ship it behind a flag. Your name came up once, on the redirect." },
@@ -995,6 +1159,7 @@
 
     { cap: "The same sentence, everywhere it was said, and who was in the room each time.",
       q: "Who was I talking to when this came up?",
+      title: "Said twice, three days apart", meta: "29 July and 1 August \u00b7 3 sources",
       steps: [["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"], ["Opening a moment", "frame_context"]],
       secs: [
         { lab: "Twice", p: "First on the call with Ana on 29 July, at minute fourteen. Then again in the thread with Marco three days later, where you repeated it almost word for word." },
@@ -1004,6 +1169,7 @@
 
     { cap: "Hours counted from the work itself, not from a timer you forgot to start.",
       q: "How much of last week went to this client?",
+      title: "Eleven hours forty", meta: "Four days \u00b7 4 sources",
       steps: [["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"]],
       secs: [
         { lab: "Eleven hours forty", p: "Across four days last week, counted from the work rather than from a stopwatch." },
@@ -1014,6 +1180,7 @@
 
     { cap: "What you said you would send, to whom, and whether it ever went.",
       q: "What did I say I would send, and to whom?",
+      title: "Four promises, three open", meta: "Last fortnight \u00b7 3 sources",
       steps: [["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
       secs: [
         { lab: "Four promises, three still open", items: [["the pricing sheet to John, promised for Friday", 0], ["the org chart to Isabela, promised in the thread", 0], ["the advisory draft to Michael, promised Monday", 0], ["the deck to Ana, already sent", 1]] },
@@ -1023,6 +1190,7 @@
 
     { cap: "A page behind a login, still readable a week after you closed the tab.",
       q: "Find the dashboard I had open on Tuesday.",
+      title: "Tuesday at 16:40", meta: "One moment \u00b7 2 sources",
       steps: [["Searching what was on screen", "search_content"], ["Opening a moment", "frame_context"]],
       secs: [
         { lab: "Found", p: "Tuesday at 16:40, the analytics dashboard behind your work login. Nothing else on this machine could reach that page." },
@@ -1031,29 +1199,39 @@
       mom: [["Chrome", "Tue 16:40"], ["OCR", "read it"]] }
   ];
 
-  var qEl = document.getElementById("q"),
-      caret = document.getElementById("caret"),
-      capEl = document.getElementById("caption"),
-      stepsEl = document.getElementById("steps"),
-      secsEl = document.getElementById("sections"),
-      momEl = document.getElementById("moments"),
-      mrow = document.getElementById("mrow"),
-      btns = [].slice.call(document.querySelectorAll(".scene-btn")),
-      stage = document.getElementById("stage");
-  if (!qEl || !btns.length) return;
+  var el = function (id) { return document.getElementById(id); };
+  var ctext = el("ctext"), cph = el("cph"), caret = el("caret"), composer = el("composer"),
+      send = el("send"), umsg = el("umsg"), bubble = el("bubble"),
+      starters = el("starters"), status = el("status"),
+      mx = el("mx"), verb = el("verb"), timer = el("timer"), tokens = el("tokens"), ran = el("ran"),
+      capEl = el("caption"), secsEl = el("sections"), srcs = el("srcs"), empty = el("empty"), connect = el("connect"),
+      doc = el("doc"), dtitle = el("dtitle"), dmeta = el("dmeta"),
+      btns = [].slice.call(document.querySelectorAll(".scene-btn")), stage = el("stage");
+  if (!ctext || !btns.length) return;
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var timers = [], idx = -1, auto = true, visible = false;
+  var timers = [], loops = [], idx = -1, auto = true, visible = false;
   var BARS = [[70, 45, 88], [55, 80, 38], [82, 60, 50], [48, 72, 64]];
+  var VERBS = ["Recalling", "Rewinding", "Retracing", "Surfacing", "Stitching", "Replaying"];
 
-  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  // 5 by 5 frames, the shape of the indicator in the app
+  var FRAMES = [
+    ["01110", "10001", "10001", "10001", "01110"],
+    ["00100", "01110", "11111", "01110", "00100"],
+    ["10001", "01010", "00100", "01010", "10001"],
+    ["11111", "10001", "10001", "10001", "11111"],
+    ["00100", "00100", "11111", "00100", "00100"]
+  ];
+
+  for (var d = 0; d < 25; d++) mx.appendChild(document.createElement("i"));
+  var dots = mx.children;
+
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; loops.forEach(clearInterval); loops = []; }
   function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function every(fn, ms) { var h = setInterval(fn, ms); loops.push(h); return h; }
 
   function paint(s) {
     capEl.textContent = s.cap;
-    stepsEl.innerHTML = s.steps.map(function (t) {
-      return '<div><span class="tick"></span>' + t[0] + "<em>" + t[1] + "</em></div>";
-    }).join("");
     secsEl.innerHTML = s.secs.map(function (b) {
       var inner = b.items
         ? "<ul>" + b.items.map(function (it) {
@@ -1062,18 +1240,50 @@
         : "<p>" + b.p + "</p>";
       return '<div class="sec"><p class="lab">' + b.lab + "</p>" + inner + "</div>";
     }).join("");
-    mrow.innerHTML = s.mom.map(function (m, k) {
-      var b = BARS[k % BARS.length];
-      return '<div class="moment"><div class="thumb">' +
-        '<i style="width:' + b[0] + '%"></i><i style="width:' + b[1] + '%"></i><i style="width:' + b[2] + '%"></i>' +
-        '</div><div class="meta"><b>' + m[0] + "</b>" + m[1] + "</div></div>";
+    srcs.innerHTML = s.mom.map(function (m) {
+      return '<span><i></i>' + m[0] + " &middot; " + m[1] + "</span>";
     }).join("");
+    bubble.textContent = s.q;
+    dtitle.textContent = s.title;
+    dmeta.textContent = s.meta;
   }
 
-  function showAll() {
-    [].forEach.call(stepsEl.children, function (n) { n.classList.add("on"); });
-    [].forEach.call(secsEl.children, function (n) { n.classList.add("on"); });
-    momEl.classList.add("on");
+  function reset() {
+    ctext.textContent = ""; cph.style.display = ""; caret.classList.add("off");
+    composer.classList.remove("hot"); send.classList.remove("hot", "fire");
+    umsg.classList.remove("on"); starters.classList.remove("off"); connect.classList.remove("off");
+    empty.classList.remove("off"); status.classList.remove("on"); srcs.classList.remove("on");
+    doc.classList.remove("on");
+    timer.textContent = "0.0s"; tokens.innerHTML = "&darr; 0 tokens";
+  }
+
+  function work(s, i) {
+    status.classList.add("on");
+    var f = 0, t0 = 0, tk = 0;
+    every(function () {
+      var fr = FRAMES[f % FRAMES.length]; f++;
+      for (var r = 0; r < 5; r++) for (var c = 0; c < 5; c++)
+        dots[r * 5 + c].classList.toggle("lit", fr[r][c] === "1");
+    }, 180);
+    every(function () { verb.textContent = VERBS[Math.floor(t0 / 12) % VERBS.length]; }, 1400);
+    every(function () {
+      t0 += 1; tk += 180 + (t0 % 5) * 40;
+      timer.textContent = (t0 / 10).toFixed(1) + "s";
+      tokens.innerHTML = "&darr; " + (tk > 999 ? (tk / 1000).toFixed(1) + "k" : tk) + " tokens";
+    }, 100);
+
+    var hold = 1500 + s.steps.length * 120;
+    later(function () {
+      clearTimers();
+      status.classList.remove("on");
+      doc.classList.add("on");
+      s.secs.forEach(function (_, k) {
+        later(function () { secsEl.children[k].classList.add("on"); }, 320 + k * 380);
+      });
+      var done = 320 + s.secs.length * 380 + 120;
+      later(function () { srcs.classList.add("on"); }, done);
+      later(function () { if (auto && visible) run((i + 1) % 4); }, done + 4200);
+    }, hold);
   }
 
   function run(i, fromClick) {
@@ -1084,31 +1294,37 @@
 
     var s = S[i];
     paint(s);
-    momEl.classList.remove("on");
-    caret.classList.remove("done");
-    qEl.textContent = "";
+    reset();
 
-    if (reduced) { qEl.textContent = s.q; caret.classList.add("done"); showAll(); return; }
+    if (reduced) {
+      umsg.classList.add("on"); starters.classList.add("off"); connect.classList.add("off");
+      empty.classList.add("off"); srcs.classList.add("on"); doc.classList.add("on");
+      [].forEach.call(secsEl.children, function (n) { n.classList.add("on"); });
+      return;
+    }
 
     var c = 0;
-    (function type() {
-      if (c <= s.q.length) {
-        qEl.textContent = s.q.slice(0, c++);
-        later(type, 16);
-      } else {
-        caret.classList.add("done");
-        s.steps.forEach(function (_, k) {
-          later(function () { stepsEl.children[k].classList.add("on"); }, 200 + k * 300);
-        });
-        var after = 200 + s.steps.length * 300 + 180;
-        s.secs.forEach(function (_, k) {
-          later(function () { secsEl.children[k].classList.add("on"); }, after + k * 380);
-        });
-        var done = after + s.secs.length * 380 + 120;
-        later(function () { momEl.classList.add("on"); }, done);
-        later(function () { if (auto && visible) run((i + 1) % 4); }, done + 4200);
-      }
-    })();
+    later(function () {
+      caret.classList.remove("off");
+      composer.classList.add("hot");
+      (function type() {
+        if (c <= s.q.length) {
+          if (c === 1) { cph.style.display = "none"; send.classList.add("hot"); }
+          ctext.textContent = s.q.slice(0, c++);
+          later(type, 17);
+        } else {
+          later(function () {
+            send.classList.add("fire");
+            later(function () { send.classList.remove("fire", "hot"); }, 170);
+            ctext.textContent = ""; cph.style.display = ""; caret.classList.add("off");
+            composer.classList.remove("hot");
+            umsg.classList.add("on"); empty.classList.add("off");
+            starters.classList.add("off"); connect.classList.add("off");
+            later(function () { work(s, i); }, 300);
+          }, 420);
+        }
+      })();
+    }, 320);
   }
 
   btns.forEach(function (b, i) { b.addEventListener("click", function () { run(i, true); }); });
