@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>litepipe</title>
+<title>litepipe &middot; alt</title>
 <meta name="description" content="A memory of your work that nobody else owns. Everything you have seen, said and heard at your computer, kept in one file on your own disk. Open source, MIT, no account, no cloud.">
 <link rel="icon" href="assets/litepipe-icon.png">
 <meta property="og:title" content="litepipe">
@@ -58,7 +58,8 @@
   nav .links a:hover { color: var(--ink); }
   @media (min-width: 920px) { nav .links { display: flex; } }
   nav .acts { display: flex; align-items: center; gap: 10px; }
-  .pill { display: inline-flex; align-items: center; height: 34px; padding: 0 18px; border-radius: 99px; font-size: 14px; font-weight: 500; transition: .15s ease; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 16px; border-radius: 99px; font-size: 14px; font-weight: 500; transition: .15s ease; }
+  .pill svg, .btn svg { flex: none; }
   .pill.ghost { border: 1px solid var(--rule-2); color: var(--ink-2); }
   .pill.ghost:hover { border-color: var(--ink); color: var(--ink); }
   .pill.solid { background: var(--ink); color: var(--ground); }
@@ -86,6 +87,9 @@
   @media (min-width: 640px) { .cta { flex-direction: row; gap: 22px; } }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 50px; padding: 0 30px; border-radius: 99px; background: var(--ink); color: var(--ground); font-size: 15.5px; font-weight: 500; transition: .15s ease; }
   .btn:hover { background: #1c242b; }
+  .btn.ghost { background: none; color: var(--ink); border: 1px solid var(--rule-2); }
+  .btn.ghost:hover { background: none; border-color: var(--ink); }
+  .cta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
   .quiet { display: inline-flex; align-items: center; gap: 12px; font-size: 15px; color: var(--muted); }
   .quiet a { border-bottom: 1px solid var(--rule-2); padding-bottom: 1px; }
   .quiet a:hover { color: var(--ink); border-color: var(--ink); }
@@ -112,6 +116,75 @@
   .tape-legend div { border-top: 1px solid rgba(255,255,255,.14); padding-top: 16px; }
   .tape-legend b { display: block; font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 26px; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
   .tape-legend span { font-size: 14px; color: #97A0A7; }
+
+
+
+  /* ---------- fold two: the periphery ----------
+     One design space of 1440 x 882 and nothing else. Below the breakpoints it is
+     scaled as a whole, the way Littlebird does it, so the cards keep their
+     proportion to the viewport and bleed off the edges instead of reflowing.
+     Transforms do not affect layout, so each step restates the scaled height. */
+  .periph { position: relative; padding: 30px 0 20px; overflow-x: clip; }
+  .pstage {
+    width: 1440px; max-width: 1440px; height: 882px; margin: 0;
+    position: relative; left: 50%; transform: translateX(-50%);
+  }
+  @media (max-width: 991px) { .pstage { height: 573px; transform: translateX(-50%) scale(.65); transform-origin: 50% 0; } }
+  @media (max-width: 767px) { .pstage { height: 635px; transform: translateX(-50%) scale(.72); transform-origin: 50% 0; } }
+  @media (max-width: 479px) { .pstage { height: 441px; transform: translateX(-50%) scale(.50); transform-origin: 50% 0; } }
+
+  .periph .rays { position: absolute; top: -60px; left: 50%; width: 1600px; height: 900px; transform: translateX(-50%); pointer-events: none; opacity: .55; }
+  .periph .rays svg { width: 100%; height: 100%; }
+
+  .pcentre { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; text-align: center; z-index: 3; }
+  .pcentre h2 { font-size: 56px; letter-spacing: -2.9px; line-height: 0.98; max-width: none; }
+  .pcentre h2 em { font-style: normal; background: var(--ink); color: var(--ground); padding: 0 8px; border-radius: 3px; }
+  .pcentre p { margin: 22px auto 0; max-width: 30rem; font-size: 20px; line-height: 1.6; color: var(--ink-2); }
+
+  .pcards figure {
+    position: absolute; margin: 0; left: var(--x); top: var(--y); width: var(--w);
+    opacity: 0; transform: translateY(18px) scale(.94);
+    transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1);
+    transition-delay: calc(var(--i) * 80ms);
+  }
+  .pstage.in figure { opacity: 1; transform: none; }
+  .pslot { width: 100%; border-radius: 12px; overflow: hidden; background: #fff;
+           border: 1px solid rgba(11,16,21,.10); box-shadow: 0 6px 22px rgba(11,16,21,.08); }
+  .pslot img { width: 100%; height: auto; display: block; }
+  .pcap { margin-top: 8px; font-size: 12.5px; font-style: italic; line-height: 1.35; color: var(--faint); }
+
+  /* a real screenshot sits back from the card edge, and the app that produced
+     it says its name on the band underneath */
+  .pshot { padding: 9px 9px 0; }
+  .pshot img { border-radius: 4px; border: 1px solid rgba(11,16,21,.09); }
+  .pfoot { margin-top: 9px; padding: 9px 11px 11px; background: var(--accent); }
+  .pfoot .a { display: flex; align-items: center; gap: 6px;
+              font-size: 10.5px; letter-spacing: .2px; color: rgba(255,255,255,.70); }
+  .pfoot .a svg { display: block; flex: none; }
+  .pfoot .n { margin-top: 5px; font-size: 12.5px; line-height: 1.35; color: #fff; }
+
+  /* the mock that lives in the slot until a screenshot replaces it */
+  .pm .h { display: flex; align-items: center; gap: 7px; padding: 11px 13px 0; font-size: 11.5px; color: var(--muted); }
+  .pm .h b { font-weight: 500; }
+  .pm .t { padding: 7px 13px 12px; font-size: 13.5px; line-height: 1.42; color: var(--ink-2); }
+  .pm .t strong { font-weight: 500; color: var(--ink); }
+  .pm.dark { background: var(--ink); }
+  .pm.dark .h { color: rgba(255,255,255,.42); }
+  .pm.dark .t { color: #C7CFD5; font-family: "JetBrains Mono", monospace; font-size: 11.5px; line-height: 1.55; }
+  .pm.dark .t b { color: var(--accent-soft); font-weight: 400; }
+  .pm .img { height: 84px; background: linear-gradient(150deg, #cdd8e6, #e6ecf4 60%, #d7e0ec); position: relative; }
+  .pm .img.warm { background: linear-gradient(150deg, #e8dcc9, #f2eadd 60%, #e2d4bd); }
+  .pm .img .l { position: absolute; left: 11px; right: 11px; bottom: 9px; display: flex; flex-direction: column; gap: 4px; }
+  .pm .img .l i { display: block; height: 5px; border-radius: 3px; background: rgba(11,16,21,.26); font-style: normal; }
+  .pm .big { font-family: "Space Grotesk", sans-serif; font-size: 27px; font-weight: 500; letter-spacing: -0.9px; color: var(--ink); }
+  .pm .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(11,16,21,.10); }
+  .pm .row span { background: #fff; height: 18px; }
+  .pm .row span.hot { background: var(--accent-wash); }
+  .pm .ln { display: flex; flex-direction: column; gap: 5px; padding-top: 6px; }
+  .pm .ln i { display: block; height: 6px; border-radius: 3px; background: rgba(11,16,21,.11); font-style: normal; }
+
+  /* the four heavy cards go below 768, as five of eleven do on theirs */
+  @media (max-width: 767px) { .pcards figure.drop { display: none; } }
 
   /* ---------- the demo ---------- */
   .demo-top { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: center; justify-content: space-between; }
@@ -302,6 +375,109 @@
   .band.dark .say { color: #B9C1C7; }
   .say strong { font-weight: 500; color: var(--ink); }
 
+  /* the meeting: the card on one side, the argument on the other, both the
+     size the reference uses so the two pages read at the same scale */
+  .meet { display: flex; flex-direction: column; gap: 40px; align-items: flex-start; }
+  @media (min-width: 1000px) { .meet { flex-direction: row; gap: 64px; align-items: center; } }
+
+  .mstage { position: relative; width: 583px; max-width: 100%; aspect-ratio: 583 / 546; flex: none;
+            padding: 26px; background: var(--paper); border: 1px solid var(--rule);
+            border-radius: 16px; overflow: hidden; }
+  .mtext { width: 476px; max-width: 100%; flex: none; display: flex; flex-direction: column; gap: 24px; }
+  .mtext .eyebrow { margin-bottom: 0; }
+  .mtext h2 { font-size: 40px; line-height: 1.1; letter-spacing: -2.1px; max-width: none; }
+  @media (min-width: 1000px) { .mtext h2 { font-size: 52px; letter-spacing: -2.7px; } }
+  .mtext p { font-size: 20px; line-height: 30px; color: var(--ink-2); text-wrap: pretty; }
+
+  .mcard { height: 100%; display: flex; flex-direction: column; overflow: hidden;
+           padding: 20px 20px 0; background: var(--white); border: 1px solid var(--rule);
+           border-radius: 12px; box-shadow: 0 6px 20px rgba(11,16,21,.05); }
+  .mcard h4 { font-family: "Newsreader", Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.15; }
+  .mhead { display: flex; align-items: center; gap: 14px; margin-top: 15px; }
+  .mtabs { display: flex; gap: 2px; padding: 3px; background: var(--ground); border-radius: 9px; }
+  .mtabs span { font-size: 12px; padding: 5px 10px; border-radius: 7px; color: var(--muted);
+                white-space: nowrap; transition: background .3s, color .3s; }
+  .mtabs span.on { background: var(--white); color: var(--ink); box-shadow: 0 1px 2px rgba(11,16,21,.10); }
+  .mfaces { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); margin-left: auto; }
+  .mfaces b { display: flex; }
+  .mfaces i { width: 21px; height: 21px; border-radius: 50%; margin-left: -7px; border: 1.5px solid var(--white); }
+  .mfaces i:first-child { margin-left: 0; }
+
+  .mpanel { display: none; margin-top: 16px; }
+  .mpanel.on { display: block; }
+
+  .tline { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 9px 0;
+           font-size: 13.5px; line-height: 1.5; opacity: 0; filter: blur(7px); transform: translateY(5px);
+           transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
+  .tline.on { opacity: 1; filter: blur(0); transform: none; }
+  .tline .at { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--faint); padding-top: 3px; }
+  .tline b { font-weight: 500; }
+
+  .mrec { position: absolute; left: 50%; bottom: 30px; transform: translate(-50%, 22px); opacity: 0;
+          display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 14px;
+          background: var(--white); border: 1px solid var(--rule); border-radius: 100px;
+          box-shadow: 0 10px 28px rgba(11,16,21,.14); font-size: 13px;
+          transition: opacity .45s ease, transform .45s ease; }
+  .mrec.on { opacity: 1; transform: translate(-50%, 0); }
+  .mrec .lv { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+  .mrec .lv i { width: 3px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .mstage.live .mrec .lv i { animation: lv 1.1s ease-in-out infinite; }
+  .mrec .lv i:nth-child(2) { animation-delay: .18s; }
+  .mrec .lv i:nth-child(3) { animation-delay: .36s; }
+  .mrec .lv i:nth-child(4) { animation-delay: .54s; }
+  @keyframes lv { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+  .mrec .st { display: flex; align-items: center; gap: 7px; padding: 5px 13px;
+              background: var(--ground); border-radius: 100px; color: var(--ink); }
+  .mrec .st i { width: 8px; height: 8px; border-radius: 2px; background: var(--ink); }
+
+  .srow { display: flex; align-items: center; gap: 11px; padding: 12px 0; font-size: 13.5px;
+          border-top: 1px solid var(--rule); opacity: 0; transform: translateY(7px);
+          transition: opacity .45s ease, transform .45s ease; }
+  .srow.on { opacity: 1; transform: none; }
+  .srow .av { width: 22px; height: 22px; border-radius: 50%; flex: none; }
+  .srow .n { font-weight: 500; }
+  .srow .s { color: var(--muted); }
+  .srow .c { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); }
+
+  .mask { display: inline-block; padding: 7px 13px; border-radius: 100px; background: var(--ground);
+          font-size: 13px; opacity: 0; transform: translateY(6px);
+          transition: opacity .4s ease, transform .4s ease; }
+  .mask.on { opacity: 1; transform: none; }
+  .wsec { margin-top: 15px; }
+  .wsec .lab { font-family: "JetBrains Mono", monospace; font-size: 9.5px; text-transform: uppercase;
+               letter-spacing: 0.13em; color: var(--muted); }
+  .wbars { margin-top: 8px; }
+  .wbars i { display: block; height: 9px; border-radius: 5px; background: rgba(11,16,21,.09); margin-top: 6px; }
+  .wtxt { margin-top: 7px; font-size: 13.5px; line-height: 1.5; opacity: 0;
+          filter: blur(7px); transition: opacity .5s ease, filter .5s ease; height: 0; overflow: hidden; }
+  .wsec.done .wbars { display: none; }
+  .wsec.done .wtxt { opacity: 1; filter: blur(0); height: auto; }
+
+  /* the workflow the archive noticed you repeating */
+  .wfmeta { margin-top: 6px; font-family: "JetBrains Mono", monospace; font-size: 10px;
+            text-transform: uppercase; letter-spacing: 0.13em; color: var(--muted); }
+  .wsteps { margin-top: 18px; }
+  .wstep { display: grid; grid-template-columns: 18px 1fr auto; gap: 12px; align-items: center;
+           padding: 12px 0; border-top: 1px solid var(--rule); font-size: 13.5px; line-height: 1.45;
+           opacity: 0; filter: blur(7px); transform: translateY(5px);
+           transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
+  .wstep.on { opacity: 1; filter: blur(0); transform: none; }
+  .wstep .no { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--faint); }
+  .wstep .tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+                padding: 4px 9px; border-radius: 100px; white-space: nowrap;
+                background: var(--ground); color: var(--muted);
+                opacity: 0; transform: scale(.92);
+                transition: opacity .4s ease, transform .4s ease; }
+  .wstep .tag.bot { background: var(--accent-wash); color: var(--accent); }
+  .mstage.tagged .wstep .tag { opacity: 1; transform: none; }
+  .wsum { margin-top: 20px; padding: 13px 15px; border-radius: 10px;
+          background: var(--paper); border: 1px solid var(--rule);
+          font-size: 13px; line-height: 1.5; color: var(--ink-2);
+          opacity: 0; transform: translateY(8px);
+          transition: opacity .5s ease, transform .5s ease; }
+  .wsum.on { opacity: 1; transform: none; }
+  .wsum b { font-weight: 500; color: var(--ink); }
+
   /* three phases with drawings */
   .three { margin-top: 54px; display: grid; grid-template-columns: 1fr; gap: 40px; }
   @media (min-width: 900px) { .three { grid-template-columns: repeat(3, 1fr); gap: 52px; } }
@@ -416,7 +592,10 @@
         <a href="#compare">Compare</a>
       </div>
       <div class="acts">
-        <a class="pill ghost" href="https://github.com/Rafaelpta/litepipe">Source</a>
+        <a class="pill ghost" href="https://github.com/Rafaelpta/litepipe" title="Star litepipe on GitHub">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.19c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Star on GitHub
+        </a>
         <a class="pill solid" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">Download</a>
       </div>
     </nav>
@@ -428,12 +607,18 @@
   <h1>A memory of your work that nobody else owns.</h1>
   <p class="sub">Everything you have seen, said and heard at your computer, kept in one file on your own disk. No account. No cloud. No telemetry.</p>
   <div class="cta">
-    <a class="btn" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M8 1.5v8.5m0 0L4.75 6.75M8 10l3.25-3.25M2.5 12v2h11v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Download for Mac
-    </a>
+    <div class="cta-row">
+      <a class="btn" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 1.5v8.5m0 0L4.75 6.75M8 10l3.25-3.25M2.5 12v2h11v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Download for Mac
+      </a>
+      <a class="btn ghost" href="https://github.com/Rafaelpta/litepipe">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.19c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        Star us on GitHub
+      </a>
+    </div>
     <span class="quiet">
       <a href="https://github.com/Rafaelpta/litepipe">read the source</a>
       <span>&middot;</span>
@@ -448,165 +633,78 @@
   </div>
 </div>
 
-<div class="tape-band">
+<div class="band" id="periphery">
   <div class="in">
-    <div class="tape-head">
-      <h2>This is one day, drawn from the file.</h2>
-      <p>7 August &middot; 7,232 moments</p>
-    </div>
-    <div class="tape">
-      <svg viewBox="0 0 1092.8 88" preserveAspectRatio="none" role="img" aria-label="A bar for every ten minutes of one captured day, taller where more was happening">
-        <rect x="0.0" y="84.8" width="6.0" height="3.2" rx="1.4" opacity="0.38"/>
-<rect x="7.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="15.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="22.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="30.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="38.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="45.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="53.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="60.8" y="78.9" width="6.0" height="9.1" rx="1.4" opacity="0.43"/>
-<rect x="68.4" y="31.1" width="6.0" height="56.9" rx="1.4" opacity="0.77"/>
-<rect x="76.0" y="31.8" width="6.0" height="56.2" rx="1.4" opacity="0.77"/>
-<rect x="83.6" y="32.6" width="6.0" height="55.4" rx="1.4" opacity="0.76"/>
-<rect x="91.2" y="29.6" width="6.0" height="58.4" rx="1.4" opacity="0.78"/>
-<rect x="98.8" y="19.6" width="6.0" height="68.4" rx="1.4" opacity="0.84"/>
-<rect x="106.4" y="36.4" width="6.0" height="51.6" rx="1.4" opacity="0.74"/>
-<rect x="114.0" y="39.2" width="6.0" height="48.8" rx="1.4" opacity="0.72"/>
-<rect x="121.6" y="41.9" width="6.0" height="46.1" rx="1.4" opacity="0.7"/>
-<rect x="129.2" y="0.0" width="6.0" height="88.0" rx="1.4" opacity="0.96"/>
-<rect x="136.8" y="52.4" width="6.0" height="35.6" rx="1.4" opacity="0.63"/>
-<rect x="144.4" y="82.8" width="6.0" height="5.2" rx="1.4" opacity="0.4"/>
-<rect x="152.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="159.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="167.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="174.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="182.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="190.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="197.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="205.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="212.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="220.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="228.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="235.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="243.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="250.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="258.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="266.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="273.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="281.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="288.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="296.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="304.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="311.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="319.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="326.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="334.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="342.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="349.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="357.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="364.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="372.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="380.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="387.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="395.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="402.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="410.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="418.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="425.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="433.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="440.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="448.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="456.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="463.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="471.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="478.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="486.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="494.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="501.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="509.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="516.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="524.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="532.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="539.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="547.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="554.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="562.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="570.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="577.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="585.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="592.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="600.4" y="39.2" width="6.0" height="48.8" rx="1.4" opacity="0.72"/>
-<rect x="608.0" y="64.2" width="6.0" height="23.8" rx="1.4" opacity="0.55"/>
-<rect x="615.6" y="73.4" width="6.0" height="14.6" rx="1.4" opacity="0.48"/>
-<rect x="623.2" y="46.3" width="6.0" height="41.7" rx="1.4" opacity="0.67"/>
-<rect x="630.8" y="46.0" width="6.0" height="42.0" rx="1.4" opacity="0.67"/>
-<rect x="638.4" y="25.9" width="6.0" height="62.1" rx="1.4" opacity="0.8"/>
-<rect x="646.0" y="25.4" width="6.0" height="62.6" rx="1.4" opacity="0.81"/>
-<rect x="653.6" y="32.6" width="6.0" height="55.4" rx="1.4" opacity="0.76"/>
-<rect x="661.2" y="17.3" width="6.0" height="70.7" rx="1.4" opacity="0.86"/>
-<rect x="668.8" y="4.2" width="6.0" height="83.8" rx="1.4" opacity="0.94"/>
-<rect x="676.4" y="9.4" width="6.0" height="78.6" rx="1.4" opacity="0.9"/>
-<rect x="684.0" y="39.2" width="6.0" height="48.8" rx="1.4" opacity="0.72"/>
-<rect x="691.6" y="24.3" width="6.0" height="63.7" rx="1.4" opacity="0.81"/>
-<rect x="699.2" y="35.3" width="6.0" height="52.7" rx="1.4" opacity="0.74"/>
-<rect x="706.8" y="24.3" width="6.0" height="63.7" rx="1.4" opacity="0.81"/>
-<rect x="714.4" y="69.4" width="6.0" height="18.6" rx="1.4" opacity="0.51"/>
-<rect x="722.0" y="28.3" width="6.0" height="59.7" rx="1.4" opacity="0.79"/>
-<rect x="729.6" y="40.8" width="6.0" height="47.2" rx="1.4" opacity="0.71"/>
-<rect x="737.2" y="48.6" width="6.0" height="39.4" rx="1.4" opacity="0.66"/>
-<rect x="744.8" y="30.8" width="6.0" height="57.2" rx="1.4" opacity="0.77"/>
-<rect x="752.4" y="37.1" width="6.0" height="50.9" rx="1.4" opacity="0.73"/>
-<rect x="760.0" y="50.3" width="6.0" height="37.7" rx="1.4" opacity="0.65"/>
-<rect x="767.6" y="21.9" width="6.0" height="66.1" rx="1.4" opacity="0.83"/>
-<rect x="775.2" y="47.2" width="6.0" height="40.8" rx="1.4" opacity="0.67"/>
-<rect x="782.8" y="12.5" width="6.0" height="75.5" rx="1.4" opacity="0.89"/>
-<rect x="790.4" y="40.6" width="6.0" height="47.4" rx="1.4" opacity="0.71"/>
-<rect x="798.0" y="44.4" width="6.0" height="43.6" rx="1.4" opacity="0.69"/>
-<rect x="805.6" y="19.8" width="6.0" height="68.2" rx="1.4" opacity="0.84"/>
-<rect x="813.2" y="42.5" width="6.0" height="45.5" rx="1.4" opacity="0.7"/>
-<rect x="820.8" y="64.6" width="6.0" height="23.4" rx="1.4" opacity="0.55"/>
-<rect x="828.4" y="71.3" width="6.0" height="16.7" rx="1.4" opacity="0.5"/>
-<rect x="836.0" y="79.9" width="6.0" height="8.1" rx="1.4" opacity="0.42"/>
-<rect x="843.6" y="76.9" width="6.0" height="11.1" rx="1.4" opacity="0.45"/>
-<rect x="851.2" y="71.3" width="6.0" height="16.7" rx="1.4" opacity="0.5"/>
-<rect x="858.8" y="79.4" width="6.0" height="8.6" rx="1.4" opacity="0.43"/>
-<rect x="866.4" y="81.6" width="6.0" height="6.4" rx="1.4" opacity="0.41"/>
-<rect x="874.0" y="34.3" width="6.0" height="53.7" rx="1.4" opacity="0.75"/>
-<rect x="881.6" y="40.8" width="6.0" height="47.2" rx="1.4" opacity="0.71"/>
-<rect x="889.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="896.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="904.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="912.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="919.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="927.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="934.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="942.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="950.0" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="957.6" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="965.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="972.8" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="980.4" y="27.9" width="6.0" height="60.1" rx="1.4" opacity="0.79"/>
-<rect x="988.0" y="33.1" width="6.0" height="54.9" rx="1.4" opacity="0.76"/>
-<rect x="995.6" y="73.4" width="6.0" height="14.6" rx="1.4" opacity="0.48"/>
-<rect x="1003.2" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="1010.8" y="54.2" width="6.0" height="33.8" rx="1.4" opacity="0.62"/>
-<rect x="1018.4" y="86.0" width="6.0" height="2.0" rx="1.4" opacity="0.1"/>
-<rect x="1026.0" y="36.6" width="6.0" height="51.4" rx="1.4" opacity="0.74"/>
-<rect x="1033.6" y="68.2" width="6.0" height="19.8" rx="1.4" opacity="0.52"/>
-<rect x="1041.2" y="75.5" width="6.0" height="12.5" rx="1.4" opacity="0.46"/>
-<rect x="1048.8" y="85.0" width="6.0" height="3.0" rx="1.4" opacity="0.37"/>
-<rect x="1056.4" y="82.8" width="6.0" height="5.2" rx="1.4" opacity="0.4"/>
-<rect x="1064.0" y="71.3" width="6.0" height="16.7" rx="1.4" opacity="0.5"/>
-<rect x="1071.6" y="76.4" width="6.0" height="11.6" rx="1.4" opacity="0.45"/>
-<rect x="1079.2" y="60.5" width="6.0" height="27.5" rx="1.4" opacity="0.58"/>
-<rect x="1086.8" y="79.4" width="6.0" height="8.6" rx="1.4" opacity="0.43"/>
-      </svg>
-      <div class="axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
-    </div>
-    <div class="tape-legend">
-      <div><b>7,232</b><span>moments kept that day, one bar per ten minutes</span></div>
-      <div><b>3</b><span>screens watched at once, not the window in front</span></div>
-      <div><b>0</b><span>bytes uploaded, because there is nowhere to send them</span></div>
+    <div class="periph">
+      <div class="pstage" id="pstage">
+        <div class="rays" aria-hidden="true"><svg preserveAspectRatio="none"><line x1="50%" y1="46%" x2="128.0%" y2="46.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="125.7%" y2="69.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="119.1%" y2="90.6%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="108.4%" y2="109.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="94.3%" y2="125.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="77.7%" y2="135.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="59.4%" y2="141.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="40.6%" y2="141.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="22.3%" y2="135.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="5.7%" y2="125.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-8.4%" y2="109.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-19.1%" y2="90.6%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-25.7%" y2="69.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-28.0%" y2="46.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-25.7%" y2="23.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-19.1%" y2="1.4%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-8.4%" y2="-17.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="5.7%" y2="-33.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="22.3%" y2="-43.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="40.6%" y2="-49.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="59.4%" y2="-49.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="77.7%" y2="-43.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="94.3%" y2="-33.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="108.4%" y2="-17.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="119.1%" y2="1.4%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="125.7%" y2="23.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="128.0%" y2="46.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/></svg></div>
+        <div class="pcards">
+          <figure class="drop" style="--x:60px; --y:120px; --w:235px; --i:0">
+            <div class="pslot">
+            <div class="pm dark"><div class="h"><b>Terminal</b><span>zsh</span></div><div class="t"><b>error</b> failed to refresh token<br>at auth/callback.ts:118</div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;What did that error actually say?&rdquo;</figcaption>
+          </figure>
+          <figure class="" style="--x:356px; --y:54px; --w:197px; --i:1">
+            <div class="pslot">
+            <div class="pm "><div class="h"><b>Meeting</b><span>in 30 min</span></div><div class="t"><strong>Quarterly review</strong><br>Ana, Marco and two others</div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;Who else is on this call?&rdquo;</figcaption>
+          </figure>
+          <figure class="drop" style="--x:1120px; --y:66px; --w:235px; --i:2">
+            <div class="pslot">
+            <div class="pm "><div class="h"><b>Shared screen</b><span>Meet</span></div><div class="img"><span class="l"><i style="width:64%"></i><i style="width:44%"></i></span></div><div class="t">Slide 7, the margin table</div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;What was on the slide?&rdquo;</figcaption>
+          </figure>
+          <figure class="drop" style="--x:70px; --y:404px; --w:213px; --i:3">
+            <div class="pslot">
+            <div class="pm "><div class="h"><b>WhatsApp Web</b><span>Marco</span></div><div class="t">&ldquo;Can you send the invoice today?&rdquo;</div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;What did I promise Marco?&rdquo;</figcaption>
+          </figure>
+          <figure class="" style="--x:398px; --y:648px; --w:213px; --i:4">
+            <div class="pslot">
+              <div class="pshot">
+                <img src="assets/cards/sheet.png" alt="A spreadsheet with a row of totals selected, from a window you had open" width="676" height="216" loading="lazy">
+              </div>
+              <div class="pfoot">
+                <div class="a"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.5" y="0.75" width="9" height="10.5" rx="1.2" stroke="currentColor" stroke-width="1"/><path d="M3.6 4.5h4.8M3.6 6.6h4.8M6 4.5v4.3" stroke="currentColor" stroke-width="1"/></svg>Sheets</div>
+                <div class="n">Budget Q3, row highlighted</div>
+              </div>
+            </div>
+            <figcaption class="pcap">&ldquo;What was that number I saw?&rdquo;</figcaption>
+          </figure>
+          <figure class="" style="--x:642px; --y:26px; --w:213px; --i:5">
+            <div class="pslot">
+              <img src="assets/cards/video.png" alt="A lecture video paused on a whiteboard, from the tab you had open" width="262" height="178" loading="lazy">
+            </div>
+            <figcaption class="pcap">&ldquo;What was on that whiteboard?&rdquo;</figcaption>
+          </figure>
+          <figure class="drop" style="--x:1150px; --y:330px; --w:197px; --i:6">
+            <div class="pslot">
+            <div class="pm "><div class="h"><b>Second screen</b><span>monitor 2</span></div><div class="t">A doc somebody shared, then closed<span class="ln"><i style="width:88%"></i><i style="width:62%"></i></span></div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;What was in that deck?&rdquo;</figcaption>
+          </figure>
+          <figure class="" style="--x:662px; --y:706px; --w:168px; --i:7">
+            <div class="pslot">
+            <div class="pm "><div class="h"><b>Admin panel</b><span>internal tool</span></div><div class="t">No API, no export, no integration</div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;And it is in there too.&rdquo;</figcaption>
+          </figure>
+          <figure class="" style="--x:884px; --y:636px; --w:213px; --i:8">
+            <div class="pslot">
+            <div class="pm "><div class="h"><b>Transcript</b><span>15:02</span></div><div class="t">Ana: &ldquo;before Friday, not next week&rdquo;</div></div>
+          </div>
+          <figcaption class="pcap">&ldquo;Who said Friday?&rdquo;</figcaption>
+          </figure>
+        </div>
+        <div class="pcentre">
+          <h2><em>Everything</em> you have seen, said and heard</h2>
+          <p>litepipe gathers your peripheral context as you work, so you do not need to AIsplain things.</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -614,16 +712,15 @@
 <div class="band" id="use">
   <div class="in">
     <section>
-      <p class="eyebrow">The point of keeping it</p>
-      <h2>What you do once you have it</h2>
-      <p class="say">A memory is only worth the work it saves. Point your agent at the archive and the writing up, the hunting and the remembering stop being your job.</p>
+      <p class="eyebrow">Peripheral context awareness</p>
+      <h2>An assistant always aware of your work</h2>
+      <p class="say">Get work done without AIsplaining and copying and pasting the obvious. litepipe knows what you have in mind.</p>
 
       <div class="demo-top">
         <div class="demo-tabs" role="tablist" aria-label="Things you can ask">
           <button class="dtab scene-btn" role="tab" aria-selected="true" data-i="0" aria-controls="stage">Yesterday</button>
           <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="1" aria-controls="stage">Left hanging</button>
           <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="2" aria-controls="stage">Repeated work</button>
-          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="3" aria-controls="stage">This week, as posts</button>
         </div>
         <p class="demo-caption" id="caption"></p>
       </div>
@@ -718,14 +815,13 @@
       </div>
 
       <div class="prompts" role="tablist" aria-label="More things you can ask">
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="4" aria-controls="stage">Catch me up, I was out Thursday.</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="5" aria-controls="stage">Who was I talking to when this came up?</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="6" aria-controls="stage">How much of last week went to this client?</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="7" aria-controls="stage">What did I say I would send, and to whom?</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="8" aria-controls="stage">Find the dashboard I had open on Tuesday.</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="3" aria-controls="stage">Catch me up, I was out Thursday.</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="4" aria-controls="stage">Who was I talking to when this came up?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="5" aria-controls="stage">How much of last week went to this client?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="6" aria-controls="stage">What did I say I would send, and to whom?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="7" aria-controls="stage">Find the dashboard I had open on Tuesday.</button>
       </div>
 
-      <p class="stage-note">The tool names are the real ones the bridge exposes. The answers are illustrative, written in the shape the archive returns them.</p>
 
       <div class="grounded">
         <div class="gh">
@@ -741,6 +837,103 @@
           <div class="zero"><b>0</b><span>bytes uploaded</span></div>
         </div>
         <p class="gf">Your own screens and calls, and nothing else. No account was created to make this, and no integration was authorised.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="meetings">
+  <div class="in">
+    <section>
+      <div class="meet">
+        <div class="mstage" id="mstage">
+          <div class="mcard">
+            <h4>Design and GTM sync</h4>
+            <div class="mhead">
+              <div class="mtabs">
+                <span class="on">Transcript</span><span>Speakers</span><span>Write up</span>
+              </div>
+              <div class="mfaces">
+                <b><i style="background:#C9D6E8"></i><i style="background:#E3D7C6"></i><i style="background:#D4E2D4"></i><i style="background:#E8D3D6"></i></b>
+                <span>John +3</span>
+              </div>
+            </div>
+
+            <div class="mpanel on">
+              <div class="tline"><span class="at">14:06</span><span><b>John:</b> hold the annual tiers until the design review lands, I do not want to price something we are about to change</span></div>
+              <div class="tline"><span class="at">14:21</span><span><b>Ana:</b> I will take the onboarding copy, but the migration cannot be that same week</span></div>
+              <div class="tline"><span class="at">14:38</span><span><b>Prerna:</b> what is our floor on the discount? we keep going around this</span></div>
+              <div class="tline"><span class="at">14:39</span><span><b>you:</b> let us settle that one before we drop, I do not want it coming back next week</span></div>
+            </div>
+
+            <div class="mpanel">
+              <div class="srow"><span class="av" style="background:#C9D6E8"></span><span class="n">John</span><span class="s">named by you</span><span class="c">41 lines</span></div>
+              <div class="srow"><span class="av" style="background:#E3D7C6"></span><span class="n">Ana</span><span class="s">named by you</span><span class="c">33 lines</span></div>
+              <div class="srow"><span class="av" style="background:#D4E2D4"></span><span class="n">Prerna</span><span class="s">named by you</span><span class="c">18 lines</span></div>
+              <div class="srow"><span class="av" style="background:#E8D3D6"></span><span class="n">you</span><span class="s">this machine</span><span class="c">27 lines</span></div>
+            </div>
+
+            <div class="mpanel">
+              <span class="mask">Write up the GTM sync.</span>
+              <div class="wsec">
+                <p class="lab">What was decided</p>
+                <div class="wbars"><i style="width:92%"></i><i style="width:64%"></i></div>
+                <p class="wtxt">Annual tiers are held until the design review lands. The migration moves off that week. Ana owns the onboarding copy.</p>
+              </div>
+              <div class="wsec">
+                <p class="lab">Left open</p>
+                <div class="wbars"><i style="width:80%"></i></div>
+                <p class="wtxt">The discount floor was raised at 14:38 and nobody answered it before the call ended.</p>
+              </div>
+              <div class="wsec">
+                <p class="lab">Where it came from</p>
+                <div class="wbars"><i style="width:88%"></i><i style="width:47%"></i></div>
+                <p class="wtxt">Every line above points back at the minute it was said, so you can reread it before you repeat it.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mrec">
+            <span class="lv"><i></i><i></i><i></i><i></i></span>
+            <span>Recording, you accepted</span>
+            <span class="st"><i></i>Stop</span>
+          </div>
+        </div>
+
+        <div class="mtext">
+          <p class="eyebrow">The meetings too</p>
+          <h2>Never write up a meeting from memory again</h2>
+          <p>The call is transcribed while it happens, with who spoke and when. Nothing is summarised on a schedule and nothing is emailed to you. It sits on your disk until you ask, and then your own agent writes it, out of what was actually said.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="repeat">
+  <div class="in">
+    <section>
+      <div class="meet">
+        <div class="mtext">
+          <p class="eyebrow">The work that repeats</p>
+          <h2>The chore nobody ever wrote down</h2>
+          <p>You run the same sequence most weeks without noticing it is a sequence. No one documented it, no one interviewed you about it, and it never shows up in any system of record because it happens between them. Ask, and it comes back as steps, with how often you ran it, what it costs you, and which parts your agent could take off your hands.</p>
+        </div>
+
+        <div class="mstage" id="wstage">
+          <div class="mcard">
+            <h4>The weekly client report</h4>
+            <p class="wfmeta">11 runs in 3 weeks &middot; about 40 minutes each</p>
+            <div class="wsteps">
+              <div class="wstep"><span class="no">01</span><span>Open the dashboard and read the four numbers</span><span class="tag bot">agent</span></div>
+              <div class="wstep"><span class="no">02</span><span>Paste them into last week&rsquo;s document</span><span class="tag bot">agent</span></div>
+              <div class="wstep"><span class="no">03</span><span>Rewrite the paragraph around them</span><span class="tag bot">agent draft</span></div>
+              <div class="wstep"><span class="no">04</span><span>Check the two numbers that looked wrong</span><span class="tag">you</span></div>
+              <div class="wstep"><span class="no">05</span><span>Send it to the client</span><span class="tag">you</span></div>
+            </div>
+            <p class="wsum"><b>Nobody wrote this down.</b> It was found by how often the same screens came back in the same order, and the last two steps stayed yours because they are the ones that need judgement.</p>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -1142,16 +1335,6 @@
       ],
       mom: [["Dashboard", "11 runs"], ["Docs", "~40 min"], ["Gmail", "3 weeks"]] },
 
-    { cap: "Drafts that sound like you, because they are built out of your own sentences.",
-      q: "Turn what I shipped this week into three posts.",
-      title: "Three drafts from your week", meta: "14 days of work \u00b7 3 sources",
-      steps: [["Looking at how the day went", "activity_summary"], ["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
-      secs: [
-        { lab: "Three drafts", items: [["the permission flow that cost an hour, and why the fix was one action per line", 1], ["what shipping a notarised Mac app alone teaches you", 1], ["the pricing conversation, written as the lesson rather than the deal", 1]] },
-        { lab: "In your voice", p: "Built from your own sentences in your own threads, so it reads like you and not like a model." }
-      ],
-      mom: [["Terminal", "14 days"], ["LinkedIn", "your drafts"], ["Meet", "8 Aug"]] },
-
     { cap: "One day away, summarised by what actually moved rather than by what got posted.",
       q: "Catch me up, I was out Thursday.",
       title: "Thursday, while you were out", meta: "One day \u00b7 3 sources",
@@ -1347,5 +1530,118 @@
 })();
 </script>
 
+<script>
+(function () {
+  var stage = document.getElementById('pstage');
+  if (!stage || !('IntersectionObserver' in window)) { if (stage) stage.classList.add('in'); return; }
+  new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { stage.classList.add('in'); } });
+  }, { threshold: 0.15 }).observe(stage);
+})();
+
+/* the meeting card: transcribed live, then who said it, then the write up you
+   asked for. It only runs while it is on screen. */
+(function () {
+  var st = document.getElementById("mstage");
+  if (!st) return;
+  var tabs = [].slice.call(st.querySelectorAll(".mtabs span")),
+      panes = [].slice.call(st.querySelectorAll(".mpanel")),
+      lines = [].slice.call(st.querySelectorAll(".tline")),
+      rows = [].slice.call(st.querySelectorAll(".srow")),
+      secs = [].slice.call(st.querySelectorAll(".wsec")),
+      ask = st.querySelector(".mask"),
+      rec = st.querySelector(".mrec");
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var t = [], running = false;
+
+  function later(fn, ms) { t.push(setTimeout(fn, ms)); }
+  function clear() { t.forEach(clearTimeout); t = []; }
+  function show(i) {
+    tabs.forEach(function (b, n) { b.classList.toggle("on", n === i); });
+    panes.forEach(function (p, n) { p.classList.toggle("on", n === i); });
+  }
+  function wipe() {
+    lines.concat(rows).forEach(function (e) { e.classList.remove("on"); });
+    secs.forEach(function (s) { s.classList.remove("done"); });
+    ask.classList.remove("on");
+    rec.classList.remove("on");
+    st.classList.remove("live");
+  }
+
+  function run() {
+    clear(); wipe(); show(0);
+    st.classList.add("live");
+    lines.forEach(function (l, n) { later(function () { l.classList.add("on"); }, 600 + n * 850); });
+    later(function () { rec.classList.add("on"); }, 950);
+    later(function () { rec.classList.remove("on"); st.classList.remove("live"); }, 4600);
+
+    later(function () {
+      show(1);
+      rows.forEach(function (r, n) { later(function () { r.classList.add("on"); }, n * 240); });
+    }, 5200);
+
+    later(function () { show(2); ask.classList.add("on"); }, 8600);
+    secs.forEach(function (s, n) { later(function () { s.classList.add("done"); }, 9400 + n * 800); });
+
+    later(run, 15000);
+  }
+
+  /* with motion turned off the card simply arrives finished */
+  if (reduced) {
+    show(2); ask.classList.add("on");
+    lines.concat(rows).forEach(function (e) { e.classList.add("on"); });
+    secs.forEach(function (s) { s.classList.add("done"); });
+    return;
+  }
+
+  if (!("IntersectionObserver" in window)) { run(); return; }
+  new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !running) { running = true; run(); }
+      else if (!e.isIntersecting && running) { running = false; clear(); }
+    });
+  }, { threshold: 0.25 }).observe(st);
+})();
+
+/* the repeated chore: the steps land first, then which of them an agent could
+   take, then the line admitting nobody ever wrote any of it down */
+(function () {
+  var st = document.getElementById("wstage");
+  if (!st) return;
+  var steps = [].slice.call(st.querySelectorAll(".wstep")),
+      sum = st.querySelector(".wsum");
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var t = [], running = false;
+
+  function later(fn, ms) { t.push(setTimeout(fn, ms)); }
+  function clear() { t.forEach(clearTimeout); t = []; }
+
+  function run() {
+    clear();
+    steps.forEach(function (s) { s.classList.remove("on"); });
+    st.classList.remove("tagged");
+    sum.classList.remove("on");
+
+    steps.forEach(function (s, n) { later(function () { s.classList.add("on"); }, 500 + n * 600); });
+    later(function () { st.classList.add("tagged"); }, 4000);
+    later(function () { sum.classList.add("on"); }, 5200);
+    later(run, 11000);
+  }
+
+  if (reduced) {
+    steps.forEach(function (s) { s.classList.add("on"); });
+    st.classList.add("tagged"); sum.classList.add("on");
+    return;
+  }
+
+  if (!("IntersectionObserver" in window)) { run(); return; }
+  new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !running) { running = true; run(); }
+      else if (!e.isIntersecting && running) { running = false; clear(); }
+    });
+  }, { threshold: 0.25 }).observe(st);
+})();
+</script>
 </body>
 </html>
