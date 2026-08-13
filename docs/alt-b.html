@@ -490,31 +490,62 @@
   .wsec.done .wbars { display: none; }
   .wsec.done .wtxt { opacity: 1; filter: blur(0); height: auto; }
 
-  /* o contexto periferico chegando no agente, e a citacao ao lado */
-  .agq { display: inline-block; padding: 8px 13px; border-radius: 100px;
-         background: var(--ground); font-size: 13px; opacity: 0; transform: translateY(6px);
-         transition: opacity .4s ease, transform .4s ease; }
-  .agq.on { opacity: 1; transform: none; }
-  .aglab { margin-top: 20px; font-family: "JetBrains Mono", monospace; font-size: 9.5px;
-           text-transform: uppercase; letter-spacing: 0.13em; color: var(--muted); }
-  .agsrc { margin-top: 11px; display: flex; flex-direction: column; gap: 8px; }
-  .agsrc .s { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center;
-              padding: 9px 11px; border: 1px solid var(--rule); border-radius: 8px;
-              background: var(--white); font-size: 13px;
-              opacity: 0; filter: blur(6px); transform: translateY(6px);
-              transition: opacity .5s ease, filter .5s ease, transform .5s ease; }
-  .agsrc .s.on { opacity: 1; filter: blur(0); transform: none; }
-  .agsrc .s i { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; }
-  .agsrc .s b { font-weight: 400; color: var(--ink); }
-  .agsrc .s em { font-style: normal; font-family: "JetBrains Mono", monospace;
-                 font-size: 10px; color: var(--faint); }
-  .agfoot { margin-top: 18px; display: flex; align-items: center; gap: 9px;
-            padding: 11px 13px; border-radius: 9px; background: var(--accent-wash);
-            font-size: 12.5px; color: var(--accent);
-            opacity: 0; transform: translateY(8px);
-            transition: opacity .5s ease, transform .5s ease; }
-  .agfoot.on { opacity: 1; transform: none; }
-  .agfoot b { font-weight: 500; }
+  /* o contexto entrando por cima, descendo por um fio so, e virando resposta:
+     tres fontes, o arquivo, e o agente lendo dele */
+  #connected .mstage { aspect-ratio: auto; height: 660px; padding: 22px 20px; }
+  .jsrc { display: flex; gap: 13px; justify-content: center; }
+  .jsrc .c { width: 158px; padding: 11px 12px 13px; border-radius: 9px; background: var(--white);
+             border: 1px solid var(--rule); box-shadow: 0 3px 12px rgba(11,16,21,.05);
+             opacity: 0; transform: translateY(-8px);
+             transition: opacity .5s ease, transform .5s ease; }
+  .jsrc .c.on { opacity: 1; transform: none; }
+  .jsrc .c .h { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+  .jsrc .c .h i { width: 16px; height: 16px; border-radius: 5px; flex: none; }
+  .jsrc .c .l { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+  .jsrc .c .l span { height: 6px; border-radius: 3px; background: rgba(11,16,21,.08); }
+
+  .jwire { display: block; width: 100%; height: 62px; }
+  .jwire path { fill: none; stroke: var(--accent); stroke-width: 1.2; opacity: .5;
+                stroke-dasharray: 200; stroke-dashoffset: 200;
+                transition: stroke-dashoffset 1s ease; }
+  .jwire.on path { stroke-dashoffset: 0; }
+
+  .jpanel { position: relative; margin: 0 6px; height: 434px; border-radius: 14px;
+            background: linear-gradient(150deg, var(--accent-wash) 0%, var(--paper) 42%, var(--paper) 72%, var(--accent-wash) 100%);
+            border: 1px solid var(--rule-soft, rgba(11,16,21,.06)); }
+
+  .jcard { position: absolute; background: var(--white); border: 1px solid var(--rule);
+           border-radius: 11px; box-shadow: 0 8px 26px rgba(11,16,21,.09);
+           opacity: 0; transform: translateY(10px);
+           transition: opacity .55s ease, transform .55s ease; }
+  .jcard.on { opacity: 1; transform: none; }
+
+  .jmain { left: 16px; top: 74px; width: 322px; padding: 15px 16px 18px; }
+  .jmain .t { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; }
+  .jmain .t i { width: 9px; height: 9px; border-radius: 50%; border: 1.6px solid var(--accent);
+                border-top-color: transparent; animation: spin 1.1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .jmain .s { margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+  .jmain .l { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+  .jmain .l span { height: 8px; border-radius: 4px; background: rgba(11,16,21,.07); }
+  .jmain .box { margin-top: 16px; height: 30px; border-radius: 7px; border: 1px solid var(--rule); }
+
+  .jask { left: -6px; bottom: 74px; width: 250px; padding: 13px 15px; font-size: 12.5px;
+          line-height: 1.4; border-radius: 10px; }
+  .jask b { display: block; padding: 9px 12px; border-radius: 7px; font-weight: 400;
+            border: 1.4px solid var(--accent); color: var(--ink); }
+
+  .jans { right: -6px; top: 34px; width: 268px; padding: 15px 16px 16px; }
+  .jans .h { font-size: 13px; font-weight: 500; }
+  .jans .it { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 11px 0;
+              border-top: 1px solid var(--rule-soft, rgba(11,16,21,.07)); }
+  .jans .it:first-of-type { margin-top: 10px; }
+  .jans .it i { width: 16px; height: 16px; border-radius: 5px; margin-top: 2px; }
+  .jans .it b { display: block; font-size: 12px; font-weight: 500; }
+  .jans .it span { font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+  .jans .f { margin-top: 13px; display: flex; justify-content: flex-end; }
+  .jans .f em { font-style: normal; font-size: 11.5px; padding: 6px 12px; border-radius: 7px;
+                background: var(--accent); color: #fff; }
 
   .quote { margin-top: 8px; padding: 24px 26px 26px; border-radius: 10px; background: #EFEDE6; }
   .quote p { font-size: 17px; line-height: 1.55; color: var(--ink-2); }
@@ -775,17 +806,35 @@
         </div>
 
         <div class="mstage" id="agstage">
-          <div class="mcard">
-            <h4>Your agent, reading the archive</h4>
-            <span class="agq">What did we decide about the pricing?</span>
-            <p class="aglab">Read from this Mac</p>
-            <div class="agsrc">
-              <div class="s"><i style="background:#1F2937"></i><b>Terminal</b><em>14:02</em></div>
-              <div class="s"><i style="background:#CFB183"></i><b>WhatsApp Web</b><em>11:48</em></div>
-              <div class="s"><i style="background:#85A2D4"></i><b>Google Meet</b><em>09:22</em></div>
-              <div class="s"><i style="background:#98B69F"></i><b>Google Sheets</b><em>Tue</em></div>
+          <div class="jsrc">
+            <div class="c"><div class="h"><i style="background:#85A2D4"></i>Seen</div><div class="l"><span style="width:86%"></span><span style="width:64%"></span><span style="width:74%"></span></div></div>
+            <div class="c"><div class="h"><i style="background:#CFB183"></i>Said</div><div class="l"><span style="width:70%"></span><span style="width:88%"></span><span style="width:56%"></span></div></div>
+            <div class="c"><div class="h"><i style="background:#98B69F"></i>Heard</div><div class="l"><span style="width:80%"></span><span style="width:58%"></span><span style="width:72%"></span></div></div>
+          </div>
+
+          <svg class="jwire" viewBox="0 0 543 62" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M92 0v18a8 8 0 0 0 8 8h163a8 8 0 0 1 8 8v28"/>
+            <path d="M271 0v62"/>
+            <path d="M451 0v18a8 8 0 0 1-8 8H280a8 8 0 0 0-8 8v28"/>
+          </svg>
+
+          <div class="jpanel">
+            <div class="jcard jmain">
+              <div class="t"><i></i>litepipe</div>
+              <div class="s">Reading the archive on this Mac</div>
+              <div class="l"><span style="width:92%"></span><span style="width:78%"></span><span style="width:85%"></span><span style="width:44%"></span></div>
+              <div class="box"></div>
             </div>
-            <div class="agfoot"><b>Four sources, nothing left this Mac.</b></div>
+
+            <div class="jcard jask"><b>What did we decide about the pricing?</b></div>
+
+            <div class="jcard jans">
+              <div class="h">Where the answer came from</div>
+              <div class="it"><i style="background:#CFB183"></i><span><b>The thread, Monday</b><span>He asked for the invoice, you said it would go out that day.</span></span></div>
+              <div class="it"><i style="background:#98B69F"></i><span><b>The call, Tuesday</b><span>Annual tiers held until the design review lands.</span></span></div>
+              <div class="it"><i style="background:#85A2D4"></i><span><b>The sheet, behind the tab</b><span>The number nobody read out loud.</span></span></div>
+              <div class="f"><em>Nothing left this Mac</em></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1727,13 +1776,15 @@
   }, { threshold: 0.25 }).observe(st);
 })();
 
-/* o agente perguntando, e as fontes chegando uma a uma, todas locais */
+/* o contexto entra por cima, desce pelo fio, e volta como resposta */
 (function () {
   var st = document.getElementById("agstage");
   if (!st) return;
-  var q = st.querySelector(".agq"),
-      srcs = [].slice.call(st.querySelectorAll(".agsrc .s")),
-      foot = st.querySelector(".agfoot");
+  var srcs = [].slice.call(st.querySelectorAll(".jsrc .c")),
+      wire = st.querySelector(".jwire"),
+      main = st.querySelector(".jmain"),
+      ask = st.querySelector(".jask"),
+      ans = st.querySelector(".jans");
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var t = [], running = false;
   function later(fn, ms) { t.push(setTimeout(fn, ms)); }
@@ -1741,18 +1792,20 @@
 
   function run() {
     clear();
-    q.classList.remove("on");
     srcs.forEach(function (e) { e.classList.remove("on"); });
-    foot.classList.remove("on");
-    later(function () { q.classList.add("on"); }, 400);
-    srcs.forEach(function (e, n) { later(function () { e.classList.add("on"); }, 1200 + n * 650); });
-    later(function () { foot.classList.add("on"); }, 4400);
-    later(run, 10000);
+    wire.classList.remove("on");
+    [main, ask, ans].forEach(function (e) { e.classList.remove("on"); });
+
+    srcs.forEach(function (e, n) { later(function () { e.classList.add("on"); }, 300 + n * 320); });
+    later(function () { wire.classList.add("on"); }, 1400);
+    later(function () { main.classList.add("on"); }, 2400);
+    later(function () { ask.classList.add("on"); }, 3100);
+    later(function () { ans.classList.add("on"); }, 3900);
+    later(run, 11000);
   }
 
   if (reduced) {
-    q.classList.add("on"); foot.classList.add("on");
-    srcs.forEach(function (e) { e.classList.add("on"); });
+    srcs.concat([wire, main, ask, ans]).forEach(function (e) { e.classList.add("on"); });
     return;
   }
   if (!("IntersectionObserver" in window)) { run(); return; }
