@@ -490,6 +490,172 @@
   .wsec.done .wbars { display: none; }
   .wsec.done .wtxt { opacity: 1; filter: blur(0); height: auto; }
 
+
+  /* ---------- tres leituras da arquitetura, para escolher uma ---------- */
+  .arch { position: relative; height: 100%; }
+  .archnote { margin-top: 4px; font-size: 13px; line-height: 1.55; color: var(--faint); max-width: 30rem; }
+  .archnote b { font-weight: 500; color: var(--muted); }
+  .fade { opacity: 0; transform: translateY(9px);
+          transition: opacity .55s ease, transform .55s ease; }
+  .fade.on { opacity: 1; transform: none; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  /* A, a camada */
+  #stage-a { height: 606px; }
+  .lyr { display: flex; flex-direction: column; height: 100%; padding: 30px 26px 26px; }
+  .lyr .step { display: flex; align-items: baseline; gap: 9px; margin-bottom: 9px;
+               font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+               letter-spacing: .13em; text-transform: uppercase; color: var(--muted); }
+  .lyr .step b { color: var(--faint); font-weight: 400; }
+
+  .lyr .cap { display: flex; gap: 8px; }
+  .lyr .cap .w { flex: 1; border-radius: 6px; background: var(--white);
+                 border: 1px solid var(--rule); overflow: hidden; }
+  .lyr .cap .w u { display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 6px;
+                   background: var(--ground); text-decoration: none;
+                   font-size: 8.5px; color: var(--muted); }
+  .lyr .cap .w u i { width: 4px; height: 4px; border-radius: 50%; background: var(--rule-2); }
+  .lyr .cap .w s { display: block; height: 4px; margin: 5px 6px; border-radius: 2px;
+                   background: rgba(11,16,21,.09); text-decoration: none; }
+
+  .lyr .fall { display: flex; align-items: center; gap: 13px; padding: 9px 0 8px; }
+  .lyr .fall svg { width: 170px; height: 26px; flex: none; }
+  .lyr .fall svg path { fill: none; stroke: var(--rule-2); stroke-width: 1.1; }
+  .lyr .fall span { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+  .lyr .slab { border-radius: 10px; background: var(--white); border: 1px solid var(--rule);
+               box-shadow: 0 6px 20px rgba(11,16,21,.06); padding: 14px 16px 15px; }
+  .lyr .slab .h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .lyr .slab .h b { font-size: 13.5px; font-weight: 500; }
+  .lyr .slab .h em { font-style: normal; font-size: 9.5px; color: var(--faint); }
+  .lyr .slab .g { margin-top: 12px; display: grid; grid-template-columns: repeat(18, 1fr); gap: 3px; }
+  .lyr .slab .g i { height: 13px; border-radius: 2px; background: rgba(11,16,21,.06); }
+  .lyr .slab .k { margin-top: 11px; display: flex; gap: 16px; font-size: 11px; color: var(--muted); }
+  .lyr .slab .k span { display: flex; align-items: center; gap: 5px; }
+  .lyr .slab .k i { width: 8px; height: 8px; border-radius: 2px; }
+
+  .lyr .plug { display: flex; align-items: center; gap: 13px; padding: 12px 0 11px; }
+  .lyr .plug svg { width: 170px; height: 24px; flex: none; }
+  .lyr .plug svg path { fill: none; stroke: var(--accent); stroke-width: 1.2; opacity: .6; }
+  .lyr .plug .t { font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+  .lyr .plug .t b { font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+                    letter-spacing: .1em; color: var(--accent); font-weight: 400; }
+
+  .lyr .ags { display: flex; gap: 8px; }
+  .lyr .ags .a { flex: 1; padding: 10px 10px 11px; border-radius: 8px; background: var(--white);
+                 border: 1px solid var(--rule); font-size: 12px; text-align: center; }
+  .lyr .ags .a em { display: block; margin-top: 4px; font-style: normal; font-size: 10px; color: var(--faint); }
+
+  .arch .bound { position: absolute; inset: 10px; border: 1.5px dashed var(--rule-2);
+                 border-radius: 14px; pointer-events: none;
+                 opacity: 0; transform: scale(1.02);
+                 transition: opacity .6s ease, transform .6s ease; }
+  .arch .bound.on { opacity: 1; transform: none; }
+  .arch .bound span { position: absolute; top: -8px; left: 22px; padding: 0 8px;
+                      background: var(--paper); font-family: "JetBrains Mono", monospace;
+                      font-size: 9.5px; letter-spacing: .13em;
+                      text-transform: uppercase; color: var(--muted); }
+  .arch .bound em { position: absolute; bottom: -9px; right: 22px; padding: 0 8px;
+                    background: var(--paper); font-style: normal; font-size: 11px; color: var(--faint); }
+
+  /* D, a camada de A com o caso de uso de cima */
+  #stage-d { height: 812px; }
+  #stage-d .jpanel { height: 384px; margin: 0; }
+  #stage-d .jmain { left: 10px; top: 62px; width: 300px; }
+  #stage-d .jask { left: -8px; bottom: 40px; width: 236px; }
+  #stage-d .jans { right: -8px; top: 24px; width: 262px; }
+  .lyr .cli1 { display: flex; align-items: center; gap: 8px; padding: 8px 11px;
+               border-radius: 8px; background: var(--white); border: 1px solid var(--rule);
+               font-size: 12px; }
+  .lyr .cli1 i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+  .lyr .cli1 em { font-style: normal; margin-left: auto; font-family: "JetBrains Mono", monospace;
+                  font-size: 9.5px; letter-spacing: .1em; color: var(--faint); }
+  .lyr .ask1 { margin-top: 9px; align-self: flex-end; max-width: 84%; padding: 9px 13px;
+               border-radius: 100px 100px 4px 100px; background: var(--ground); font-size: 12.5px; }
+  .lyr .ans1 { margin-top: 9px; padding: 13px 15px 14px; border-radius: 10px;
+               background: var(--white); border: 1px solid var(--rule);
+               box-shadow: 0 6px 20px rgba(11,16,21,.06); }
+  .lyr .ans1 > b { font-size: 12.5px; font-weight: 500; }
+  .lyr .ans1 .r { display: grid; grid-template-columns: 9px 1fr; gap: 9px; padding: 9px 0;
+                  border-top: 1px solid var(--rule-soft, rgba(11,16,21,.07)); font-size: 11.5px;
+                  line-height: 1.45; }
+  .lyr .ans1 .r:first-of-type { margin-top: 9px; }
+  .lyr .ans1 .r i { width: 9px; height: 9px; border-radius: 2px; margin-top: 4px; }
+  .lyr .ans1 .r b { font-weight: 500; }
+  .lyr .ans1 .r span { color: var(--muted); }
+  .lyr .ans1 .seal { margin-top: 11px; display: flex; justify-content: flex-end; }
+  .lyr .ans1 .seal em { font-style: normal; font-size: 11px; padding: 5px 11px; border-radius: 7px;
+                        background: var(--accent-wash); color: var(--accent); }
+
+  /* E, a mesma D deitada: o percurso da esquerda para a direita */
+  #stage-e { position: relative; width: 100%; height: 448px; padding: 26px 24px 22px;
+             background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; }
+  /* aqui a borda abraca a caixa toda, e o conteudo respira por dentro dela */
+  #stage-e .bound { inset: 0; }
+  #stage-e .lyr { flex-direction: row; align-items: flex-start; padding: 20px 18px 18px; gap: 0; }
+  #stage-e .col { display: flex; flex-direction: column; }
+  #stage-e .col.c1 { flex: 0 0 232px; }
+  #stage-e .col.c2 { flex: 0 0 296px; }
+  #stage-e .col.c3 { flex: 0 0 322px; }
+  #stage-e .col .step { margin-bottom: 11px; }
+  #stage-e .cap { flex-direction: column; gap: 7px; }
+  #stage-e .cap .w { flex: 0 0 auto; }
+  #stage-e .slab { margin-top: 0; }
+  #stage-e .slab .g { grid-template-columns: repeat(9, 1fr); grid-auto-rows: 13px; }
+  #stage-e .ask1 { margin-top: 0; align-self: stretch; max-width: none;
+                   border-radius: 10px; border: 1.4px solid var(--accent); background: var(--white); }
+  #stage-e .ans1 { margin-top: 9px; }
+  #stage-e .ans1 .r { font-size: 11px; }
+  .jask, .jans, .ask1, .ans1 { transition: opacity .6s ease; }
+  .dim { opacity: .12 !important; }
+  .lead { font-size: 13px; font-weight: 500; line-height: 1.5; }
+  .ln { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+  .ln.off { display: none; }
+
+  .arw { flex: 1; display: flex; flex-direction: column; align-items: center;
+         justify-content: center; gap: 8px; padding: 0 10px; }
+  .arw svg { width: 100%; height: 12px; }
+  .arw svg path { fill: none; stroke: var(--rule-2); stroke-width: 1.2; }
+  .arw.mcp svg path { stroke: var(--accent); opacity: .6; }
+  .arw p { font-size: 10.5px; line-height: 1.4; color: var(--muted); text-align: center; margin: 0; }
+  .arw p b { display: block; font-family: "JetBrains Mono", monospace; font-size: 10px;
+             letter-spacing: .1em; color: var(--accent); font-weight: 400; margin-bottom: 3px; }
+
+  /* B, o soquete */
+  .sock { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 24px 20px; height: 100%; }
+  .sock .port { width: 260px; padding: 13px 16px 14px; border-radius: 10px; text-align: center;
+                background: var(--ink); color: var(--ground); box-shadow: 0 8px 24px rgba(11,16,21,.16); }
+  .sock .port b { display: block; font-size: 13px; font-weight: 500; letter-spacing: .04em; }
+  .sock .port em { display: block; margin-top: 3px; font-style: normal; font-size: 10.5px;
+                   color: var(--accent-soft); }
+  .sock .legs { width: 100%; height: 34px; }
+  .sock .legs path { fill: none; stroke: var(--rule-2); stroke-width: 1.2; }
+  .sock .cli { display: flex; gap: 9px; width: 100%; }
+  .sock .cli .c { flex: 1; padding: 11px 11px 12px; border-radius: 9px; background: var(--white);
+                  border: 1px solid var(--rule); }
+  .sock .cli .c b { display: block; font-size: 12px; font-weight: 500; }
+  .sock .cli .c em { display: block; margin-top: 7px; font-style: normal; font-size: 10px;
+                     color: var(--accent); background: var(--accent-wash);
+                     padding: 3px 6px; border-radius: 4px; }
+
+  /* C, o laco */
+  .loop { position: relative; height: 100%; display: grid; place-items: center; }
+  .loop svg { width: 430px; height: 430px; }
+  .loop svg .ring { fill: none; stroke: var(--rule-2); stroke-width: 1.4;
+                    stroke-dasharray: 880; stroke-dashoffset: 880;
+                    transition: stroke-dashoffset 1.6s ease; }
+  .loop.on svg .ring { stroke-dashoffset: 0; }
+  .loop .n { position: absolute; width: 132px; padding: 9px 11px; border-radius: 9px;
+             background: var(--white); border: 1px solid var(--rule); font-size: 11.5px;
+             line-height: 1.4; box-shadow: 0 4px 14px rgba(11,16,21,.07); }
+  .loop .n b { display: block; font-weight: 500; font-size: 12px; }
+  .loop .n span { color: var(--muted); }
+  .loop .n.theirs { border-style: dashed; background: var(--paper); }
+  .loop .n u { display: inline-block; margin-bottom: 4px; text-decoration: none;
+               font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: .1em;
+               text-transform: uppercase; color: var(--faint); }
+  .loop .n.theirs u { color: var(--accent); }
+
   /* o contexto entrando por cima, descendo por um fio so, e virando resposta:
      tres fontes, o arquivo, e o agente lendo dele */
   #connected .mstage { aspect-ratio: auto; height: 660px; padding: 22px 20px; }
@@ -837,6 +1003,297 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+
+<div class="band" id="arch-a">
+  <div class="in">
+    <section>
+      <div class="meet">
+        <div class="mtext">
+          <p class="eyebrow">Option A &middot; the layer</p>
+          <h2>Everything you do lands in one layer underneath</h2>
+          <p>What you saw, said and heard stops being scattered across apps and becomes a single layer on your disk. Your agents attach to that layer instead of to your apps, and they attach from inside the machine, not from someone else&rsquo;s server.</p>
+          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
+        </div>
+        <div class="mstage" id="stage-a">
+          <div class="arch">
+            <div class="lyr">
+              <div class="step fade"><b>01</b>Computer activity is captured</div>
+              <div class="cap fade">
+                <div class="w"><u><i></i>Chrome</u><s style="width:72%"></s><s style="width:48%"></s></div>
+                <div class="w"><u><i></i>Meet</u><s style="width:58%"></s><s style="width:74%"></s></div>
+                <div class="w"><u><i></i>Terminal</u><s style="width:80%"></s><s style="width:40%"></s></div>
+                <div class="w"><u><i></i>Sheets</u><s style="width:52%"></s><s style="width:66%"></s></div>
+              </div>
+
+              <div class="fall fade">
+                <svg viewBox="0 0 170 26" aria-hidden="true">
+                  <path d="M22 0v16m0 0l-4-4m4 4l4-4"/><path d="M64 0v16m0 0l-4-4m4 4l4-4"/>
+                  <path d="M106 0v16m0 0l-4-4m4 4l4-4"/><path d="M148 0v16m0 0l-4-4m4 4l4-4"/>
+                </svg>
+                <span>Every monitor, read while you work.</span>
+              </div>
+
+              <div class="step fade"><b>02</b>Context is packaged in one local database</div>
+              <div class="slab fade">
+                <div class="h"><b>Peripheral context layer</b><em class="mono">~/.litepipe/db.sqlite</em></div>
+                <div class="g">
+                  <i style="background:#85A2D4"></i><i></i><i style="background:#CFB183"></i><i></i><i></i>
+                  <i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i><i></i>
+                  <i style="background:#CFB183"></i><i></i><i style="background:#85A2D4"></i><i></i>
+                  <i style="background:#98B69F"></i><i></i><i></i><i style="background:#CFB183"></i>
+                </div>
+                <div class="k">
+                  <span><i style="background:#85A2D4"></i>Seen</span>
+                  <span><i style="background:#CFB183"></i>Said</span>
+                  <span><i style="background:#98B69F"></i>Heard</span>
+                </div>
+              </div>
+
+              <div class="plug fade">
+                <svg viewBox="0 0 170 24" aria-hidden="true"><path d="M85 0v14m0 0l-4-4m4 4l4-4"/></svg>
+                <span class="t"><b>MCP</b><br>You point your AI at the layer once. After that it can look things up in there, the same way it opens a file.</span>
+              </div>
+
+              <div class="step fade"><b>03</b>Your AI reads it, from in here</div>
+              <div class="ags fade">
+                <div class="a">Claude Code<em>or Cursor</em></div>
+                <div class="a">A chat client<em>whichever you pay for</em></div>
+                <div class="a">Your own script<em>it is only a file</em></div>
+              </div>
+            </div>
+            <div class="bound"><span>this Mac</span><em>Nothing crosses this line</em></div>
+          </div>
+</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="arch-d">
+  <div class="in">
+    <section>
+      <div class="meet">
+        <div class="mtext">
+          <p class="eyebrow">Option D &middot; the layer, answering</p>
+          <h2>One layer underneath, and the answer never leaves it</h2>
+          <p>Everything you had open becomes a single layer on your disk. Then the assistant you already use reads that layer, over MCP, and answers out of what actually happened. The question, the reading and the answer all sit on the same side of the line.</p>
+          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
+        </div>
+
+        <div class="mstage" id="stage-d">
+          <div class="arch">
+            <div class="lyr">
+              <div class="step fade"><b>01</b>Computer activity is captured</div>
+              <div class="cap fade">
+                <div class="w"><u><i></i>Chrome</u><s style="width:72%"></s><s style="width:48%"></s></div>
+                <div class="w"><u><i></i>Meet</u><s style="width:58%"></s><s style="width:74%"></s></div>
+                <div class="w"><u><i></i>Terminal</u><s style="width:80%"></s><s style="width:40%"></s></div>
+                <div class="w"><u><i></i>Sheets</u><s style="width:52%"></s><s style="width:66%"></s></div>
+              </div>
+
+              <div class="fall fade">
+                <svg viewBox="0 0 170 26" aria-hidden="true">
+                  <path d="M22 0v16m0 0l-4-4m4 4l4-4"/><path d="M64 0v16m0 0l-4-4m4 4l4-4"/>
+                  <path d="M106 0v16m0 0l-4-4m4 4l4-4"/><path d="M148 0v16m0 0l-4-4m4 4l4-4"/>
+                </svg>
+                <span>Every monitor, read while you work.</span>
+              </div>
+
+              <div class="step fade"><b>02</b>Context is packaged in one local database</div>
+              <div class="slab fade">
+                <div class="h"><b>Peripheral context layer</b><em class="mono">~/.litepipe/db.sqlite</em></div>
+                <div class="g">
+                  <i style="background:#85A2D4"></i><i></i><i style="background:#CFB183"></i><i></i><i></i>
+                  <i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i><i></i>
+                  <i style="background:#CFB183"></i><i></i><i style="background:#85A2D4"></i><i></i>
+                  <i style="background:#98B69F"></i><i></i><i></i><i style="background:#CFB183"></i>
+                </div>
+                <div class="k">
+                  <span><i style="background:#85A2D4"></i>Seen</span>
+                  <span><i style="background:#CFB183"></i>Said</span>
+                  <span><i style="background:#98B69F"></i>Heard</span>
+                </div>
+              </div>
+
+              <div class="plug fade">
+                <svg viewBox="0 0 170 24" aria-hidden="true"><path d="M85 0v14m0 0l-4-4m4 4l4-4"/></svg>
+                <span class="t"><b>MCP</b><br>You point your AI at the layer once. After that it can look things up in there, the same way it opens a file.</span>
+              </div>
+
+              <div class="step fade"><b>03</b>Your agents understand your work</div>
+              <div class="jpanel">
+                <div class="jcard jmain fade">
+                  <div class="t"><i></i>litepipe</div>
+                  <div class="s">Reading the archive on this Mac</div>
+                  <div class="l"><span style="width:92%"></span><span style="width:78%"></span><span style="width:85%"></span><span style="width:44%"></span></div>
+                  <div class="box"></div>
+                </div>
+
+                <div class="jcard jask fade"><b>What did we decide about the pricing?</b></div>
+
+                <div class="jcard jans fade">
+                  <p class="lead">Six hours went to the deploy, and it failed twice before it went out.</p>
+                  <p class="ln">Quarterly review at eleven. Ana took the onboarding copy.</p>
+                  <p class="ln">You told Marco the invoice would go out that afternoon.</p>
+                  <p class="ln">It never went.</p>
+                  <p class="ln off"></p>
+                  <p class="ln off"></p>
+                  <div class="f"><em>Nothing left this Mac</em></div>
+                </div>
+              </div>
+            </div>
+            <div class="bound"><span>this Mac</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="arch-e">
+  <div class="in">
+    <section>
+      <p class="eyebrow">Option E &middot; the same path, lying down</p>
+      <h2>One layer underneath, and the answer never leaves it</h2>
+      <p class="say">Everything you had open becomes a single layer on your disk. The assistant you already use reads that layer over MCP, and answers out of what actually happened. Read it left to right: the question, the reading and the answer all sit on the same side of the line.</p>
+      <p class="archnote" style="margin-top:14px"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
+
+      <div id="stage-e" style="margin-top:44px">
+        <div class="arch">
+          <div class="lyr">
+            <div class="col c1">
+              <div class="step fade"><b>01</b>Computer activity is captured</div>
+              <div class="cap fade">
+                <div class="w"><u><i></i>Chrome</u><s style="width:72%"></s><s style="width:48%"></s></div>
+                <div class="w"><u><i></i>Meet</u><s style="width:58%"></s><s style="width:74%"></s></div>
+                <div class="w"><u><i></i>Terminal</u><s style="width:80%"></s><s style="width:40%"></s></div>
+                <div class="w"><u><i></i>Sheets</u><s style="width:52%"></s><s style="width:66%"></s></div>
+              </div>
+            </div>
+
+            <div class="arw fade">
+              <svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6h92m0 0l-5-4m5 4l-5 4"/></svg>
+              <p>Every monitor, read while you work</p>
+            </div>
+
+            <div class="col c2">
+              <div class="step fade"><b>02</b>Context is packaged in one local database</div>
+              <div class="slab fade">
+                <div class="h"><b>Peripheral context layer</b></div>
+                <p class="mono" style="margin-top:4px; font-size:9.5px; color:var(--faint)">~/.litepipe/db.sqlite</p>
+                <div class="g">
+                  <i style="background:#85A2D4"></i><i></i><i style="background:#CFB183"></i><i></i><i></i><i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i>
+                  <i style="background:#CFB183"></i><i></i><i style="background:#85A2D4"></i><i></i><i style="background:#98B69F"></i><i></i><i></i><i style="background:#CFB183"></i><i></i>
+                  <i></i><i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i><i></i><i style="background:#CFB183"></i><i></i><i style="background:#98B69F"></i>
+                </div>
+                <div class="k">
+                  <span><i style="background:#85A2D4"></i>Seen</span>
+                  <span><i style="background:#CFB183"></i>Said</span>
+                  <span><i style="background:#98B69F"></i>Heard</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="arw mcp fade">
+              <svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6h92m0 0l-5-4m5 4l-5 4"/></svg>
+              <p><b>MCP</b>Point your AI at it once, and it can look things up in there</p>
+            </div>
+
+            <div class="col c3">
+              <div class="step fade"><b>03</b>Your agents understand your work</div>
+              <div class="ask1 fade">What did we decide about the pricing?</div>
+              <div class="ans1 fade">
+                <p class="lead">Six hours went to the deploy, and it failed twice before it went out.</p>
+                <p class="ln">Quarterly review at eleven. Ana took the onboarding copy.</p>
+                <p class="ln">You told Marco the invoice would go out that afternoon.</p>
+                <p class="ln">It never went.</p>
+                <p class="ln off"></p>
+                <p class="ln off"></p>
+                <div class="seal"><em>Nothing left this Mac</em></div>
+              </div>
+            </div>
+          </div>
+          <div class="bound"><span>this Mac</span><em>Nothing crosses this line</em></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="arch-b">
+  <div class="in">
+    <section>
+      <div class="meet">
+        <div class="mtext">
+          <p class="eyebrow">Option B &middot; the socket</p>
+          <h2>Not a feature. A socket your AI plugs into</h2>
+          <p>The archive is not a product you use, it is an interface you connect to. One local address, the open MCP standard, and whichever assistant you already pay for on the other end, calling the same tools.</p>
+          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
+        </div>
+        <div class="mstage" id="stage-b">
+          <div class="arch">
+            <div class="sock">
+              <div class="jsrc" style="width:100%%">
+                <div class="c fade"><div class="h"><i style="background:#85A2D4"></i>Seen</div><div class="l"><span style="width:86%%"></span><span style="width:64%%"></span></div></div>
+                <div class="c fade"><div class="h"><i style="background:#CFB183"></i>Said</div><div class="l"><span style="width:70%%"></span><span style="width:88%%"></span></div></div>
+                <div class="c fade"><div class="h"><i style="background:#98B69F"></i>Heard</div><div class="l"><span style="width:80%%"></span><span style="width:58%%"></span></div></div>
+              </div>
+
+              <svg class="jwire" viewBox="0 0 543 62" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M92 0v18a8 8 0 0 0 8 8h163a8 8 0 0 1 8 8v28"/>
+                <path d="M271 0v62"/>
+                <path d="M451 0v18a8 8 0 0 1-8 8H280a8 8 0 0 0-8 8v28"/>
+              </svg>
+
+              <div class="port fade"><b class="mono">MCP</b><em class="mono">127.0.0.1:3030</em></div>
+
+              <svg class="legs" viewBox="0 0 543 34" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M271 0v10a7 7 0 0 1-7 7H99a7 7 0 0 0-7 7v10"/>
+                <path d="M271 0v34"/>
+                <path d="M271 0v10a7 7 0 0 0 7 7h165a7 7 0 0 1 7 7v10"/>
+              </svg>
+
+              <div class="cli">
+                <div class="c fade"><b>Claude Code</b><em class="mono">search-content</em></div>
+                <div class="c fade"><b>A chat client</b><em class="mono">frame-context</em></div>
+                <div class="c fade"><b>Your own script</b><em class="mono">get-meeting</em></div>
+              </div>
+            </div>
+          </div>
+</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="band" id="arch-c">
+  <div class="in">
+    <section>
+      <div class="meet">
+        <div class="mtext">
+          <p class="eyebrow">Option C &middot; the loop</p>
+          <h2>It watches, you ask, your agent acts, it watches that too</h2>
+          <p>The work becomes context, the context answers a question, the answer becomes an action, and the action happens on the screen it is already watching. The circle closes, and every step you would call private happens on your own machine.</p>
+          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
+        </div>
+        <div class="mstage" id="stage-c">
+          <div class="arch loop" id="loopc">
+            <svg viewBox="0 0 400 400" aria-hidden="true">
+              <defs><marker id="lp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9BA3AA"/></marker></defs>
+              <path class="ring" d="M200 60 A140 140 0 1 1 186 60.7" marker-end="url(#lp)"/>
+            </svg>
+            <div class="n fade" style="left:226px; top:92px"><u>01</u><b>You work</b><span>Seen, said and heard</span></div>
+            <div class="n fade" style="left:369px; top:196px"><u>02</u><b>The layer</b><span>One file, on this Mac</span></div>
+            <div class="n fade theirs" style="left:314px; top:364px"><u>your agent</u><b>It asks</b><span>Over MCP, reading only</span></div>
+            <div class="n fade theirs" style="left:137px; top:364px"><u>your agent</u><b>It acts</b><span>In its own tools, not ours</span></div>
+            <div class="n fade" style="left:82px; top:196px"><u>05</u><b>On your screen</b><span>So it is captured too</span></div>
+          </div>
+</div>
       </div>
     </section>
   </div>
@@ -1715,8 +2172,6 @@
 
     later(function () { show(2); ask.classList.add("on"); }, 8600);
     secs.forEach(function (s, n) { later(function () { s.classList.add("done"); }, 9400 + n * 800); });
-
-    later(run, 15000);
   }
 
   /* with motion turned off the card simply arrives finished */
@@ -1728,12 +2183,12 @@
   }
 
   if (!("IntersectionObserver" in window)) { run(); return; }
-  new IntersectionObserver(function (es) {
+  var io = new IntersectionObserver(function (es) {
     es.forEach(function (e) {
-      if (e.isIntersecting && !running) { running = true; run(); }
-      else if (!e.isIntersecting && running) { running = false; clear(); }
+      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
     });
-  }, { threshold: 0.25 }).observe(st);
+  }, { threshold: 0.25 });
+  io.observe(st);
 })();
 
 /* the repeated chore: the steps land first, then which of them an agent could
@@ -1758,7 +2213,6 @@
     steps.forEach(function (s, n) { later(function () { s.classList.add("on"); }, 500 + n * 600); });
     later(function () { st.classList.add("tagged"); }, 4000);
     later(function () { sum.classList.add("on"); }, 5200);
-    later(run, 11000);
   }
 
   if (reduced) {
@@ -1768,12 +2222,12 @@
   }
 
   if (!("IntersectionObserver" in window)) { run(); return; }
-  new IntersectionObserver(function (es) {
+  var io = new IntersectionObserver(function (es) {
     es.forEach(function (e) {
-      if (e.isIntersecting && !running) { running = true; run(); }
-      else if (!e.isIntersecting && running) { running = false; clear(); }
+      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
     });
-  }, { threshold: 0.25 }).observe(st);
+  }, { threshold: 0.25 });
+  io.observe(st);
 })();
 
 /* o contexto entra por cima, desce pelo fio, e volta como resposta */
@@ -1801,7 +2255,6 @@
     later(function () { main.classList.add("on"); }, 2400);
     later(function () { ask.classList.add("on"); }, 3100);
     later(function () { ans.classList.add("on"); }, 3900);
-    later(run, 11000);
   }
 
   if (reduced) {
@@ -1809,13 +2262,147 @@
     return;
   }
   if (!("IntersectionObserver" in window)) { run(); return; }
-  new IntersectionObserver(function (es) {
+  var io = new IntersectionObserver(function (es) {
     es.forEach(function (e) {
-      if (e.isIntersecting && !running) { running = true; run(); }
-      else if (!e.isIntersecting && running) { running = false; clear(); }
+      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
     });
-  }, { threshold: 0.25 }).observe(st);
+  }, { threshold: 0.25 });
+  io.observe(st);
+})();
+
+/* as tres leituras da arquitetura, uma sequencia por palco */
+["a", "b", "c", "d", "e"].forEach(function (k) {
+  var st = document.getElementById("stage-" + k);
+  if (!st) return;
+  var steps = [].slice.call(st.querySelectorAll(".fade")),
+      bound = st.querySelector(".bound"),
+      wires = [].slice.call(st.querySelectorAll(".jwire, .legs")),
+      loop = st.querySelector(".loop");
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var t = [], running = false;
+  function later(fn, ms) { t.push(setTimeout(fn, ms)); }
+  function clear() { t.forEach(clearTimeout); t = []; }
+
+  function done() {
+    steps.concat(wires).forEach(function (e) { e.classList.add("on"); });
+    if (bound) bound.classList.add("on");
+    if (loop) loop.classList.add("on");
+  }
+
+  function run() {
+    clear();
+    steps.concat(wires).forEach(function (e) { e.classList.remove("on"); });
+    if (bound) bound.classList.remove("on");
+    if (loop) loop.classList.remove("on");
+
+    /* no laco a linha se desenha primeiro, e os nos pousam sobre ela */
+    var head = loop ? 900 : 300;
+    if (loop) later(function () { loop.classList.add("on"); }, 300);
+    steps.forEach(function (e, n) { later(function () { e.classList.add("on"); }, head + n * 420); });
+    wires.forEach(function (e, n) { later(function () { e.classList.add("on"); }, head + 700 + n * 900); });
+    if (bound) later(function () { bound.classList.add("on"); }, head + steps.length * 420 + 300);
+  }
+
+  if (reduced) { done(); return; }
+  if (!("IntersectionObserver" in window)) { run(); return; }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
+    });
+  }, { threshold: 0.25 });
+  io.observe(st);
+});
+/* o passo 03 nao para: a pergunta e digitada, a resposta chega escrevendo,
+   e depois de um tempo o proximo caso comeca */
+(function () {
+  var CASES = [
+    { q: "What did I do yesterday?",
+      lead: "Six hours went to the deploy, and it failed twice before it went out.",
+      lines: ["Quarterly review at eleven. Ana took the onboarding copy.",
+              "You told Marco the invoice would go out that afternoon.",
+              "It never went."] },
+
+    { q: "What are my top five open loops right now?",
+      lead: "All five, oldest first.",
+      lines: ["Marco\u2019s invoice, asked for five days ago.",
+              "The advisory letter, still missing a name.",
+              "The pricing redirect, half written.",
+              "The reply to Prerna about the paperwork.",
+              "The design review blocking the permissions copy."] },
+
+    { q: "Find one repeated, costly workflow that could become a useful low-risk automation",
+      lead: "The weekly client report. Eleven runs in three weeks, about forty minutes each.",
+      lines: ["Always the same shape: open the dashboard, copy four numbers, rewrite last week\u2019s paragraph, send.",
+              "Only the last paragraph needs your judgement.",
+              "Low risk, because you read the draft before it goes."] },
+
+    { q: "Generate a small batch of LinkedIn post drafts based on my recent activity",
+      lead: "Three drafts, built out of your own sentences.",
+      lines: ["The permission flow that cost an hour, and why the fix was one action per line.",
+              "What shipping a notarised Mac app on your own teaches you.",
+              "The pricing conversation, written as the lesson rather than the deal."] }
+  ];
+
+  [{ id: "stage-d", q: ".jask b" }, { id: "stage-e", q: ".ask1" }].forEach(function (cfg) {
+    var st = document.getElementById(cfg.id);
+    if (!st) return;
+    var qEl = st.querySelector(cfg.q),
+        lead = st.querySelector(".lead"),
+        lns = [].slice.call(st.querySelectorAll(".ln"));
+    if (!qEl || !lead) return;
+
+    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var timers = [], i = 0, started = false;
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    function stop() { timers.forEach(function (t) { clearTimeout(t); clearInterval(t); }); timers = []; }
+
+    /* escreve caractere a caractere, e avisa quando termina */
+    function type(el, text, speed, done) {
+      el.textContent = "";
+      var n = 0;
+      var id = setInterval(function () {
+        n += 1;
+        el.textContent = text.slice(0, n);
+        if (n >= text.length) { clearInterval(id); if (done) done(); }
+      }, speed);
+      timers.push(id);
+    }
+
+    function show(c) {
+      stop();
+      lns.forEach(function (el) { el.classList.add("off"); el.textContent = ""; });
+      lead.textContent = "";
+
+      type(qEl, c.q, 20, function () {
+        later(function () {
+          type(lead, c.lead, 9, function () {
+            var k = 0;
+            (function nextLine() {
+              if (k >= c.lines.length) { later(cycle, 5200); return; }
+              var el = lns[k];
+              if (!el) { later(cycle, 5200); return; }
+              el.classList.remove("off");
+              type(el, c.lines[k], 9, function () { k += 1; later(nextLine, 160); });
+            })();
+          });
+        }, 520);
+      });
+    }
+
+    function cycle() { i = (i + 1) % CASES.length; show(CASES[i]); }
+
+    if (reduced) return;
+
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting && !started) {
+          started = true;
+          later(function () { show(CASES[0]); }, 6600);
+          io.unobserve(st);
+        }
+      });
+    }, { threshold: 0.25 });
+    io.observe(st);
+  });
 })();
 </script>
-</body>
-</html>
