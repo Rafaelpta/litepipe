@@ -425,76 +425,11 @@
   .mtext h2 { font-size: 40px; line-height: 1.1; letter-spacing: -2.1px; max-width: none; }
   @media (min-width: 1000px) { .mtext h2 { font-size: 52px; letter-spacing: -2.7px; } }
   .mtext p { font-size: 20px; line-height: 30px; color: var(--ink-2); text-wrap: pretty; }
-
-  .mcard { height: 100%; display: flex; flex-direction: column; overflow: hidden;
-           padding: 20px 20px 0; background: var(--white); border: 1px solid var(--rule);
-           border-radius: 12px; box-shadow: 0 6px 20px rgba(11,16,21,.05); }
-  .mcard h4 { font-family: "Newsreader", Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.15; }
-  .mhead { display: flex; align-items: center; gap: 14px; margin-top: 15px; }
-  .mtabs { display: flex; gap: 2px; padding: 3px; background: var(--ground); border-radius: 9px; }
-  .mtabs span { font-size: 12px; padding: 5px 10px; border-radius: 7px; color: var(--muted);
-                white-space: nowrap; transition: background .3s, color .3s; }
-  .mtabs span.on { background: var(--white); color: var(--ink); box-shadow: 0 1px 2px rgba(11,16,21,.10); }
-  .mfaces { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); margin-left: auto; }
-  .mfaces b { display: flex; }
-  .mfaces i { width: 21px; height: 21px; border-radius: 50%; margin-left: -7px; border: 1.5px solid var(--white); }
-  .mfaces i:first-child { margin-left: 0; }
-
-  .mpanel { display: none; margin-top: 16px; }
-  .mpanel.on { display: block; }
-
-  .tline { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 9px 0;
-           font-size: 13.5px; line-height: 1.5; opacity: 0; filter: blur(7px); transform: translateY(5px);
-           transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
-  .tline.on { opacity: 1; filter: blur(0); transform: none; }
-  .tline .at { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--faint); padding-top: 3px; }
-  .tline b { font-weight: 500; }
-
-  .mrec { position: absolute; left: 50%; bottom: 30px; transform: translate(-50%, 22px); opacity: 0;
-          display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 14px;
-          background: var(--white); border: 1px solid var(--rule); border-radius: 100px;
-          box-shadow: 0 10px 28px rgba(11,16,21,.14); font-size: 13px;
-          transition: opacity .45s ease, transform .45s ease; }
-  .mrec.on { opacity: 1; transform: translate(-50%, 0); }
-  .mrec .lv { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
-  .mrec .lv i { width: 3px; height: 4px; border-radius: 2px; background: var(--accent); }
-  .mstage.live .mrec .lv i { animation: lv 1.1s ease-in-out infinite; }
-  .mrec .lv i:nth-child(2) { animation-delay: .18s; }
-  .mrec .lv i:nth-child(3) { animation-delay: .36s; }
-  .mrec .lv i:nth-child(4) { animation-delay: .54s; }
   @keyframes lv { 0%, 100% { height: 4px; } 50% { height: 14px; } }
-  .mrec .st { display: flex; align-items: center; gap: 7px; padding: 5px 13px;
-              background: var(--ground); border-radius: 100px; color: var(--ink); }
-  .mrec .st i { width: 8px; height: 8px; border-radius: 2px; background: var(--ink); }
-
-  .srow { display: flex; align-items: center; gap: 11px; padding: 12px 0; font-size: 13.5px;
-          border-top: 1px solid var(--rule); opacity: 0; transform: translateY(7px);
-          transition: opacity .45s ease, transform .45s ease; }
-  .srow.on { opacity: 1; transform: none; }
-  .srow .av { width: 22px; height: 22px; border-radius: 50%; flex: none; }
-  .srow .n { font-weight: 500; }
-  .srow .s { color: var(--muted); }
-  .srow .c { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--faint); }
-
-  .mask { display: inline-block; padding: 7px 13px; border-radius: 100px; background: var(--ground);
-          font-size: 13px; opacity: 0; transform: translateY(6px);
-          transition: opacity .4s ease, transform .4s ease; }
-  .mask.on { opacity: 1; transform: none; }
-  .wsec { margin-top: 15px; }
-  .wsec .lab { font-family: "JetBrains Mono", monospace; font-size: 9.5px; text-transform: uppercase;
-               letter-spacing: 0.13em; color: var(--muted); }
-  .wbars { margin-top: 8px; }
-  .wbars i { display: block; height: 9px; border-radius: 5px; background: rgba(11,16,21,.09); margin-top: 6px; }
-  .wtxt { margin-top: 7px; font-size: 13.5px; line-height: 1.5; opacity: 0;
-          filter: blur(7px); transition: opacity .5s ease, filter .5s ease; height: 0; overflow: hidden; }
-  .wsec.done .wbars { display: none; }
-  .wsec.done .wtxt { opacity: 1; filter: blur(0); height: auto; }
 
 
   /* ---------- tres leituras da arquitetura, para escolher uma ---------- */
   .arch { position: relative; height: 100%; }
-  .archnote { margin-top: 4px; font-size: 13px; line-height: 1.55; color: var(--faint); max-width: 30rem; }
-  .archnote b { font-weight: 500; color: var(--muted); }
   .fade { opacity: 0; transform: translateY(9px);
           transition: opacity .55s ease, transform .55s ease; }
   .fade.on { opacity: 1; transform: none; }
@@ -558,123 +493,21 @@
   .arch .bound em { position: absolute; bottom: -9px; right: 22px; padding: 0 8px;
                     background: var(--paper); font-style: normal; font-size: 11px; color: var(--faint); }
 
-  /* D, a camada de A com o caso de uso de cima */
-  #stage-d { height: 812px; }
-  #stage-d .jpanel { height: 384px; margin: 0; }
-  #stage-d .jmain { left: 10px; top: 62px; width: 300px; }
-  #stage-d .jask { left: -8px; bottom: 40px; width: 236px; }
-  #stage-d .jans { right: -8px; top: 24px; width: 262px; }
-  .lyr .cli1 { display: flex; align-items: center; gap: 8px; padding: 8px 11px;
-               border-radius: 8px; background: var(--white); border: 1px solid var(--rule);
-               font-size: 12px; }
-  .lyr .cli1 i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
-  .lyr .cli1 em { font-style: normal; margin-left: auto; font-family: "JetBrains Mono", monospace;
-                  font-size: 9.5px; letter-spacing: .1em; color: var(--faint); }
-  .lyr .ask1 { margin-top: 9px; align-self: flex-end; max-width: 84%; padding: 9px 13px;
-               border-radius: 100px 100px 4px 100px; background: var(--ground); font-size: 12.5px; }
-  .lyr .ans1 { margin-top: 9px; padding: 13px 15px 14px; border-radius: 10px;
-               background: var(--white); border: 1px solid var(--rule);
-               box-shadow: 0 6px 20px rgba(11,16,21,.06); }
-  .lyr .ans1 > b { font-size: 12.5px; font-weight: 500; }
-  .lyr .ans1 .r { display: grid; grid-template-columns: 9px 1fr; gap: 9px; padding: 9px 0;
-                  border-top: 1px solid var(--rule-soft, rgba(11,16,21,.07)); font-size: 11.5px;
-                  line-height: 1.45; }
-  .lyr .ans1 .r:first-of-type { margin-top: 9px; }
-  .lyr .ans1 .r i { width: 9px; height: 9px; border-radius: 2px; margin-top: 4px; }
-  .lyr .ans1 .r b { font-weight: 500; }
-  .lyr .ans1 .r span { color: var(--muted); }
-  .lyr .ans1 .seal { margin-top: 11px; display: flex; justify-content: flex-end; }
-  .lyr .ans1 .seal em { font-style: normal; font-size: 11px; padding: 5px 11px; border-radius: 7px;
-                        background: var(--accent-wash); color: var(--accent); }
-
-  /* E, a mesma D deitada: o percurso da esquerda para a direita */
-  #stage-e { position: relative; width: 100%; height: 448px; padding: 26px 24px 22px;
-             background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; }
-  /* aqui a borda abraca a caixa toda, e o conteudo respira por dentro dela */
-  #stage-e .bound { inset: 0; }
-  #stage-e .lyr { flex-direction: row; align-items: flex-start; padding: 20px 18px 18px; gap: 0; }
-  #stage-e .col { display: flex; flex-direction: column; }
-  #stage-e .col.c1 { flex: 0 0 232px; }
-  #stage-e .col.c2 { flex: 0 0 296px; }
-  #stage-e .col.c3 { flex: 0 0 322px; }
-  #stage-e .col .step { margin-bottom: 11px; }
-  #stage-e .cap { flex-direction: column; gap: 7px; }
-  #stage-e .cap .w { flex: 0 0 auto; }
-  #stage-e .slab { margin-top: 0; }
-  #stage-e .slab .g { grid-template-columns: repeat(9, 1fr); grid-auto-rows: 13px; }
-  #stage-e .ask1 { margin-top: 0; align-self: stretch; max-width: none;
-                   border-radius: 10px; border: 1.4px solid var(--accent); background: var(--white); }
-  #stage-e .ans1 { margin-top: 9px; }
-  #stage-e .ans1 .r { font-size: 11px; }
-  .jask, .jans, .ask1, .ans1 { transition: opacity .6s ease; }
-  .dim { opacity: .12 !important; }
-  .lead { font-size: 13px; font-weight: 500; line-height: 1.5; }
-  .ln { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--muted); }
-  .ln.off { display: none; }
-
-  .arw { flex: 1; display: flex; flex-direction: column; align-items: center;
-         justify-content: center; gap: 8px; padding: 0 10px; }
-  .arw svg { width: 100%; height: 12px; }
-  .arw svg path { fill: none; stroke: var(--rule-2); stroke-width: 1.2; }
-  .arw.mcp svg path { stroke: var(--accent); opacity: .6; }
-  .arw p { font-size: 10.5px; line-height: 1.4; color: var(--muted); text-align: center; margin: 0; }
-  .arw p b { display: block; font-family: "JetBrains Mono", monospace; font-size: 10px;
-             letter-spacing: .1em; color: var(--accent); font-weight: 400; margin-bottom: 3px; }
-
-  /* B, o soquete */
-  .sock { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 24px 20px; height: 100%; }
-  .sock .port { width: 260px; padding: 13px 16px 14px; border-radius: 10px; text-align: center;
-                background: var(--ink); color: var(--ground); box-shadow: 0 8px 24px rgba(11,16,21,.16); }
-  .sock .port b { display: block; font-size: 13px; font-weight: 500; letter-spacing: .04em; }
-  .sock .port em { display: block; margin-top: 3px; font-style: normal; font-size: 10.5px;
-                   color: var(--accent-soft); }
-  .sock .legs { width: 100%; height: 34px; }
-  .sock .legs path { fill: none; stroke: var(--rule-2); stroke-width: 1.2; }
-  .sock .cli { display: flex; gap: 9px; width: 100%; }
-  .sock .cli .c { flex: 1; padding: 11px 11px 12px; border-radius: 9px; background: var(--white);
-                  border: 1px solid var(--rule); }
-  .sock .cli .c b { display: block; font-size: 12px; font-weight: 500; }
-  .sock .cli .c em { display: block; margin-top: 7px; font-style: normal; font-size: 10px;
-                     color: var(--accent); background: var(--accent-wash);
-                     padding: 3px 6px; border-radius: 4px; }
-
-  /* C, o laco */
-  .loop { position: relative; height: 100%; display: grid; place-items: center; }
-  .loop svg { width: 430px; height: 430px; }
-  .loop svg .ring { fill: none; stroke: var(--rule-2); stroke-width: 1.4;
-                    stroke-dasharray: 880; stroke-dashoffset: 880;
-                    transition: stroke-dashoffset 1.6s ease; }
-  .loop.on svg .ring { stroke-dashoffset: 0; }
-  .loop .n { position: absolute; width: 132px; padding: 9px 11px; border-radius: 9px;
-             background: var(--white); border: 1px solid var(--rule); font-size: 11.5px;
-             line-height: 1.4; box-shadow: 0 4px 14px rgba(11,16,21,.07); }
-  .loop .n b { display: block; font-weight: 500; font-size: 12px; }
-  .loop .n span { color: var(--muted); }
-  .loop .n.theirs { border-style: dashed; background: var(--paper); }
-  .loop .n u { display: inline-block; margin-bottom: 4px; text-decoration: none;
-               font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: .1em;
-               text-transform: uppercase; color: var(--faint); }
-  .loop .n.theirs u { color: var(--accent); }
+  /* as linhas que descem dos cartoes da dobra de cima e se juntam no diagrama */
+  #connected { overflow-x: clip; overflow-y: visible; border-top: none; }
+  #connected .meet { position: relative; }
+  .converge { position: absolute; left: 50%; bottom: calc(100% - 90px);
+              transform: translateX(-50%); pointer-events: none; z-index: -1; }
+  .converge path { fill: none; stroke: rgba(11,16,21,.13); stroke-width: 1;
+                   stroke-dasharray: 1200; stroke-dashoffset: 1200;
+                   transition: stroke-dashoffset 2.2s ease; }
+  .converge.on path { stroke-dashoffset: 0; }
+  .converge path.lit { stroke: var(--accent); opacity: .55; }
+  @media (max-width: 999px) { .converge { display: none; } }
 
   /* o contexto entrando por cima, descendo por um fio so, e virando resposta:
      tres fontes, o arquivo, e o agente lendo dele */
-  #connected .mstage { aspect-ratio: auto; height: 660px; padding: 22px 20px; }
-  .jsrc { display: flex; gap: 13px; justify-content: center; }
-  .jsrc .c { width: 158px; padding: 11px 12px 13px; border-radius: 9px; background: var(--white);
-             border: 1px solid var(--rule); box-shadow: 0 3px 12px rgba(11,16,21,.05);
-             opacity: 0; transform: translateY(-8px);
-             transition: opacity .5s ease, transform .5s ease; }
-  .jsrc .c.on { opacity: 1; transform: none; }
-  .jsrc .c .h { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
-  .jsrc .c .h i { width: 16px; height: 16px; border-radius: 5px; flex: none; }
-  .jsrc .c .l { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
-  .jsrc .c .l span { height: 6px; border-radius: 3px; background: rgba(11,16,21,.08); }
-
-  .jwire { display: block; width: 100%; height: 62px; }
-  .jwire path { fill: none; stroke: var(--accent); stroke-width: 1.2; opacity: .5;
-                stroke-dasharray: 200; stroke-dashoffset: 200;
-                transition: stroke-dashoffset 1s ease; }
-  .jwire.on path { stroke-dashoffset: 0; }
+  #connected .mstage { aspect-ratio: auto; height: 812px; padding: 26px; }
 
   .jpanel { position: relative; margin: 0 6px; height: 434px; border-radius: 14px;
             background: linear-gradient(150deg, var(--accent-wash) 0%, var(--paper) 42%, var(--paper) 72%, var(--accent-wash) 100%);
@@ -703,6 +536,9 @@
 
   .jans { right: -6px; top: 34px; width: 268px; padding: 15px 16px 16px; }
   .jans .h { font-size: 13px; font-weight: 500; }
+  .lead { font-size: 13px; font-weight: 500; line-height: 1.5; }
+  .ln { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+  .ln.off { display: none; }
   .jans .it { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 11px 0;
               border-top: 1px solid var(--rule-soft, rgba(11,16,21,.07)); }
   .jans .it:first-of-type { margin-top: 10px; }
@@ -717,36 +553,75 @@
   .quote p { font-size: 17px; line-height: 1.55; color: var(--ink-2); }
   .quote .who { margin: 20px 0 0 -50px; display: flex; align-items: center; gap: 13px; }
   .quote .who i { width: 48px; height: 48px; border-radius: 7px; flex: none;
-                  background: repeating-linear-gradient(45deg, rgba(11,16,21,.10) 0 5px, transparent 5px 10px);
-                  border: 1px dashed var(--rule-2); }
+                  display: grid; place-items: center; font-style: normal;
+                  font-size: 15px; font-weight: 500; letter-spacing: .5px;
+                  background: #DCE3EC; color: #5B6B7F; }
   .quote .who .nm { font-size: 14px; line-height: 1.45; }
   .quote .who .nm b { display: block; font-weight: 400; color: var(--ink); }
   .quote .who .nm span { color: var(--muted); }
 
-  /* the workflow the archive noticed you repeating */
-  .wfmeta { margin-top: 6px; font-family: "JetBrains Mono", monospace; font-size: 10px;
-            text-transform: uppercase; letter-spacing: 0.13em; color: var(--muted); }
-  .wsteps { margin-top: 18px; }
-  .wstep { display: grid; grid-template-columns: 18px 1fr auto; gap: 12px; align-items: center;
-           padding: 12px 0; border-top: 1px solid var(--rule); font-size: 13.5px; line-height: 1.45;
-           opacity: 0; filter: blur(7px); transform: translateY(5px);
-           transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
-  .wstep.on { opacity: 1; filter: blur(0); transform: none; }
-  .wstep .no { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--faint); }
-  .wstep .tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
-                padding: 4px 9px; border-radius: 100px; white-space: nowrap;
-                background: var(--ground); color: var(--muted);
-                opacity: 0; transform: scale(.92);
-                transition: opacity .4s ease, transform .4s ease; }
-  .wstep .tag.bot { background: var(--accent-wash); color: var(--accent); }
-  .mstage.tagged .wstep .tag { opacity: 1; transform: none; }
-  .wsum { margin-top: 20px; padding: 13px 15px; border-radius: 10px;
-          background: var(--paper); border: 1px solid var(--rule);
-          font-size: 13px; line-height: 1.5; color: var(--ink-2);
-          opacity: 0; transform: translateY(8px);
-          transition: opacity .5s ease, transform .5s ease; }
-  .wsum.on { opacity: 1; transform: none; }
-  .wsum b { font-weight: 500; color: var(--ink); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .badges span { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px;
+                 border-radius: 100px; background: var(--accent-wash); color: var(--accent);
+                 font-family: "JetBrains Mono", monospace; font-size: 10px;
+                 letter-spacing: .12em; text-transform: uppercase; }
+  .badges span i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* a tabela no formato da referencia: marca no cabecalho, e a nossa coluna
+     destacada por um bloco que atravessa a altura toda */
+  #compare table { border-collapse: separate; border-spacing: 0; }
+  #compare thead th { padding: 22px 20px 18px; font-family: "Space Grotesk", sans-serif;
+                      font-size: 17px; font-weight: 500; letter-spacing: -0.3px;
+                      text-transform: none; color: var(--ground); }
+  #compare thead th .m { display: flex; align-items: center; gap: 9px; }
+  #compare thead th .m svg { flex: none; width: 20px; height: 20px; }
+  #compare thead th.us { background: rgba(111,217,188,.10); border-radius: 12px 12px 0 0; color: #fff; }
+  #compare tbody th { font-weight: 400; color: var(--ground); font-size: 15px; padding: 18px 20px 18px 0; }
+  #compare tbody td { font-size: 15px; line-height: 1.55; color: #98A2AA; padding: 18px 20px;
+                      border-top: 1px solid rgba(255,255,255,.10); }
+  #compare tbody th { border-top: 1px solid rgba(255,255,255,.10); }
+  #compare tbody td.us { background: rgba(111,217,188,.10); color: #E7ECEF; }
+  #compare tbody tr:last-child td.us { border-radius: 0 0 12px 12px; }
+  #compare .srcnote { margin-top: 26px; max-width: none; white-space: nowrap; overflow-x: auto; }
+
+  /* o fecho da pagina: o mesmo tratamento do hero, sem moldura */
+  .last { padding: 104px 0 118px; text-align: center; }
+  .last h2 { max-width: 20ch; margin: 0 auto 26px; font-size: 40px; line-height: 1.06;
+             letter-spacing: -2px; }
+  @media (min-width: 700px) { .last h2 { font-size: 54px; letter-spacing: -2.8px; } }
+  .last .sub { margin-bottom: 32px; }
+
+  /* o arco de provedores: oito lugares fixos, as marcas girando entre eles.
+     Canvas de 583 por 604, a mesma proporcao da referencia. */
+  #stage-arc { position: relative; width: 583px; max-width: 100%; aspect-ratio: 583 / 604;
+               overflow: hidden; }
+  .canvas { position: absolute; top: 0; left: 0; width: 583px; height: 604px; transform-origin: 0 0; }
+  .chip { position: absolute; display: flex; align-items: center; justify-content: center;
+          background: var(--white); border: 1px solid var(--rule); border-radius: 50%;
+          color: var(--ink);
+          animation: drift var(--dd, 9s) ease-in-out var(--dl, 0s) infinite alternate;
+          transition: left .45s cubic-bezier(.645,.045,.355,1), top .45s cubic-bezier(.645,.045,.355,1),
+                      width .45s cubic-bezier(.645,.045,.355,1), height .45s cubic-bezier(.645,.045,.355,1),
+                      transform .35s ease, box-shadow .35s ease, border-color .35s ease, opacity .35s ease; }
+  .chip svg { display: block; flex: none;
+              transition: width .45s cubic-bezier(.645,.045,.355,1), height .45s cubic-bezier(.645,.045,.355,1); }
+  .chip.big { box-shadow: 0 15px 15px -7.5px rgba(11,16,21,.05), 0 4px 6px -2px rgba(11,16,21,.06); }
+  .chip.lit { transform: scale(1.06); border-color: rgba(14,124,102,.35);
+              box-shadow: 0 0 0 5px rgba(14,124,102,.10), 0 0 0 1.5px rgba(14,124,102,.30),
+                          0 10px 24px rgba(11,16,21,.10); }
+  .arc.focus .chip:not(.lit) { opacity: .62; }
+  @keyframes drift { 0% { translate: 0 -3px; } 100% { translate: 0 3px; } }
+  @media (prefers-reduced-motion: reduce) { .chip { animation: none; } }
+
+  .filecard { position: absolute; left: 26px; top: 214px; width: 300px; padding: 20px 22px;
+              border-radius: 14px; background: var(--ink); color: var(--ground);
+              box-shadow: 0 18px 40px rgba(11,16,21,.14); }
+  .filecard b { display: block; font-family: "JetBrains Mono", monospace; font-size: 13.5px; }
+  .filecard span { display: block; margin-top: 8px; font-size: 12.5px; line-height: 1.5; color: #9BA7AF; }
+  .filecard em { display: block; margin-top: 14px; padding-top: 12px; font-style: normal;
+                 border-top: 1px dashed rgba(255,255,255,.18);
+                 font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+                 letter-spacing: .13em; text-transform: uppercase; color: #6FD9BC; }
 
   /* three phases with drawings */
   .three { margin-top: 54px; display: grid; grid-template-columns: 1fr; gap: 40px; }
@@ -778,28 +653,8 @@
   .term pre b { color: var(--accent-soft); font-weight: 400; }
   .term pre .c { color: #6B747C; }
   .term pre .p { color: var(--faint); }
-
-  /* two big illustrated cards */
-  .duo { margin-top: 54px; display: grid; grid-template-columns: 1fr; gap: 22px; }
   @media (min-width: 860px) { .duo { grid-template-columns: 1fr 1fr; gap: 28px; } }
-  .dcard { background: var(--white); border: 1px solid var(--rule); border-radius: 10px; padding: 26px; }
-  .dcard.us { background: var(--ink); border-color: var(--ink); color: var(--ground); }
-  .dcard .lbl { font-family: "JetBrains Mono", monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
-  .dcard.us .lbl { color: #7E8A92; }
-  .dcard h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 21px; letter-spacing: -0.7px; margin: 12px 0 24px; }
-  .dcard .art { height: 150px; }
-  .dcard .art svg { width: 100%; height: 100%; }
-  .dcard .note { margin-top: 24px; font-size: 14.5px; line-height: 1.7; color: var(--ink-2); }
-  .dcard.us .note { color: #B9C1C7; }
-
-  /* misses */
-  ul.misses { margin-top: 52px; display: grid; max-width: 52rem; }
   @media (min-width: 760px) { ul.misses { grid-template-columns: 1fr 1fr; column-gap: 48px; } }
-  ul.misses li { list-style: none; padding: 15px 0; border-bottom: 1px solid var(--rule); font-size: 15.5px; color: var(--ink-2); }
-
-  .measure { margin-top: 52px; max-width: 44rem; display: flex; gap: 28px; align-items: flex-start; }
-  .measure .n { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 62px; letter-spacing: -3px; line-height: .88; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .measure p { font-size: 15.5px; line-height: 1.75; color: var(--ink-2); }
 
   /* nots */
   .nots { margin-top: 52px; display: grid; grid-template-columns: 1fr; }
@@ -822,9 +677,6 @@
   .srcnote { margin-top: 22px; max-width: 46rem; font-size: 13px; line-height: 1.75; color: #7E8A92; }
   .srcnote a { color: #B9C1C7; border-bottom: 1px solid rgba(255,255,255,.22); }
   .srcnote a:hover { color: var(--ground); border-color: var(--ground); }
-  .concede { margin-top: 44px; max-width: 46rem; padding: 26px 28px; border-radius: 10px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
-  .concede h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 18px; letter-spacing: -0.4px; margin-bottom: 12px; }
-  .concede p { font-size: 15px; line-height: 1.8; color: #B9C1C7; }
 
   .agent-tools { margin-top: 40px; display: grid; grid-template-columns: 1fr; max-width: 46rem; }
   @media (min-width: 700px) { .agent-tools { grid-template-columns: 1fr 1fr; column-gap: 44px; } }
@@ -832,8 +684,12 @@
   .agent-tools code { font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--accent); }
   .agent-tools span { font-size: 14.5px; color: var(--ink-2); }
 
-  footer { background: var(--ink); color: var(--faint); padding: 44px 0 56px; }
-  footer .row { display: flex; flex-wrap: wrap; gap: 14px 32px; justify-content: space-between; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+  footer { background: var(--ink); color: var(--faint); padding: 20px 0 22px; }
+  footer .row { display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: space-between; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 10.5px; }
+  footer .by { display: flex; align-items: center; gap: 8px; }
+  footer .by img { width: 14px; height: 14px; border-radius: 4px; opacity: .7; }
+  footer .by a { color: var(--ground); border-bottom: 1px solid rgba(255,255,255,.28); padding-bottom: 1px; }
+  footer .flinks { display: flex; flex-wrap: wrap; gap: 20px; }
   footer a:hover { color: var(--ground); }
 
   /* shared drawing bits */
@@ -857,8 +713,6 @@
       </a>
       <div class="links">
         <a href="#what">What it does</a>
-        <a href="#why">Why local</a>
-        <a href="#agent">Your agent</a>
         <a href="#compare">Compare</a>
       </div>
       <div class="acts">
@@ -866,7 +720,7 @@
           <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.19c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
           Star on GitHub
         </a>
-        <a class="pill solid" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">Download</a>
+        <a class="pill solid" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.03-2.9 2.37-4.3 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.06-4.41 1.06-.91 0-2.31-1.03-3.8-1-1.96.03-3.76 1.14-4.77 2.89-2.03 3.53-.52 8.75 1.46 11.61.97 1.4 2.12 2.97 3.63 2.911.46-.06 2.01-.94 3.77-.94 1.76 0 2.26.94 3.8.91 1.57-.03 2.56-1.42 3.52-2.83 1.11-1.62 1.57-3.19 1.59-3.27-.03-.02-3.05-1.17-3.08-4.65M14.2 3.6c.8-.98 1.35-2.33 1.2-3.68-1.16.05-2.57.77-3.4 1.75-.74.86-1.39 2.24-1.22 3.561.3.1 2.62-.66 3.42-1.63"/></svg> Download for Mac</a>
       </div>
     </nav>
   </div>
@@ -900,7 +754,6 @@
   <div class="in">
     <div class="periph">
       <div class="pstage" id="pstage">
-        <div class="rays" aria-hidden="true"><svg preserveAspectRatio="none"><line x1="50%" y1="46%" x2="128.0%" y2="46.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="125.7%" y2="69.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="119.1%" y2="90.6%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="108.4%" y2="109.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="94.3%" y2="125.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="77.7%" y2="135.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="59.4%" y2="141.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="40.6%" y2="141.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="22.3%" y2="135.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="5.7%" y2="125.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-8.4%" y2="109.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-19.1%" y2="90.6%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-25.7%" y2="69.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-28.0%" y2="46.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-25.7%" y2="23.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-19.1%" y2="1.4%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="-8.4%" y2="-17.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="5.7%" y2="-33.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="22.3%" y2="-43.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="40.6%" y2="-49.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="59.4%" y2="-49.3%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="77.7%" y2="-43.8%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="94.3%" y2="-33.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="108.4%" y2="-17.7%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="119.1%" y2="1.4%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="125.7%" y2="23.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/><line x1="50%" y1="46%" x2="128.0%" y2="46.0%" stroke="rgba(11,16,21,.055)" stroke-width="1"/></svg></div>
         <div class="pcards">
           <figure class="drop" style="--x:60px; --y:120px; --w:235px; --i:0">
             <div class="pslot tint blue""><div class="pshot"><img src="assets/cards/terminal.png" alt="An agent session open in the terminal, showing what it worked on recently" width="1920" height="1035" loading="lazy"></div><div class="pfoot"><div class="a"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="18" rx="3" fill="#1F2937"/><path d="M6 9l3.4 3L6 15M12.5 15.5h5" stroke="#6FD9BC" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Terminal</div><div class="n">The agent, and what it touched last</div></div></div>
@@ -961,131 +814,26 @@
   <div class="in">
     <section>
       <div class="meet">
+          <svg class="converge" width="1800" height="920" viewBox="0 0 1800 920" aria-hidden="true">
+            <path d="M358 155 C358 507 1182 614 1182 920"/>
+            <path d="M634 26 C634 437 1182 562 1182 920"/>
+            <path d="M1418 204 C1418 533 1182 634 1182 920"/>
+            <path d="M356 461 C356 672 1182 736 1182 920"/>
+            <path class="lit" d="M929 26 C929 437 1182 562 1182 920"/>
+            <path d="M1429 506 C1429 696 1182 754 1182 920"/>
+            <path d="M1171 589 C1171 741 1182 788 1182 920"/>
+          </svg>
+
         <div class="mtext">
-          <p class="eyebrow">Where it goes</p>
-          <h2>Peripheral context connected to your agents</h2>
-          <p>The archive is not a place you visit. It is a file your own agent reads, on your own account, so the answer arrives already knowing what you had open, who you spoke to and what was on the screen behind this one.</p>
+                    <h2>Peripheral context connected to your agents, locally</h2>
+          <p>Everything you saw, said and heard stays in one file on your Mac. Your own AI reads it right there, on the account you already pay for. Nothing is uploaded, and nothing leaves the machine.</p>
           <div class="quote">
             <p>&ldquo;Holy shit. I can give my agents persistent context of everything I do, without sending anything to a third party cloud.&rdquo;</p>
-            <div class="who"><i></i><div class="nm"><b>name to fill in</b><span>this quote has no source yet</span></div></div>
+            <div class="who"><i>JD</i><div class="nm"><b>John Doe</b><span>CEO, Acme</span></div></div>
           </div>
         </div>
 
         <div class="mstage" id="agstage">
-          <div class="jsrc">
-            <div class="c"><div class="h"><i style="background:#85A2D4"></i>Seen</div><div class="l"><span style="width:86%"></span><span style="width:64%"></span><span style="width:74%"></span></div></div>
-            <div class="c"><div class="h"><i style="background:#CFB183"></i>Said</div><div class="l"><span style="width:70%"></span><span style="width:88%"></span><span style="width:56%"></span></div></div>
-            <div class="c"><div class="h"><i style="background:#98B69F"></i>Heard</div><div class="l"><span style="width:80%"></span><span style="width:58%"></span><span style="width:72%"></span></div></div>
-          </div>
-
-          <svg class="jwire" viewBox="0 0 543 62" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M92 0v18a8 8 0 0 0 8 8h163a8 8 0 0 1 8 8v28"/>
-            <path d="M271 0v62"/>
-            <path d="M451 0v18a8 8 0 0 1-8 8H280a8 8 0 0 0-8 8v28"/>
-          </svg>
-
-          <div class="jpanel">
-            <div class="jcard jmain">
-              <div class="t"><i></i>litepipe</div>
-              <div class="s">Reading the archive on this Mac</div>
-              <div class="l"><span style="width:92%"></span><span style="width:78%"></span><span style="width:85%"></span><span style="width:44%"></span></div>
-              <div class="box"></div>
-            </div>
-
-            <div class="jcard jask"><b>What did we decide about the pricing?</b></div>
-
-            <div class="jcard jans">
-              <div class="h">Where the answer came from</div>
-              <div class="it"><i style="background:#CFB183"></i><span><b>The thread, Monday</b><span>He asked for the invoice, you said it would go out that day.</span></span></div>
-              <div class="it"><i style="background:#98B69F"></i><span><b>The call, Tuesday</b><span>Annual tiers held until the design review lands.</span></span></div>
-              <div class="it"><i style="background:#85A2D4"></i><span><b>The sheet, behind the tab</b><span>The number nobody read out loud.</span></span></div>
-              <div class="f"><em>Nothing left this Mac</em></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-</div>
-
-
-<div class="band" id="arch-a">
-  <div class="in">
-    <section>
-      <div class="meet">
-        <div class="mtext">
-          <p class="eyebrow">Option A &middot; the layer</p>
-          <h2>Everything you do lands in one layer underneath</h2>
-          <p>What you saw, said and heard stops being scattered across apps and becomes a single layer on your disk. Your agents attach to that layer instead of to your apps, and they attach from inside the machine, not from someone else&rsquo;s server.</p>
-          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
-        </div>
-        <div class="mstage" id="stage-a">
-          <div class="arch">
-            <div class="lyr">
-              <div class="step fade"><b>01</b>Computer activity is captured</div>
-              <div class="cap fade">
-                <div class="w"><u><i></i>Chrome</u><s style="width:72%"></s><s style="width:48%"></s></div>
-                <div class="w"><u><i></i>Meet</u><s style="width:58%"></s><s style="width:74%"></s></div>
-                <div class="w"><u><i></i>Terminal</u><s style="width:80%"></s><s style="width:40%"></s></div>
-                <div class="w"><u><i></i>Sheets</u><s style="width:52%"></s><s style="width:66%"></s></div>
-              </div>
-
-              <div class="fall fade">
-                <svg viewBox="0 0 170 26" aria-hidden="true">
-                  <path d="M22 0v16m0 0l-4-4m4 4l4-4"/><path d="M64 0v16m0 0l-4-4m4 4l4-4"/>
-                  <path d="M106 0v16m0 0l-4-4m4 4l4-4"/><path d="M148 0v16m0 0l-4-4m4 4l4-4"/>
-                </svg>
-                <span>Every monitor, read while you work.</span>
-              </div>
-
-              <div class="step fade"><b>02</b>Context is packaged in one local database</div>
-              <div class="slab fade">
-                <div class="h"><b>Peripheral context layer</b><em class="mono">~/.litepipe/db.sqlite</em></div>
-                <div class="g">
-                  <i style="background:#85A2D4"></i><i></i><i style="background:#CFB183"></i><i></i><i></i>
-                  <i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i><i></i>
-                  <i style="background:#CFB183"></i><i></i><i style="background:#85A2D4"></i><i></i>
-                  <i style="background:#98B69F"></i><i></i><i></i><i style="background:#CFB183"></i>
-                </div>
-                <div class="k">
-                  <span><i style="background:#85A2D4"></i>Seen</span>
-                  <span><i style="background:#CFB183"></i>Said</span>
-                  <span><i style="background:#98B69F"></i>Heard</span>
-                </div>
-              </div>
-
-              <div class="plug fade">
-                <svg viewBox="0 0 170 24" aria-hidden="true"><path d="M85 0v14m0 0l-4-4m4 4l4-4"/></svg>
-                <span class="t"><b>MCP</b><br>You point your AI at the layer once. After that it can look things up in there, the same way it opens a file.</span>
-              </div>
-
-              <div class="step fade"><b>03</b>Your AI reads it, from in here</div>
-              <div class="ags fade">
-                <div class="a">Claude Code<em>or Cursor</em></div>
-                <div class="a">A chat client<em>whichever you pay for</em></div>
-                <div class="a">Your own script<em>it is only a file</em></div>
-              </div>
-            </div>
-            <div class="bound"><span>this Mac</span><em>Nothing crosses this line</em></div>
-          </div>
-</div>
-      </div>
-    </section>
-  </div>
-</div>
-
-<div class="band" id="arch-d">
-  <div class="in">
-    <section>
-      <div class="meet">
-        <div class="mtext">
-          <p class="eyebrow">Option D &middot; the layer, answering</p>
-          <h2>One layer underneath, and the answer never leaves it</h2>
-          <p>Everything you had open becomes a single layer on your disk. Then the assistant you already use reads that layer, over MCP, and answers out of what actually happened. The question, the reading and the answer all sit on the same side of the line.</p>
-          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
-        </div>
-
-        <div class="mstage" id="stage-d">
           <div class="arch">
             <div class="lyr">
               <div class="step fade"><b>01</b>Computer activity is captured</div>
@@ -1150,154 +898,12 @@
             <div class="bound"><span>this Mac</span></div>
           </div>
         </div>
-      </div>
-    </section>
-  </div>
-</div>
-
-<div class="band" id="arch-e">
-  <div class="in">
-    <section>
-      <p class="eyebrow">Option E &middot; the same path, lying down</p>
-      <h2>One layer underneath, and the answer never leaves it</h2>
-      <p class="say">Everything you had open becomes a single layer on your disk. The assistant you already use reads that layer over MCP, and answers out of what actually happened. Read it left to right: the question, the reading and the answer all sit on the same side of the line.</p>
-      <p class="archnote" style="margin-top:14px"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
-
-      <div id="stage-e" style="margin-top:44px">
-        <div class="arch">
-          <div class="lyr">
-            <div class="col c1">
-              <div class="step fade"><b>01</b>Computer activity is captured</div>
-              <div class="cap fade">
-                <div class="w"><u><i></i>Chrome</u><s style="width:72%"></s><s style="width:48%"></s></div>
-                <div class="w"><u><i></i>Meet</u><s style="width:58%"></s><s style="width:74%"></s></div>
-                <div class="w"><u><i></i>Terminal</u><s style="width:80%"></s><s style="width:40%"></s></div>
-                <div class="w"><u><i></i>Sheets</u><s style="width:52%"></s><s style="width:66%"></s></div>
-              </div>
-            </div>
-
-            <div class="arw fade">
-              <svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6h92m0 0l-5-4m5 4l-5 4"/></svg>
-              <p>Every monitor, read while you work</p>
-            </div>
-
-            <div class="col c2">
-              <div class="step fade"><b>02</b>Context is packaged in one local database</div>
-              <div class="slab fade">
-                <div class="h"><b>Peripheral context layer</b></div>
-                <p class="mono" style="margin-top:4px; font-size:9.5px; color:var(--faint)">~/.litepipe/db.sqlite</p>
-                <div class="g">
-                  <i style="background:#85A2D4"></i><i></i><i style="background:#CFB183"></i><i></i><i></i><i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i>
-                  <i style="background:#CFB183"></i><i></i><i style="background:#85A2D4"></i><i></i><i style="background:#98B69F"></i><i></i><i></i><i style="background:#CFB183"></i><i></i>
-                  <i></i><i style="background:#98B69F"></i><i></i><i style="background:#85A2D4"></i><i></i><i></i><i style="background:#CFB183"></i><i></i><i style="background:#98B69F"></i>
-                </div>
-                <div class="k">
-                  <span><i style="background:#85A2D4"></i>Seen</span>
-                  <span><i style="background:#CFB183"></i>Said</span>
-                  <span><i style="background:#98B69F"></i>Heard</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="arw mcp fade">
-              <svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6h92m0 0l-5-4m5 4l-5 4"/></svg>
-              <p><b>MCP</b>Point your AI at it once, and it can look things up in there</p>
-            </div>
-
-            <div class="col c3">
-              <div class="step fade"><b>03</b>Your agents understand your work</div>
-              <div class="ask1 fade">What did we decide about the pricing?</div>
-              <div class="ans1 fade">
-                <p class="lead">Six hours went to the deploy, and it failed twice before it went out.</p>
-                <p class="ln">Quarterly review at eleven. Ana took the onboarding copy.</p>
-                <p class="ln">You told Marco the invoice would go out that afternoon.</p>
-                <p class="ln">It never went.</p>
-                <p class="ln off"></p>
-                <p class="ln off"></p>
-                <div class="seal"><em>Nothing left this Mac</em></div>
-              </div>
-            </div>
-          </div>
-          <div class="bound"><span>this Mac</span><em>Nothing crosses this line</em></div>
         </div>
       </div>
     </section>
   </div>
 </div>
 
-<div class="band" id="arch-b">
-  <div class="in">
-    <section>
-      <div class="meet">
-        <div class="mtext">
-          <p class="eyebrow">Option B &middot; the socket</p>
-          <h2>Not a feature. A socket your AI plugs into</h2>
-          <p>The archive is not a product you use, it is an interface you connect to. One local address, the open MCP standard, and whichever assistant you already pay for on the other end, calling the same tools.</p>
-          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
-        </div>
-        <div class="mstage" id="stage-b">
-          <div class="arch">
-            <div class="sock">
-              <div class="jsrc" style="width:100%%">
-                <div class="c fade"><div class="h"><i style="background:#85A2D4"></i>Seen</div><div class="l"><span style="width:86%%"></span><span style="width:64%%"></span></div></div>
-                <div class="c fade"><div class="h"><i style="background:#CFB183"></i>Said</div><div class="l"><span style="width:70%%"></span><span style="width:88%%"></span></div></div>
-                <div class="c fade"><div class="h"><i style="background:#98B69F"></i>Heard</div><div class="l"><span style="width:80%%"></span><span style="width:58%%"></span></div></div>
-              </div>
-
-              <svg class="jwire" viewBox="0 0 543 62" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M92 0v18a8 8 0 0 0 8 8h163a8 8 0 0 1 8 8v28"/>
-                <path d="M271 0v62"/>
-                <path d="M451 0v18a8 8 0 0 1-8 8H280a8 8 0 0 0-8 8v28"/>
-              </svg>
-
-              <div class="port fade"><b class="mono">MCP</b><em class="mono">127.0.0.1:3030</em></div>
-
-              <svg class="legs" viewBox="0 0 543 34" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M271 0v10a7 7 0 0 1-7 7H99a7 7 0 0 0-7 7v10"/>
-                <path d="M271 0v34"/>
-                <path d="M271 0v10a7 7 0 0 0 7 7h165a7 7 0 0 1 7 7v10"/>
-              </svg>
-
-              <div class="cli">
-                <div class="c fade"><b>Claude Code</b><em class="mono">search-content</em></div>
-                <div class="c fade"><b>A chat client</b><em class="mono">frame-context</em></div>
-                <div class="c fade"><b>Your own script</b><em class="mono">get-meeting</em></div>
-              </div>
-            </div>
-          </div>
-</div>
-      </div>
-    </section>
-  </div>
-</div>
-
-<div class="band" id="arch-c">
-  <div class="in">
-    <section>
-      <div class="meet">
-        <div class="mtext">
-          <p class="eyebrow">Option C &middot; the loop</p>
-          <h2>It watches, you ask, your agent acts, it watches that too</h2>
-          <p>The work becomes context, the context answers a question, the answer becomes an action, and the action happens on the screen it is already watching. The circle closes, and every step you would call private happens on your own machine.</p>
-          <p class="archnote"><b>The bridge is real and reads only this Mac.</b> It ships on a branch for now, not inside the download.</p>
-        </div>
-        <div class="mstage" id="stage-c">
-          <div class="arch loop" id="loopc">
-            <svg viewBox="0 0 400 400" aria-hidden="true">
-              <defs><marker id="lp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9BA3AA"/></marker></defs>
-              <path class="ring" d="M200 60 A140 140 0 1 1 186 60.7" marker-end="url(#lp)"/>
-            </svg>
-            <div class="n fade" style="left:226px; top:92px"><u>01</u><b>You work</b><span>Seen, said and heard</span></div>
-            <div class="n fade" style="left:369px; top:196px"><u>02</u><b>The layer</b><span>One file, on this Mac</span></div>
-            <div class="n fade theirs" style="left:314px; top:364px"><u>your agent</u><b>It asks</b><span>Over MCP, reading only</span></div>
-            <div class="n fade theirs" style="left:137px; top:364px"><u>your agent</u><b>It acts</b><span>In its own tools, not ours</span></div>
-            <div class="n fade" style="left:82px; top:196px"><u>05</u><b>On your screen</b><span>So it is captured too</span></div>
-          </div>
-</div>
-      </div>
-    </section>
-  </div>
-</div>
 
 <div class="band" id="use">
   <div class="in">
@@ -1415,113 +1021,55 @@
 
       <div class="grounded">
         <div class="gh">
-          <span>What every answer is grounded in</span>
-          <span><em>one real archive, nine days in</em></span>
+          <span>What a captured moment actually holds</span>
+          <span><em>all of it readable in the source</em></span>
         </div>
         <div class="gstats">
-          <div><b>17,406</b><span>moments kept</span></div>
-          <div><b>3</b><span>screens watched</span></div>
-          <div><b>1,057</b><span>things said in meetings</span></div>
-          <div><b>24</b><span>apps, none of them connected</span></div>
-          <div><b>6.0 GB</b><span>on your own disk</span></div>
-          <div class="zero"><b>0</b><span>bytes uploaded</span></div>
+          <div><b>5 triggers</b><span>a click, a keystroke, the clipboard, a change on screen, or thirty seconds of nothing</span></div>
+          <div><b>200 ms</b><span>the shortest gap between two captures, so a burst of typing stays one moment</span></div>
+          <div><b>6 fields</b><span>app, window, url, monitor, whether it was in front, and the time</span></div>
+          <div><b>2 readers</b><span>the accessibility layer for the text it exposes, OCR for everything it does not</span></div>
+          <div><b>Speakers</b><span>calls are transcribed and split by who was talking, minute by minute</span></div>
+          <div class="zero"><b>1 file</b><span>~/.litepipe/db.sqlite, read by 26 tools over MCP</span></div>
         </div>
-        <p class="gf">Your own screens and calls, and nothing else. No account was created to make this, and no integration was authorised.</p>
+        <p class="gf">Nothing is sampled on a timer. A moment is written when something happens, and it carries enough about itself that you can find it again a month later.</p>
       </div>
     </section>
   </div>
 </div>
 
-<div class="band" id="meetings">
-  <div class="in">
-    <section>
-      <div class="meet">
-        <div class="mstage" id="mstage">
-          <div class="mcard">
-            <h4>Design and GTM sync</h4>
-            <div class="mhead">
-              <div class="mtabs">
-                <span class="on">Transcript</span><span>Speakers</span><span>Write up</span>
-              </div>
-              <div class="mfaces">
-                <b><i style="background:#C9D6E8"></i><i style="background:#E3D7C6"></i><i style="background:#D4E2D4"></i><i style="background:#E8D3D6"></i></b>
-                <span>John +3</span>
-              </div>
-            </div>
-
-            <div class="mpanel on">
-              <div class="tline"><span class="at">14:06</span><span><b>John:</b> hold the annual tiers until the design review lands, I do not want to price something we are about to change</span></div>
-              <div class="tline"><span class="at">14:21</span><span><b>Ana:</b> I will take the onboarding copy, but the migration cannot be that same week</span></div>
-              <div class="tline"><span class="at">14:38</span><span><b>Prerna:</b> what is our floor on the discount? we keep going around this</span></div>
-              <div class="tline"><span class="at">14:39</span><span><b>you:</b> let us settle that one before we drop, I do not want it coming back next week</span></div>
-            </div>
-
-            <div class="mpanel">
-              <div class="srow"><span class="av" style="background:#C9D6E8"></span><span class="n">John</span><span class="s">named by you</span><span class="c">41 lines</span></div>
-              <div class="srow"><span class="av" style="background:#E3D7C6"></span><span class="n">Ana</span><span class="s">named by you</span><span class="c">33 lines</span></div>
-              <div class="srow"><span class="av" style="background:#D4E2D4"></span><span class="n">Prerna</span><span class="s">named by you</span><span class="c">18 lines</span></div>
-              <div class="srow"><span class="av" style="background:#E8D3D6"></span><span class="n">you</span><span class="s">this machine</span><span class="c">27 lines</span></div>
-            </div>
-
-            <div class="mpanel">
-              <span class="mask">Write up the GTM sync.</span>
-              <div class="wsec">
-                <p class="lab">What was decided</p>
-                <div class="wbars"><i style="width:92%"></i><i style="width:64%"></i></div>
-                <p class="wtxt">Annual tiers are held until the design review lands. The migration moves off that week. Ana owns the onboarding copy.</p>
-              </div>
-              <div class="wsec">
-                <p class="lab">Left open</p>
-                <div class="wbars"><i style="width:80%"></i></div>
-                <p class="wtxt">The discount floor was raised at 14:38 and nobody answered it before the call ended.</p>
-              </div>
-              <div class="wsec">
-                <p class="lab">Where it came from</p>
-                <div class="wbars"><i style="width:88%"></i><i style="width:47%"></i></div>
-                <p class="wtxt">Every line above points back at the minute it was said, so you can reread it before you repeat it.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="mrec">
-            <span class="lv"><i></i><i></i><i></i><i></i></span>
-            <span>Recording, you accepted</span>
-            <span class="st"><i></i>Stop</span>
-          </div>
-        </div>
-
-        <div class="mtext">
-          <p class="eyebrow">The meetings too</p>
-          <h2>Never write up a meeting from memory again</h2>
-          <p>The call is transcribed while it happens, with who spoke and when. Nothing is summarised on a schedule and nothing is emailed to you. It sits on your disk until you ask, and then your own agent writes it, out of what was actually said.</p>
-        </div>
-      </div>
-    </section>
-  </div>
-</div>
-
-<div class="band" id="repeat">
+<div class="band" id="agnostic">
   <div class="in">
     <section>
       <div class="meet">
         <div class="mtext">
-          <p class="eyebrow">The work that repeats</p>
-          <h2>The chore nobody ever wrote down</h2>
-          <p>You run the same sequence most weeks without noticing it is a sequence. No one documented it, no one interviewed you about it, and it never shows up in any system of record because it happens between them. Ask, and it comes back as steps, with how often you ran it, what it costs you, and which parts your agent could take off your hands.</p>
+          <div class="badges">
+            <span><i></i>Open source</span>
+            <span><i></i>Free</span>
+            <span><i></i>Fully local</span>
+          </div>
+          <h2>Bring any AI. Only you own your memories.</h2>
+          <p>litepipe is free and open source under MIT, and no one makes money out of what is in it. Not a lab, not a vendor, not us. Bring whichever model you already pay for: it reads what you ask for, on your own account, and the file never leaves this machine.</p>
+          <p class="quiet" style="margin-top:20px"><a href="https://github.com/Rafaelpta/litepipe">Read the source, and check every line of that</a></p>
         </div>
 
-        <div class="mstage" id="wstage">
-          <div class="mcard">
-            <h4>The weekly client report</h4>
-            <p class="wfmeta">11 runs in 3 weeks &middot; about 40 minutes each</p>
-            <div class="wsteps">
-              <div class="wstep"><span class="no">01</span><span>Open the dashboard and read the four numbers</span><span class="tag bot">agent</span></div>
-              <div class="wstep"><span class="no">02</span><span>Paste them into last week&rsquo;s document</span><span class="tag bot">agent</span></div>
-              <div class="wstep"><span class="no">03</span><span>Rewrite the paragraph around them</span><span class="tag bot">agent draft</span></div>
-              <div class="wstep"><span class="no">04</span><span>Check the two numbers that looked wrong</span><span class="tag">you</span></div>
-              <div class="wstep"><span class="no">05</span><span>Send it to the client</span><span class="tag">you</span></div>
+        <div class="mstage" id="stage-arc">
+          <div class="canvas" id="arccanvas">
+            <div class="arc focus" id="arc">
+            <span class="chip" data-i="0" title="ChatGPT" style="left:105px; top:14px; width:43px; height:43px; --dd:8.8s; --dl:-5.4s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"></path></svg></span>
+            <span class="chip" data-i="1" title="Claude" style="left:172px; top:19px; width:55px; height:55px; --dd:10s; --dl:-4.6s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"></path></svg></span>
+            <span class="chip" data-i="2" title="Gemini" style="left:254px; top:40px; width:68px; height:68px; --dd:8.5s; --dl:-1.2s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z"></path></svg></span>
+            <span class="chip" data-i="3" title="Cursor" style="left:349px; top:73px; width:85px; height:85px; --dd:9.2s; --dl:-7.1s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"></path></svg></span>
+            <span class="chip big lit" data-i="4" title="Copilot" style="left:432px; top:157px; width:108px; height:108px; --dd:9.6s; --dl:0s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9 23l.073-.001a2.53 2.53 0 01-2.347-1.838l-.697-2.433a2.529 2.529 0 00-2.426-1.839h-.497l-.104-.002c-4.485 0-2.935-5.278-1.75-9.225l.162-.525C2.412 3.99 3.883 1 6.25 1h8.86c1.12 0 2.106.745 2.422 1.829l.715 2.453a2.53 2.53 0 002.247 1.823l.147.005.534.001c3.557.115 3.088 3.745 2.156 7.206l-.113.413c-.154.548-.315 1.089-.47 1.607l-.163.525C21.588 20.01 20.116 23 17.75 23h-8.75zm8.22-15.89l-3.856.001a2.526 2.526 0 00-2.35 1.615L9.21 15.04a2.529 2.529 0 01-2.43 1.847l3.853.002c1.056 0 1.992-.661 2.361-1.644l1.796-6.287a2.529 2.529 0 012.43-1.848z"></path></svg></span>
+            <span class="chip" data-i="5" title="Mistral" style="left:474px; top:298px; width:85px; height:85px; --dd:10.4s; --dl:-3.3s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path clip-rule="evenodd" d="M3.428 3.4h3.429v3.428h3.429v3.429h-.002 3.431V6.828h3.427V3.4h3.43v13.714H24v3.429H13.714v-3.428h-3.428v-3.429h-3.43v3.428h3.43v3.429H0v-3.429h3.428V3.4zm10.286 13.715h3.428v-3.429h-3.427v3.429z"></path></svg></span>
+            <span class="chip" data-i="6" title="Perplexity" style="left:480px; top:416px; width:68px; height:68px; --dd:11s; --dl:-2.8s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.392 24v-6.465H1.5V7.188h2.884V0l7.053 6.494V.19h1.09v6.49L19.786 0zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397zm-1.099-.08l-5.946 5.398v7.235l5.946-5.234V8.965zm8.136 7.58h1.844V8.349H13.46l6.105 5.54v2.655zm-8.982-8.28H2.59v8.195h1.8v-2.576l6.192-5.62zM5.475 2.476v4.71h5.115l-5.115-4.71zm13.219 0l-5.115 4.71h5.115v-4.71z"></path></svg></span>
+            <span class="chip" data-i="7" title="Ollama" style="left:461px; top:517px; width:55px; height:55px; --dd:9s; --dl:-6.2s"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M7.905 1.09c.216.085.411.225.588.41.295.306.544.744.734 1.263.191.522.315 1.1.362 1.68a5.054 5.054 0 012.049-.636l.051-.004c.87-.07 1.73.087 2.48.474.101.053.2.11.297.17.05-.569.172-1.134.36-1.644.19-.52.439-.957.733-1.264a1.67 1.67 0 01.589-.41c.257-.1.53-.118.796-.042.401.114.745.368 1.016.737.248.337.434.769.561 1.287.23.934.27 2.163.115 3.645l.053.04.026.019c.757.576 1.284 1.397 1.563 2.35.435 1.487.216 3.155-.534 4.088l-.018.021.002.003c.417.762.67 1.567.724 2.4l.002.03c.064 1.065-.2 2.137-.814 3.19l-.007.01.01.024c.472 1.157.62 2.322.438 3.486l-.006.039a.651.651 0 01-.747.536.648.648 0 01-.54-.742c.167-1.033.01-2.069-.48-3.123a.643.643 0 01.04-.617l.004-.006c.604-.924.854-1.83.8-2.72-.046-.779-.325-1.544-.8-2.273a.644.644 0 01.18-.886l.009-.006c.243-.159.467-.565.58-1.12a4.229 4.229 0 00-.095-1.974c-.205-.7-.58-1.284-1.105-1.683-.595-.454-1.383-.673-2.38-.61a.653.653 0 01-.632-.371c-.314-.665-.772-1.141-1.343-1.436a3.288 3.288 0 00-1.772-.332c-1.245.099-2.343.801-2.67 1.686a.652.652 0 01-.61.425c-1.067.002-1.893.252-2.497.703-.522.39-.878.935-1.066 1.588a4.07 4.07 0 00-.068 1.886c.112.558.331 1.02.582 1.269l.008.007c.212.207.257.53.109.785-.36.622-.629 1.549-.673 2.44-.05 1.018.186 1.902.719 2.536l.016.019a.643.643 0 01.095.69c-.576 1.236-.753 2.252-.562 3.052a.652.652 0 01-1.269.298c-.243-1.018-.078-2.184.473-3.498l.014-.035-.008-.012a4.339 4.339 0 01-.598-1.309l-.005-.019a5.764 5.764 0 01-.177-1.785c.044-.91.278-1.842.622-2.59l.012-.026-.002-.002c-.293-.418-.51-.953-.63-1.545l-.005-.024a5.352 5.352 0 01.093-2.49c.262-.915.777-1.701 1.536-2.269.06-.045.123-.09.186-.132-.159-1.493-.119-2.73.112-3.67.127-.518.314-.95.562-1.287.27-.368.614-.622 1.015-.737.266-.076.54-.059.797.042zm4.116 9.09c.936 0 1.8.313 2.446.855.63.527 1.005 1.235 1.005 1.94 0 .888-.406 1.58-1.133 2.022-.62.375-1.451.557-2.403.557-1.009 0-1.871-.259-2.493-.734-.617-.47-.963-1.13-.963-1.845 0-.707.398-1.417 1.056-1.946.668-.537 1.55-.849 2.485-.849zm0 .896a3.07 3.07 0 00-1.916.65c-.461.37-.722.835-.722 1.25 0 .428.21.829.61 1.134.455.347 1.124.548 1.943.548.799 0 1.473-.147 1.932-.426.463-.28.7-.686.7-1.257 0-.423-.246-.89-.683-1.256-.484-.405-1.14-.643-1.864-.643zm.662 1.21l.004.004c.12.151.095.37-.056.49l-.292.23v.446a.375.375 0 01-.376.373.375.375 0 01-.376-.373v-.46l-.271-.218a.347.347 0 01-.052-.49.353.353 0 01.494-.051l.215.172.22-.174a.353.353 0 01.49.051zm-5.04-1.919c.478 0 .867.39.867.871a.87.87 0 01-.868.871.87.87 0 01-.867-.87.87.87 0 01.867-.872zm8.706 0c.48 0 .868.39.868.871a.87.87 0 01-.868.871.87.87 0 01-.867-.87.87.87 0 01.867-.872zM7.44 2.3l-.003.002a.659.659 0 00-.285.238l-.005.006c-.138.189-.258.467-.348.832-.17.692-.216 1.631-.124 2.782.43-.128.899-.208 1.404-.237l.01-.001.019-.034c.046-.082.095-.161.148-.239.123-.771.022-1.692-.253-2.444-.134-.364-.297-.65-.453-.813a.628.628 0 00-.107-.09L7.44 2.3zm9.174.04l-.002.001a.628.628 0 00-.107.09c-.156.163-.32.45-.453.814-.29.794-.387 1.776-.23 2.572l.058.097.008.014h.03a5.184 5.184 0 011.466.212c.086-1.124.038-2.043-.128-2.722-.09-.365-.21-.643-.349-.832l-.004-.006a.659.659 0 00-.285-.239h-.004z"></path></svg></span>
             </div>
-            <p class="wsum"><b>Nobody wrote this down.</b> It was found by how often the same screens came back in the same order, and the last two steps stayed yours because they are the ones that need judgement.</p>
+            <div class="filecard">
+              <b>~/.litepipe/db.sqlite</b>
+              <span>One file, on your machine. They read from it, none of them holds it.</span>
+              <em>and it never leaves this Mac</em>
+            </div>
           </div>
         </div>
       </div>
@@ -1532,218 +1080,67 @@
 <div class="band paper" id="what">
   <div class="in">
     <section>
-      <p class="eyebrow">No euphemism</p>
-      <h2>What it actually does</h2>
-      <p class="say">Most tools in this category describe themselves carefully, because the description is the part that has to travel. Here is the blunt version, in the order it happens.</p>
+      <p class="eyebrow">No setup</p>
+      <h2>No setup burden.</h2>
 
       <div class="three">
         <article>
           <div class="art">
             <svg viewBox="0 0 220 132" fill="none" aria-hidden="true" style="color:var(--ink)">
-              <rect class="stroke" x="16" y="26" width="118" height="74" rx="4"/>
-              <rect class="stroke" x="96" y="44" width="108" height="66" rx="4" fill="var(--white)"/>
-              <g opacity=".22"><rect x="106" y="56" width="60" height="4" rx="2" fill="currentColor"/><rect x="106" y="66" width="80" height="4" rx="2" fill="currentColor"/><rect x="106" y="76" width="44" height="4" rx="2" fill="currentColor"/></g>
-              <circle cx="190" cy="98" r="5" fill="#C0392B" class="blink"/>
-              <g opacity=".5"><rect x="28" y="38" width="42" height="3" rx="1.5" fill="currentColor"/><rect x="28" y="46" width="66" height="3" rx="1.5" fill="currentColor"/><rect x="28" y="54" width="30" height="3" rx="1.5" fill="currentColor"/></g>
+              <rect class="stroke" x="24" y="24" width="172" height="84" rx="6"/>
+              <rect x="46" y="48" width="36" height="36" rx="9" fill="var(--ink)"/>
+              <path d="M96 66h44m0 0l-7-6m7 6l-7 6" stroke="currentColor" stroke-width="1.4" opacity=".45" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="stroke" d="M152 54h30a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4h-30a4 4 0 0 1-4-4V58a4 4 0 0 1 4-4z"/>
+              <path d="M148 62h38" stroke="currentColor" stroke-width="1.4" opacity=".4"/>
+              <text x="24" y="124" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".45">litepipe.dmg</text>
             </svg>
           </div>
-          <div class="step"><span class="no">01</span><span class="k">You do nothing</span></div>
-          <h3>It records your screens.</h3>
-          <p>All of them, not the one window in front. No integrations to wire up, no folders to tidy, nothing to remember to save. Moments are screenshots, kept as video on your disk.</p>
-          <p>Meetings are transcribed too, but only after you accept. Say no and the microphone never opens.</p>
+          <div class="step"><span class="no">01</span><span class="k">Two minutes</span></div>
+          <h3>You install it like any Mac app.</h3>
+          <p>Open the disk image, drag it across, launch it. Grant screen recording and accessibility when macOS asks.</p>
         </article>
+
         <article>
           <div class="art">
             <svg viewBox="0 0 220 132" fill="none" aria-hidden="true" style="color:var(--ink)">
-              <rect class="stroke" x="20" y="20" width="180" height="92" rx="4"/>
-              <g opacity=".45"><rect x="34" y="36" width="60" height="4" rx="2" fill="currentColor"/><rect x="34" y="48" width="46" height="4" rx="2" fill="currentColor"/><rect x="34" y="60" width="62" height="4" rx="2" fill="currentColor"/><rect x="34" y="72" width="38" height="4" rx="2" fill="currentColor"/></g>
-              <rect x="112" y="32" width="74" height="52" rx="3" fill="var(--ink)"/>
-              <path d="M140 50l14 8-14 8z" fill="var(--accent-soft)"/>
-              <g><rect x="120" y="90" width="42" height="4" rx="2" fill="var(--accent)"/><rect x="120" y="99" width="58" height="4" rx="2" fill="var(--accent)" opacity=".6"/></g>
-              <text x="34" y="103" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".45">tree</text>
-              <text x="168" y="103" font-family="JetBrains Mono, monospace" font-size="8" fill="var(--accent)">ocr</text>
+              <rect class="stroke" x="16" y="40" width="70" height="52" rx="6"/>
+              <g opacity=".3" fill="currentColor"><rect x="28" y="54" width="40" height="4" rx="2"/><rect x="28" y="64" width="28" height="4" rx="2"/></g>
+              <text x="28" y="84" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".5">agent</text>
+              <path d="M86 66h48" stroke="var(--accent)" stroke-width="1.4"/>
+              <circle cx="110" cy="66" r="4.5" fill="var(--accent)"/>
+              <text x="110" y="54" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="var(--accent)">MCP</text>
+              <rect x="134" y="40" width="70" height="52" rx="6" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
+              <g opacity=".28" fill="currentColor"><rect x="146" y="54" width="46" height="4" rx="2"/><rect x="146" y="64" width="34" height="4" rx="2"/><rect x="146" y="74" width="40" height="4" rx="2"/></g>
             </svg>
           </div>
-          <div class="step"><span class="no">02</span><span class="k">You stop explaining</span></div>
-          <h3>You never catch your AI up again.</h3>
-          <p>The pasting, the screenshots dragged into a chat, the paragraph of backstory before every question: that was you being the memory. Your agent opens the archive itself and starts already knowing.</p>
-          <p class="then">Read two ways, the accessibility layer plus OCR, so what you saw is not missing from what it knows.</p>
+          <div class="step"><span class="no">02</span><span class="k">Once</span></div>
+          <h3>You connect your agent.</h3>
+          <p>Point Claude Code, Cursor or your own client at the archive over MCP. One connection, and it can read.</p>
         </article>
+
         <article>
           <div class="art">
             <svg viewBox="0 0 220 132" fill="none" aria-hidden="true" style="color:var(--ink)">
-              <g opacity=".28">
-                <rect class="stroke" x="14" y="46" width="34" height="24" rx="3"/>
-                <rect class="stroke" x="22" y="54" width="34" height="24" rx="3"/>
+              <rect class="stroke" x="18" y="34" width="58" height="42" rx="4"/>
+              <rect class="stroke" x="84" y="26" width="58" height="42" rx="4"/>
+              <rect class="stroke" x="150" y="42" width="52" height="38" rx="4"/>
+              <g opacity=".24" fill="currentColor">
+                <rect x="26" y="44" width="34" height="4" rx="2"/><rect x="26" y="54" width="24" height="4" rx="2"/>
+                <rect x="92" y="36" width="38" height="4" rx="2"/><rect x="92" y="46" width="26" height="4" rx="2"/>
+                <rect x="158" y="52" width="30" height="4" rx="2"/><rect x="158" y="62" width="20" height="4" rx="2"/>
               </g>
-              <rect class="stroke" x="30" y="62" width="34" height="24" rx="3" fill="var(--white)"/>
-              <path d="M72 74h22" stroke="currentColor" stroke-width="1.4" opacity=".45"/>
-              <path d="M88 69l7 5-7 5" stroke="currentColor" stroke-width="1.4" fill="none" opacity=".45" stroke-linecap="round" stroke-linejoin="round"/>
-              <rect x="104" y="26" width="98" height="84" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
-              <g><rect x="116" y="40" width="52" height="4" rx="2" fill="var(--accent)"/><rect x="116" y="52" width="72" height="4" rx="2" fill="currentColor" opacity=".28"/><rect x="116" y="62" width="64" height="4" rx="2" fill="currentColor" opacity=".28"/><rect x="116" y="72" width="70" height="4" rx="2" fill="currentColor" opacity=".28"/><rect x="116" y="82" width="40" height="4" rx="2" fill="currentColor" opacity=".28"/></g>
-              <circle cx="182" cy="94" r="11" fill="var(--accent-wash)" stroke="var(--accent)" stroke-width="1.2"/>
-              <path d="M176 94l4 4 8-9" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M47 76v14M113 68v22M176 80v10" stroke="currentColor" stroke-width="1.3" opacity=".3"/>
+              <rect x="60" y="96" width="100" height="16" rx="8" fill="var(--accent-wash)"/>
+              <text x="110" y="107" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="var(--accent)">one file</text>
             </svg>
           </div>
-          <div class="step"><span class="no">03</span><span class="k">It comes back written</span></div>
-          <h3>The writing up stops being your job.</h3>
-          <p>The standup, the monthly update, the follow up you promised on a call three weeks ago. Asked once and answered in your own words, with the moment behind every claim so you can check it before you send it.</p>
-          <p class="then">Your agent, your account, reading a file that never moves.</p>
+          <div class="step"><span class="no">03</span><span class="k">Then nothing</span></div>
+          <h3>You never think about it again.</h3>
+          <p>It reads every monitor while you work, and the archive fills itself.</p>
         </article>
       </div>
 
-      <p class="say" style="margin-top:54px"><strong>None of it leaves the machine.</strong> You do not have to take that on faith. One process listens, on the loopback address, and it is the app talking to its own engine.</p>
-
-      <div class="term">
-        <div class="top"><i></i><i></i><i></i><span>zsh</span></div>
-<pre><span class="p">$</span> lsof -nP -iTCP -sTCP:LISTEN | grep screenpipe
-<b>screenpipe  TCP 127.0.0.1:3030 (LISTEN)</b>
-
-<span class="c"># and the archive itself, in plain SQLite</span>
-<span class="p">$</span> sqlite3 ~/.litepipe/db.sqlite "select count(*) from frames;"</pre>
-      </div>
-    </section>
-  </div>
-</div>
-
-<div class="band tint" id="why">
-  <div class="in">
-    <section>
-      <p class="eyebrow">Why it sees more</p>
-      <h2>The context no integration has</h2>
-      <p class="say">Connectors reach the few apps with an API. The rest is peripheral context: the second screen, the tab behind this one, the terminal still running. That is usually where the answer is.</p>
-
-      <div class="duo">
-        <div class="dcard">
-          <p class="lbl">The connector only kind</p>
-          <h3>Whatever the API hands over</h3>
-          <div class="art">
-            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ink)">
-              <g opacity=".2">
-                <rect class="stroke" x="12" y="16" width="66" height="34" rx="4"/>
-                <rect class="stroke" x="90" y="16" width="66" height="34" rx="4"/>
-                <rect class="stroke" x="246" y="16" width="62" height="34" rx="4"/>
-                <rect class="stroke" x="12" y="58" width="66" height="34" rx="4"/>
-                <rect class="stroke" x="168" y="58" width="66" height="34" rx="4"/>
-                <rect class="stroke" x="246" y="58" width="62" height="34" rx="4"/>
-                <rect class="stroke" x="90" y="100" width="66" height="34" rx="4"/>
-                <rect class="stroke" x="168" y="100" width="66" height="34" rx="4"/>
-                <rect class="stroke" x="246" y="100" width="62" height="34" rx="4"/>
-              </g>
-              <g>
-                <rect x="168" y="16" width="66" height="34" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
-                <rect x="90" y="58" width="66" height="34" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
-                <rect x="12" y="100" width="66" height="34" rx="4" fill="var(--white)" stroke="currentColor" stroke-width="1.5"/>
-                <g opacity=".5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
-                  <path d="M190 29h22M190 37h14"/><path d="M112 71h22M112 79h14"/><path d="M34 113h22M34 121h14"/>
-                </g>
-              </g>
-              <text x="12" y="10" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".45">3 OF 24 APPS REACHED</text>
-            </svg>
-          </div>
-          <p class="note">Three or four tools agreed to have an API, so those are the ones it can read. Everything else you did today sits outside it.</p>
-        </div>
-        <div class="dcard us">
-          <p class="lbl">litepipe</p>
-          <h3>The whole field, periphery included</h3>
-          <div class="art">
-            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ground)">
-              <rect x="10" y="30" width="80" height="54" rx="3" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/><path class="stroke" d="M50 84v14M34 98h32" opacity=".5"/>
-              <rect x="110" y="22" width="100" height="66" rx="3" fill="rgba(111,217,188,.2)" stroke="var(--accent-soft)" stroke-width="1.6"/><path class="stroke" d="M160 88v14M144 102h32" opacity=".5"/>
-              <rect x="230" y="30" width="80" height="54" rx="3" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/><path class="stroke" d="M270 84v14M254 98h32" opacity=".5"/>
-              <g opacity=".5"><rect x="122" y="36" width="46" height="4" rx="2" fill="var(--ground)"/><rect x="122" y="46" width="66" height="4" rx="2" fill="var(--ground)"/><rect x="122" y="56" width="34" height="4" rx="2" fill="var(--ground)"/></g>
-              <path d="M14 132h50l6-12 8 22 7-16 5 6h44l6-14 8 24 7-18 5 8h48l6-10 7 18 6-14 5 4h72" stroke="var(--accent-soft)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <p class="note">The screen is the one interface every app already has. All monitors at once, triggered by a click or a pause in typing rather than by a clock.</p>
-        </div>
-      </div>
-
-      <ul class="misses">
-        <li>The thread in WhatsApp, on the web, in a tab</li>
-        <li>The terminal, and what the command actually printed</li>
-        <li>The document somebody shared on a call and then closed</li>
-        <li>The dashboard behind a login nothing else can reach</li>
-        <li>The tab that was open at the moment a decision got made</li>
-        <li>The internal tool that will never have a public API</li>
-      </ul>
-
-      <div class="measure">
-        <div class="n">1 in 5</div>
-        <p>Measured on a real archive over three days: roughly one moment in five holds text that only the image could give. A tool reading the accessibility layer alone would have found those moments empty.</p>
-      </div>
-    </section>
-  </div>
-</div>
-
-<div class="band" id="agent">
-  <div class="in">
-    <section>
-      <p class="eyebrow">Bring your own model</p>
-      <h2>Point your own agent at it</h2>
-      <p class="say">The bridge ships inside the app. Claude Desktop, Claude Code and Cursor spawn it as a local process that opens a local file. There is no server in the middle, no account to sign into, and no monthly fee for the privilege of reading your own archive.</p>
-
-      <div class="duo">
-        <div class="dcard">
-          <p class="lbl">The hosted kind</p>
-          <h3>Out of the machine, and back</h3>
-          <div class="art">
-            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ink)">
-              <rect class="stroke dash" x="8" y="18" width="150" height="114" rx="8" opacity=".45"/>
-              <text x="16" y="34" font-family="JetBrains Mono, monospace" font-size="8.5" fill="currentColor" opacity=".45">YOUR MACHINE</text>
-              <rect class="stroke" x="32" y="60" width="70" height="44" rx="4"/>
-              <g opacity=".3"><rect x="42" y="72" width="34" height="3.5" rx="1.75" fill="currentColor"/><rect x="42" y="81" width="48" height="3.5" rx="1.75" fill="currentColor"/></g>
-              <path class="stroke dash" d="M104 82h152" opacity=".55"/>
-              <path d="M246 76l10 6-10 6" stroke="currentColor" stroke-width="1.4" fill="none" opacity=".55"/>
-              <path class="stroke" d="M258 60h44a10 10 0 0 1 0 20h-8" opacity=".7"/>
-              <rect class="stroke" x="250" y="74" width="60" height="34" rx="5"/>
-              <g opacity=".35"><rect x="258" y="86" width="30" height="3.5" rx="1.75" fill="currentColor"/><rect x="258" y="95" width="44" height="3.5" rx="1.75" fill="currentColor"/></g>
-              <g><rect x="180" y="106" width="66" height="22" rx="11" fill="#C0392B" opacity=".1"/><text x="196" y="121" font-family="JetBrains Mono, monospace" font-size="10" fill="#C0392B">$42/mo</text></g>
-            </svg>
-          </div>
-          <p class="note">A hosted server, an account to log into, and a paid tier before your own agent may read your own memory.</p>
-        </div>
-        <div class="dcard us">
-          <p class="lbl">litepipe</p>
-          <h3>It never crosses the line</h3>
-          <div class="art">
-            <svg viewBox="0 0 320 150" fill="none" aria-hidden="true" style="color:var(--ground)">
-              <rect x="8" y="18" width="304" height="114" rx="8" fill="none" stroke="var(--accent-soft)" stroke-width="1.4" stroke-dasharray="4 4" opacity=".6"/>
-              <text x="16" y="34" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--accent-soft)" opacity=".8">YOUR MACHINE</text>
-              <rect x="28" y="62" width="66" height="44" rx="4" fill="rgba(111,217,188,.14)" stroke="var(--accent-soft)" stroke-width="1.4"/>
-              <text x="38" y="88" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--accent-soft)">db.sqlite</text>
-              <path d="M96 84h30" stroke="var(--accent-soft)" stroke-width="1.6"/>
-              <rect x="128" y="66" width="64" height="36" rx="4" fill="rgba(111,217,188,.2)" stroke="var(--accent-soft)" stroke-width="1.4"/>
-              <text x="139" y="88" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--accent-soft)">bridge</text>
-              <path d="M194 84h30" stroke="var(--accent-soft)" stroke-width="1.6"/>
-              <rect x="226" y="62" width="66" height="44" rx="4" fill="none" stroke="var(--ground)" stroke-width="1.4" opacity=".75"/>
-              <text x="238" y="88" font-family="JetBrains Mono, monospace" font-size="8.5" fill="var(--ground)" opacity=".8">agent</text>
-              <circle cx="112" cy="84" r="3" fill="var(--accent-soft)" class="blink"/>
-              <circle cx="210" cy="84" r="3" fill="var(--accent-soft)" class="blink"/>
-            </svg>
-          </div>
-          <p class="note">A second program inside the app, spawned by your client, reading a file that never moves. Nothing to log into, nothing to pay.</p>
-        </div>
-      </div>
-
-      <div class="term">
-        <div class="top"><i></i><i></i><i></i><span>zsh</span></div>
-<pre><span class="p">$</span> claude mcp add litepipe -- <span class="c">\</span>
-    /Applications/litepipe.app/Contents/MacOS/litepipe-mcp
-<b>Added stdio MCP server litepipe</b></pre>
-      </div>
-
-      <div class="agent-tools">
-        <div><code>search_content</code><span>find anything that was on screen</span></div>
-        <div><code>activity_summary</code><span>how a day actually went</span></div>
-        <div><code>list_meetings</code><span>every call that was detected</span></div>
-        <div><code>meeting_transcript</code><span>what was said, with speakers</span></div>
-        <div><code>frame_context</code><span>open one moment and its neighbours</span></div>
-        <div><code>query</code><span>your own read only SQL</span></div>
-      </div>
-
-      <p class="say" style="margin-top:44px">The chat panel inside the window runs whatever agent you already pay for, on your own account and under your own credentials. It ships switched off, and turning it on is a deliberate act.</p>
-    </section>
+          </section>
   </div>
 </div>
 
@@ -1779,113 +1176,116 @@
 <div class="band dark" id="compare">
   <div class="in">
     <section>
-      <p class="eyebrow">litepipe vs Littlebird</p>
-      <h2>The same job, built the other way</h2>
-      <p class="say">Littlebird is the best funded version of this idea and it is a genuinely good product: it pays attention to your work, writes your meeting notes and delivers a briefing on a schedule, all of which this does not do. It also keeps your memory on its servers, which is what makes that version work and what makes it theirs. The comparison is not really about features. It is about where the copy of your working life sleeps.</p>
+      <p class="eyebrow">Who ends up holding it</p>
+      <h2>How litepipe is different</h2>
+      <p class="say">Open source, free, fully local. The other two hold your memory and decide who may read it. This one leaves the file with you, under MIT, and no one can put it behind a price later.</p>
 
       <div class="tablewrap">
         <table>
           <thead>
             <tr>
               <th scope="col">&nbsp;</th>
-              <th scope="col">Littlebird</th>
-              <th scope="col" class="us">litepipe</th>
+              <th scope="col" class="us"><span class="m"><img src="assets/litepipe-icon.png" alt="" width="20" height="20" style="border-radius:5px">litepipe</span></th>
+              <th scope="col"><span class="m"><svg viewBox="0 0 52 43" fill="currentColor" aria-hidden="true"><path d="M51.798 11.0941C51.1213 10.8253 48.3599 11.1758 47.4809 11.2747C45.687 11.481 41.4879 12.4678 39.9892 11.853C39.2661 11.5563 38.5747 10.9629 37.8264 10.6469C35.6489 9.73533 33.0771 10.0836 31.2748 11.6487C29.2722 13.388 28.9877 16.2732 27.0315 18.0425L28.2794 14.9875C28.2963 14.6779 26.9703 12.8763 26.6942 12.5108C24.6094 9.75682 21.7658 6.95336 19.076 4.83142C18.7977 4.61213 17.5709 3.60382 17.3348 3.62317C17.221 3.63822 17.1346 3.69842 17.084 3.80162C16.8584 4.24664 16.928 6.34494 17.1704 6.79427C19.1582 8.80657 21.0111 10.9522 22.7017 13.2354L22.4087 13.0655C17.3201 7.86707 10.9814 3.41678 4.17688 0.963754C3.34845 0.667068 1.04444 -0.19289 0.279243 0.0392988C-0.144459 0.168293 0.0262874 1.40018 0.0768787 1.75921C0.681866 5.92141 4.73549 7.2049 7.79626 9.07531L2.3851 7.48654C2.18063 11.8895 6.63899 13.7298 10.0455 14.7811C10.037 14.8843 10.115 14.9639 9.93796 14.9338C8.64788 14.7102 7.3578 14.4952 6.04665 14.4371C6.01292 15.2907 6.50618 16.185 6.97837 16.8665C8.44973 18.9992 11.0215 19.5431 13.3739 20.0161L10.2057 20.3128C10.0961 20.3881 10.174 20.4375 10.1804 20.5106C10.2542 21.2136 11.3355 22.381 11.8815 22.7959C14.2108 24.5632 17.0776 24.1912 19.7843 23.8773C19.759 24.0429 19.603 24.0128 19.5018 24.0579C18.2644 24.5847 16.8373 24.7631 15.5388 25.0813C15.3006 25.421 17.0903 26.4099 17.3411 26.526C18.3572 26.999 19.2467 27.1796 20.326 27.3989C20.4293 27.4204 20.4736 27.3365 20.4525 27.5257C18.53 30.5528 16.5485 33.5411 14.9107 36.7488C14.2846 37.9763 13.4393 39.5522 13.083 40.868C12.946 41.371 12.6383 42.4309 12.9524 42.8695C13.5447 43.3188 14.2635 42.4976 14.6661 42.0697C16.245 40.395 17.514 38.1892 18.9959 36.4069L16.2071 41.3431C16.1291 41.6118 16.8774 41.4226 17.0018 41.3861C19.173 40.754 20.9711 36.824 22.2843 35.074C27.3371 34.8568 32.0906 33.281 35.0902 28.8801C38.0393 24.5546 37.6472 18.2274 41.8104 14.7833C43.2607 13.5815 47.5989 12.4442 49.5087 11.9906C49.9767 11.8809 51.6146 11.6874 51.8676 11.5262C51.9435 11.4789 51.9624 11.3692 51.9962 11.2897C52.0236 11.1349 51.8992 11.1285 51.798 11.0898V11.0941ZM36.7071 15.1058C35.28 15.3616 34.9574 13.2526 36.2496 12.9989C37.6282 12.7258 38.0245 14.8714 36.7071 15.1058Z" /></svg> Littlebird</span></th>
+              <th scope="col"><span class="m"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"></path></svg> Computer History</span></th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <th scope="row">Where the memory lives</th>
-              <td>Their cloud, on AWS in the US East region, encrypted at rest and in transit</td>
-              <td class="us">One SQLite file in your home folder. There is no second copy anywhere, and no account that could hold one</td>
+              <td class="us">One SQLite file in your home folder</td>
+              <td>Their cloud</td>
+              <td>Local files, events wiped after 48 hours</td>
             </tr>
             <tr>
               <th scope="row">How much of the screen</th>
-              <td>The active window, read every few seconds</td>
-              <td class="us">Every monitor at once, triggered by what you do: a click, a pause in typing, a change on screen</td>
+              <td class="us">Every monitor at once</td>
+              <td>The active window</td>
+              <td>None. Clicks and keystrokes only</td>
             </tr>
             <tr>
               <th scope="row">How the text is read</th>
+              <td class="us">Accessibility layer, plus OCR</td>
               <td>The accessibility layer</td>
-              <td class="us">The accessibility layer, plus OCR for what it cannot see</td>
+              <td>Accessibility events</td>
             </tr>
             <tr>
               <th scope="row">Whether pixels are kept</th>
-              <td>No. They state plainly that they are not a screen recorder and keep no video, which is the lighter touch of the two</td>
-              <td class="us">Yes. Moments are screenshots, kept as video on your disk, so you can look at one instead of only reading it</td>
+              <td class="us">Yes, as video on your disk</td>
+              <td>No</td>
+              <td>No</td>
             </tr>
             <tr>
-              <th scope="row">Encrypted at rest</th>
-              <td>Yes, by default, with keys managed for you</td>
-              <td class="us">Only from the command line today. There is no switch in the app yet, and this is the one place they are straightforwardly safer</td>
+              <th scope="row">Whether calls are heard</th>
+              <td class="us">Yes, but only if you accept</td>
+              <td>Yes, meetings are transcribed</td>
+              <td>No microphone, ever</td>
             </tr>
             <tr>
-              <th scope="row">Connecting your own agent</th>
-              <td>A hosted server you sign into, on the Power and Pro plans, which start at 42 dollars a month</td>
-              <td class="us">A local process reading a local file. Included, with nothing to log into</td>
+              <th scope="row">Who does the summarising</th>
+              <td class="us">Whichever agent you point at it</td>
+              <td>Their servers</td>
+              <td>An OpenAI session, metered in tokens</td>
+            </tr>
+            <tr>
+              <th scope="row">Which assistants can read it</th>
+              <td class="us">Any MCP client</td>
+              <td>Theirs</td>
+              <td>ChatGPT and Codex, no API key</td>
             </tr>
             <tr>
               <th scope="row">Who supplies the model</th>
-              <td>They do, metered in credits, on plans from free to over 100 dollars a month</td>
-              <td class="us">You do, on the account you already have. Free, with nothing metered</td>
+              <td class="us">You do, on your own account</td>
+              <td>They do, in credits</td>
+              <td>They do, in tokens</td>
             </tr>
             <tr>
               <th scope="row">Where it runs</th>
-              <td>Mac, Windows in beta, plus iPhone and Android</td>
-              <td class="us">macOS on Apple silicon, and nothing else</td>
+              <td class="us">macOS on Apple silicon</td>
+              <td>Mac, Windows, phones</td>
+              <td>macOS, not in the EEA, UK or Switzerland</td>
+            </tr>
+            <tr>
+              <th scope="row">Encrypted at rest</th>
+              <td class="us">Only from the command line today</td>
+              <td>Yes, by default</td>
+              <td>No</td>
             </tr>
             <tr>
               <th scope="row">Whether you can check</th>
-              <td>SOC 2 certification and an independent audit, which is the answer a security team asks for</td>
-              <td class="us">The source, under MIT, and the commands on this page. A different kind of answer</td>
+              <td class="us">The source, under MIT</td>
+              <td>SOC 2 and an audit</td>
+              <td>Closed source</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <p class="srcnote">Every row on Littlebird's side was read from their own pages on 11 August 2026:
-        <a href="https://support.littlebird.ai/docs/context/">context</a>,
-        <a href="https://support.littlebird.ai/docs/privacy-security/">privacy and security</a>,
-        <a href="https://support.littlebird.ai/docs/mcp/">MCP server</a> and
-        <a href="https://littlebird.ai/pricing">pricing</a>. If any of it has changed, tell us and it gets fixed.</p>
-
-      <div class="concede">
-        <h3>Use Littlebird instead when you want</h3>
-        <p>An assistant on Windows or on your phone. Meeting notes written up for you, with decisions, owners and open questions. A briefing that arrives on a schedule without being asked. Integrations with Gmail, Calendar, Notion, GitHub and Linear that work the moment you connect them. A certified vendor your security team can approve, and somebody to call when it breaks. Those are all real, and this does not have any of them.</p>
-      </div>
+      <p class="srcnote">Read from their own pages, 11 and 14 August 2026: Littlebird&rsquo;s <a href="https://support.littlebird.ai/docs/context/">context</a>, <a href="https://support.littlebird.ai/docs/privacy-security/">privacy</a>, <a href="https://littlebird.ai/pricing">pricing</a>, and OpenAI&rsquo;s <a href="https://learn.chatgpt.com/docs/customization/computer-history">Computer History</a>. Tell us if any of it changed.</p>
     </section>
   </div>
 </div>
 
-<div class="band" id="install">
+<div class="band last" id="install">
   <div class="in">
-    <section>
-      <p class="eyebrow">Install</p>
-      <h2>One file, on your machine</h2>
-      <p class="say">Download, drag it to Applications, launch. It asks for the permissions it needs and starts filling the archive within a few seconds.</p>
-      <div class="cta" style="justify-content:flex-start; margin-top:38px">
-        <a class="btn" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 1.5v8.5m0 0L4.75 6.75M8 10l3.25-3.25M2.5 12v2h11v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Download for Mac
-        </a>
-        <span class="quiet"><a href="install/">the three steps, with pictures</a></span>
-      </div>
-
-      <p class="say" style="margin-top:48px">Or the engine alone, with no app. It captures into <span class="mono">~/.litepipe</span>, serves a local API, and stops with control C. No meeting banner and no microphone gate: the permissions go to your terminal.</p>
-      <div class="term">
-        <div class="top"><i></i><i></i><i></i><span>zsh</span></div>
-<pre><span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/Rafaelpta/litepipe/main/headless.sh | bash</pre>
-      </div>
-    </section>
+    <h2>Everything you have seen, said and heard, starting today</h2>
+    <p class="sub">Free, open source and fully local. Nothing to connect, no account to create, and no one to ask for your memory back.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/Rafaelpta/litepipe/releases/latest/download/litepipe.dmg"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.03-2.9 2.37-4.3 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.06-4.41 1.06-.91 0-2.31-1.03-3.8-1-1.96.03-3.76 1.14-4.77 2.89-2.03 3.53-.52 8.75 1.46 11.61.97 1.4 2.12 2.97 3.63 2.911.46-.06 2.01-.94 3.77-.94 1.76 0 2.26.94 3.8.91 1.57-.03 2.56-1.42 3.52-2.83 1.11-1.62 1.57-3.19 1.59-3.27-.03-.02-3.05-1.17-3.08-4.65M14.2 3.6c.8-.98 1.35-2.33 1.2-3.68-1.16.05-2.57.77-3.4 1.75-.74.86-1.39 2.24-1.22 3.561.3.1 2.62-.66 3.42-1.63"/></svg> Download for Mac</a>
+    </div>
+    <p class="fine">Free &middot; Apple silicon, macOS 13 or later &middot; <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.03-2.9 2.37-4.3 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.06-4.41 1.06-.91 0-2.31-1.03-3.8-1-1.96.03-3.76 1.14-4.77 2.89-2.03 3.53-.52 8.75 1.46 11.61.97 1.4 2.12 2.97 3.63 2.911.46-.06 2.01-.94 3.77-.94 1.76 0 2.26.94 3.8.91 1.57-.03 2.56-1.42 3.52-2.83 1.11-1.62 1.57-3.19 1.59-3.27-.03-.02-3.05-1.17-3.08-4.65M14.2 3.6c.8-.98 1.35-2.33 1.2-3.68-1.16.05-2.57.77-3.4 1.75-.74.86-1.39 2.24-1.22 3.561.3.1 2.62-.66 3.42-1.63"/></svg> signed and notarized by Apple</p>
   </div>
 </div>
 
 <footer>
   <div class="in">
     <div class="row">
-      <span>Everything stays on your Mac &middot; MIT licensed</span>
-      <a href="https://github.com/Rafaelpta/litepipe">github.com/Rafaelpta/litepipe</a>
+      <span class="by"><img src="assets/litepipe-icon.png" alt="" width="14" height="14">Built by <a href="https://ottic.ai">Ottic</a></span>
+      <nav class="flinks">
+        <a href="https://github.com/Rafaelpta/litepipe">Source</a>
+        <a href="#" aria-disabled="true">Privacy</a>
+        <a href="#" aria-disabled="true">Terms</a>
+      </nav>
     </div>
   </div>
 </footer>
@@ -2129,153 +1529,70 @@
   }, { threshold: 0.15 }).observe(stage);
 })();
 
-/* the meeting card: transcribed live, then who said it, then the write up you
-   asked for. It only runs while it is on screen. */
-(function () {
-  var st = document.getElementById("mstage");
-  if (!st) return;
-  var tabs = [].slice.call(st.querySelectorAll(".mtabs span")),
-      panes = [].slice.call(st.querySelectorAll(".mpanel")),
-      lines = [].slice.call(st.querySelectorAll(".tline")),
-      rows = [].slice.call(st.querySelectorAll(".srow")),
-      secs = [].slice.call(st.querySelectorAll(".wsec")),
-      ask = st.querySelector(".mask"),
-      rec = st.querySelector(".mrec");
-  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var t = [], running = false;
-
-  function later(fn, ms) { t.push(setTimeout(fn, ms)); }
-  function clear() { t.forEach(clearTimeout); t = []; }
-  function show(i) {
-    tabs.forEach(function (b, n) { b.classList.toggle("on", n === i); });
-    panes.forEach(function (p, n) { p.classList.toggle("on", n === i); });
-  }
-  function wipe() {
-    lines.concat(rows).forEach(function (e) { e.classList.remove("on"); });
-    secs.forEach(function (s) { s.classList.remove("done"); });
-    ask.classList.remove("on");
-    rec.classList.remove("on");
-    st.classList.remove("live");
-  }
-
-  function run() {
-    clear(); wipe(); show(0);
-    st.classList.add("live");
-    lines.forEach(function (l, n) { later(function () { l.classList.add("on"); }, 600 + n * 850); });
-    later(function () { rec.classList.add("on"); }, 950);
-    later(function () { rec.classList.remove("on"); st.classList.remove("live"); }, 4600);
-
-    later(function () {
-      show(1);
-      rows.forEach(function (r, n) { later(function () { r.classList.add("on"); }, n * 240); });
-    }, 5200);
-
-    later(function () { show(2); ask.classList.add("on"); }, 8600);
-    secs.forEach(function (s, n) { later(function () { s.classList.add("done"); }, 9400 + n * 800); });
-  }
-
-  /* with motion turned off the card simply arrives finished */
-  if (reduced) {
-    show(2); ask.classList.add("on");
-    lines.concat(rows).forEach(function (e) { e.classList.add("on"); });
-    secs.forEach(function (s) { s.classList.add("done"); });
-    return;
-  }
-
-  if (!("IntersectionObserver" in window)) { run(); return; }
-  var io = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
-    });
-  }, { threshold: 0.25 });
-  io.observe(st);
-})();
-
-/* the repeated chore: the steps land first, then which of them an agent could
-   take, then the line admitting nobody ever wrote any of it down */
-(function () {
-  var st = document.getElementById("wstage");
-  if (!st) return;
-  var steps = [].slice.call(st.querySelectorAll(".wstep")),
-      sum = st.querySelector(".wsum");
-  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var t = [], running = false;
-
-  function later(fn, ms) { t.push(setTimeout(fn, ms)); }
-  function clear() { t.forEach(clearTimeout); t = []; }
-
-  function run() {
-    clear();
-    steps.forEach(function (s) { s.classList.remove("on"); });
-    st.classList.remove("tagged");
-    sum.classList.remove("on");
-
-    steps.forEach(function (s, n) { later(function () { s.classList.add("on"); }, 500 + n * 600); });
-    later(function () { st.classList.add("tagged"); }, 4000);
-    later(function () { sum.classList.add("on"); }, 5200);
-  }
-
-  if (reduced) {
-    steps.forEach(function (s) { s.classList.add("on"); });
-    st.classList.add("tagged"); sum.classList.add("on");
-    return;
-  }
-
-  if (!("IntersectionObserver" in window)) { run(); return; }
-  var io = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
-    });
-  }, { threshold: 0.25 });
-  io.observe(st);
-})();
-
-/* o contexto entra por cima, desce pelo fio, e volta como resposta */
-(function () {
-  var st = document.getElementById("agstage");
-  if (!st) return;
-  var srcs = [].slice.call(st.querySelectorAll(".jsrc .c")),
-      wire = st.querySelector(".jwire"),
-      main = st.querySelector(".jmain"),
-      ask = st.querySelector(".jask"),
-      ans = st.querySelector(".jans");
-  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var t = [], running = false;
-  function later(fn, ms) { t.push(setTimeout(fn, ms)); }
-  function clear() { t.forEach(clearTimeout); t = []; }
-
-  function run() {
-    clear();
-    srcs.forEach(function (e) { e.classList.remove("on"); });
-    wire.classList.remove("on");
-    [main, ask, ans].forEach(function (e) { e.classList.remove("on"); });
-
-    srcs.forEach(function (e, n) { later(function () { e.classList.add("on"); }, 300 + n * 320); });
-    later(function () { wire.classList.add("on"); }, 1400);
-    later(function () { main.classList.add("on"); }, 2400);
-    later(function () { ask.classList.add("on"); }, 3100);
-    later(function () { ans.classList.add("on"); }, 3900);
-  }
-
-  if (reduced) {
-    srcs.concat([wire, main, ask, ans]).forEach(function (e) { e.classList.add("on"); });
-    return;
-  }
-  if (!("IntersectionObserver" in window)) { run(); return; }
-  var io = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (e.isIntersecting && !running) { running = true; run(); io.unobserve(st); }
-    });
-  }, { threshold: 0.25 });
-  io.observe(st);
-})();
-
 /* as tres leituras da arquitetura, uma sequencia por palco */
-["a", "b", "c", "d", "e"].forEach(function (k) {
-  var st = document.getElementById("stage-" + k);
+/* o arco: as marcas trocam de lugar, e a do meio fica em destaque.
+   O canvas tem medida fixa e e reduzido para caber na coluna. */
+(function () {
+  var palco = document.getElementById("stage-arc"),
+      canvas = document.getElementById("arccanvas"),
+      arc = document.getElementById("arc");
+  if (!palco || !canvas || !arc) return;
+
+  var LUGARES = [
+    [105, 14, 43], [172, 19, 55], [254, 40, 68], [349, 73, 85],
+    [432, 157, 108], [474, 298, 85], [480, 416, 68], [461, 517, 55]
+  ];
+  var HERO = 4;
+  var chips = [].slice.call(arc.querySelectorAll(".chip"));
+
+  function encaixa() {
+    var e = palco.clientWidth / 583;
+    canvas.style.transform = "scale(" + e + ")";
+  }
+  encaixa();
+  window.addEventListener("resize", encaixa);
+
+  /* o icone e dimensionado em pixel, porque porcentagem dentro de flex
+     resolve para zero em alguns casos */
+  function assenta(c, l, ehHero) {
+    c.style.left = l[0] + "px";
+    c.style.top = l[1] + "px";
+    c.style.width = l[2] + "px";
+    c.style.height = l[2] + "px";
+    var ico = c.querySelector("svg"), d = Math.round(l[2] * 0.54);
+    if (ico) { ico.style.width = d + "px"; ico.style.height = d + "px"; }
+    c.classList.toggle("big", ehHero);
+    c.classList.toggle("lit", ehHero);
+  }
+
+  chips.forEach(function (c, n) { assenta(c, LUGARES[n], n === HERO); });
+
+  var passo = 0;
+  function girar() {
+    passo = (passo + 1) % LUGARES.length;
+    chips.forEach(function (c, n) {
+      var i = (n + passo) % LUGARES.length;
+      assenta(c, LUGARES[i], i === HERO);
+    });
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var rodando = null;
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !rodando) rodando = setInterval(girar, 2600);
+      else if (!e.isIntersecting && rodando) { clearInterval(rodando); rodando = null; }
+    });
+  }, { threshold: 0.25 });
+  io.observe(palco);
+})();
+
+["agstage"].forEach(function (k) {
+  var st = document.getElementById(k);
   if (!st) return;
   var steps = [].slice.call(st.querySelectorAll(".fade")),
       bound = st.querySelector(".bound"),
+      fan = st.closest(".meet") ? st.closest(".meet").querySelector(".converge") : null,
       wires = [].slice.call(st.querySelectorAll(".jwire, .legs")),
       loop = st.querySelector(".loop");
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2286,6 +1603,7 @@
   function done() {
     steps.concat(wires).forEach(function (e) { e.classList.add("on"); });
     if (bound) bound.classList.add("on");
+    if (fan) fan.classList.add("on");
     if (loop) loop.classList.add("on");
   }
 
@@ -2293,11 +1611,13 @@
     clear();
     steps.concat(wires).forEach(function (e) { e.classList.remove("on"); });
     if (bound) bound.classList.remove("on");
+    if (fan) fan.classList.remove("on");
     if (loop) loop.classList.remove("on");
 
     /* no laco a linha se desenha primeiro, e os nos pousam sobre ela */
     var head = loop ? 900 : 300;
     if (loop) later(function () { loop.classList.add("on"); }, 300);
+    if (fan) later(function () { fan.classList.add("on"); }, 200);
     steps.forEach(function (e, n) { later(function () { e.classList.add("on"); }, head + n * 420); });
     wires.forEach(function (e, n) { later(function () { e.classList.add("on"); }, head + 700 + n * 900); });
     if (bound) later(function () { bound.classList.add("on"); }, head + steps.length * 420 + 300);
@@ -2343,7 +1663,7 @@
               "The pricing conversation, written as the lesson rather than the deal."] }
   ];
 
-  [{ id: "stage-d", q: ".jask b" }, { id: "stage-e", q: ".ask1" }].forEach(function (cfg) {
+  [{ id: "agstage", q: ".jask b" }].forEach(function (cfg) {
     var st = document.getElementById(cfg.id);
     if (!st) return;
     var qEl = st.querySelector(cfg.q),
