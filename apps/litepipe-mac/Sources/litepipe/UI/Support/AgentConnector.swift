@@ -62,25 +62,72 @@ enum AgentConnector {
     /// path that existed on one machine in the world. Reading it out of the bundle
     /// means it is there for anyone who dragged the app to Applications, it moves
     /// with the app, and it is covered by the same signature and notarisation.
-    /// Whether the bridge being registered is the one inside the app, or the one a
-    /// `swift build` left in a build directory.
     static var isBundled: Bool {
         FileManager.default.isExecutableFile(atPath: bundledServerPath)
+    }
+
+    /// Where the app happens to be running from, which decides whether connecting
+    /// is safe at all.
+    ///
+    /// A client config holds an absolute path and reads it back weeks later. Written
+    /// while the app runs from a mounted disk image it names `/Volumes/litepipe/…`,
+    /// which stops existing the moment the image is ejected. The person is then left
+    /// with a server that fails every question and nothing on screen explaining why.
+    /// macOS adds a second version of the same trap: a freshly downloaded app is run
+    /// from a read only translocated copy whose path is a random directory that is
+    /// gone by the next launch.
+    enum Location {
+        /// A stable path. Writing it into a config is safe.
+        case installed
+        /// Running from a mounted image, so the path dies on eject.
+        case removableVolume
+        /// Running from App Translocation, so the path dies on quit.
+        case translocated
+        /// No bundle at all, which is a `swift build` from a checkout.
+        case development
+    }
+
+    static var location: Location {
+        guard isBundled else { return .development }
+        let path = Bundle.main.bundleURL.path
+        if path.hasPrefix("/Volumes/") { return .removableVolume }
+        if path.contains("/AppTranslocation/") { return .translocated }
+        return .installed
     }
 
     private static var bundledServerPath: String {
         Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/litepipe-mcp").path
     }
 
+    /// The copy sitting at a path that survives this app being quit or unmounted.
+    private static var installedServerPath: String? {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        for app in ["/Applications/litepipe.app", "\(home)/Applications/litepipe.app"] {
+            let candidate = app + "/Contents/MacOS/litepipe-mcp"
+            if FileManager.default.isExecutableFile(atPath: candidate) { return candidate }
+        }
+        return nil
+    }
+
+    /// The path that gets written into somebody else's config file.
+    ///
+    /// The running copy is preferred while it lives somewhere stable, so a developer
+    /// testing a build registers the build they are testing. Only when the running
+    /// copy is somewhere that will disappear does it fall back to an installed one.
     static var serverPath: String {
-        let bundled = bundledServerPath
-        if FileManager.default.isExecutableFile(atPath: bundled) { return bundled }
-        // A dev build has no bundle around it, so fall back to the sibling the
-        // same `swift build` produced. Without this the connect flow can only be
-        // tried by assembling an app first, which is the slowest way to find out
-        // it is wrong.
-        return Bundle.main.executableURL?.deletingLastPathComponent()
-            .appendingPathComponent("litepipe-mcp").path ?? bundled
+        switch location {
+        case .installed:
+            return bundledServerPath
+        case .removableVolume, .translocated:
+            return installedServerPath ?? bundledServerPath
+        case .development:
+            // A dev build has no bundle around it, so fall back to the sibling the
+            // same `swift build` produced. Without this the connect flow can only be
+            // tried by assembling an app first, which is the slowest way to find out
+            // it is wrong.
+            return Bundle.main.executableURL?.deletingLastPathComponent()
+                .appendingPathComponent("litepipe-mcp").path ?? bundledServerPath
+        }
     }
 
     /// The bridge exists unless the app was assembled wrong, which is worth
@@ -89,11 +136,38 @@ enum AgentConnector {
         FileManager.default.isExecutableFile(atPath: serverPath)
     }
 
+    /// Whether a path written now will still resolve after this app is quit.
+    static var canConnect: Bool {
+        guard isReady else { return false }
+        switch location {
+        case .installed, .development: return true
+        case .removableVolume, .translocated: return installedServerPath != nil
+        }
+    }
+
+    /// What to say instead of connecting, in words the person can act on.
+    static var blockedReason: String? {
+        if !isReady {
+            return "The bridge is missing from this copy of litepipe. Download the app again."
+        }
+        guard !canConnect else { return nil }
+        switch location {
+        case .removableVolume:
+            return "litepipe is running from the disk image. Drag it to Applications and open it "
+                 + "from there, otherwise the connection breaks as soon as the image is ejected."
+        case .translocated:
+            return "macOS is running litepipe from a temporary copy. Drag it to Applications and "
+                 + "open it from there, otherwise the connection breaks when the app quits."
+        case .installed, .development:
+            return nil
+        }
+    }
+
     // MARK: - Connect
 
     @discardableResult
     static func connect(_ target: Target) -> Bool {
-        guard isReady else { return false }
+        guard canConnect else { return false }
         // No key and no port: the bridge opens the archive file directly, so it
         // answers with the app closed and there is no secret to leak into a
         // config file that other tools read.

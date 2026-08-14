@@ -59,10 +59,16 @@ while let line = readLine(strippingNewline: true) {
 
     switch method {
     case "initialize":
-        // Echo the version the client asked for. Pinning our own would make a
-        // newer client fail on a field neither side actually disagrees about.
+        // Answer with a revision this server actually speaks. Echoing back whatever
+        // was asked for is friendlier right up until a client asks for a revision
+        // that changes the shape of these messages, at which point we would have
+        // claimed support we do not have and the failure lands somewhere useless.
+        // Naming the newest one we do speak is what the spec asks for, and leaves
+        // the client to decide whether to carry on.
+        let spoken = ["2025-06-18", "2025-03-26", "2024-11-05"]
         let params = msg["params"] as? [String: Any] ?? [:]
-        let version = params["protocolVersion"] as? String ?? "2025-06-18"
+        let asked = params["protocolVersion"] as? String ?? ""
+        let version = spoken.contains(asked) ? asked : spoken[0]
         reply(id as Any, [
             "protocolVersion": version,
             "capabilities": ["tools": [:] as [String: Any]],

@@ -19,8 +19,8 @@ struct ConnectAgentsView: View {
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
-                    if !AgentConnector.isReady {
-                        missingRequirement
+                    if !AgentConnector.canConnect {
+                        cannotConnect
                     } else if installed.isEmpty {
                         nothingInstalled
                     } else {
@@ -130,23 +130,31 @@ struct ConnectAgentsView: View {
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 9))
     }
 
-    private var missingRequirement: some View {
+    /// Shown instead of the client list when connecting now would write a path that
+    /// stops resolving later. Refusing is the kinder failure: a config pointing at an
+    /// ejected disk image looks connected and answers nothing.
+    private var cannotConnect: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Node is missing")
+            Text(AgentConnector.isReady ? "Move litepipe to Applications first"
+                                        : "The bridge is missing")
                 .font(.system(size: 13, weight: .medium))
-            Text("""
-                 The bridge that lets an agent read the archive runs on Node. \
-                 Install it and reopen this window. Nothing else is needed, and \
-                 nothing about the archive changes.
-                 """)
+            Text(AgentConnector.blockedReason ?? "")
                 .font(.system(size: 12.5))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Button("How to install Node") {
-                if let url = URL(string: "https://nodejs.org") { NSWorkspace.shared.open(url) }
+            if AgentConnector.isReady {
+                Button("Show litepipe in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
+                }
+                .controlSize(.small)
+                .padding(.top, 4)
+            } else {
+                Button("Download litepipe again") {
+                    if let url = URL(string: "https://litepipe.ai") { NSWorkspace.shared.open(url) }
+                }
+                .controlSize(.small)
+                .padding(.top, 4)
             }
-            .controlSize(.small)
-            .padding(.top, 4)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

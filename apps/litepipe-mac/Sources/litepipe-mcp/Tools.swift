@@ -13,6 +13,9 @@ enum Tools {
 
     struct Tool {
         let name: String
+        /// What a client shows a person picking a tool from a list. The name is for
+        /// the model and stays in snake case; this is the sentence a human reads.
+        let title: String
         let description: String
         let schema: [String: Any]
         let run: ([String: Any]) throws -> String
@@ -28,8 +31,27 @@ enum Tools {
 
     static let byName: [String: Tool] = Dictionary(uniqueKeysWithValues: all.map { ($0.name, $0) })
 
+    /// Every tool here reads and nothing else. Saying so in the fields a client can
+    /// check, rather than only in a README, is what lets a careful client mark this
+    /// server safe without anyone taking our word for it.
+    ///
+    /// `openWorldHint` is false because the archive is a closed domain: one file on
+    /// this disk. There is no third party for a call to reach.
+    private static let readOnly: [String: Any] = [
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+    ]
+
     static var manifest: [[String: Any]] {
-        all.map { ["name": $0.name, "description": $0.description, "inputSchema": $0.schema] }
+        all.map {
+            ["name": $0.name,
+             "title": $0.title,
+             "description": $0.description,
+             "inputSchema": $0.schema,
+             "annotations": readOnly]
+        }
     }
 
     // MARK: Tools
@@ -38,6 +60,7 @@ enum Tools {
     /// is a hit there.
     private static let searchContent = Tool(
         name: "search_content",
+        title: "Search the archive",
         description: """
             Full text search over everything captured on screen. Returns the moments \
             that matched, newest first, with the sentence that matched and where it \
@@ -90,6 +113,7 @@ enum Tools {
     /// What a day looked like, without reading the day.
     private static let activitySummary = Tool(
         name: "activity_summary",
+        title: "Summarise a day",
         description: """
             Where the time went on a given day: which apps, for how long, how many \
             captures each, and any meetings. Start here for "what did I do" questions \
@@ -132,6 +156,7 @@ enum Tools {
 
     private static let listMeetings = Tool(
         name: "list_meetings",
+        title: "List meetings",
         description: "Meetings detected from audio, newest first, with how much was transcribed.",
         schema: object(["limit": integer("How many. Default 20.")], required: [])
     ) { args in
@@ -150,6 +175,7 @@ enum Tools {
 
     private static let meetingTranscript = Tool(
         name: "meeting_transcript",
+        title: "Read a meeting transcript",
         description: "The transcript of one meeting, in order, with speakers and times.",
         schema: object(["meeting_id": integer("From list_meetings.")], required: ["meeting_id"])
     ) { args in
@@ -168,6 +194,7 @@ enum Tools {
     /// gets the rest of the screen, and what came before and after it.
     private static let frameContext = Tool(
         name: "frame_context",
+        title: "Open a moment",
         description: """
             Everything captured in one moment, plus the captures immediately before \
             and after it. Use it on a frame id returned by search_content.
@@ -206,15 +233,38 @@ enum Tools {
     /// The tool that makes the rest of them optional.
     private static let rawQuery = Tool(
         name: "query",
+        title: "Query the archive with SQL",
         description: """
             Read only SQL over the archive. SELECT statements only; a LIMIT is added \
-            if you leave one out. Tables: frames(id, timestamp, app_name, window_name, \
-            browser_url, full_text, accessibility_text, capture_trigger, text_source, \
-            video_chunk_id, offset_index), ocr_text(frame_id, text), meetings(id, \
-            meeting_start, meeting_end, meeting_app), meeting_transcript_segments(\
-            meeting_id, timestamp, speaker, transcription), audio_transcriptions, \
-            elements, video_chunks(id, file_path, fps). Timestamps are UTC ISO 8601: \
-            compare with datetime(timestamp) and group with date(timestamp).
+            if you leave one out. Timestamps are UTC ISO 8601: compare with \
+            datetime(timestamp) and group with date(timestamp).
+
+            frames(id, timestamp, app_name, window_name, browser_url, full_text, \
+            accessibility_text, capture_trigger, text_source, document_path, \
+            video_chunk_id, offset_index) is one row per captured moment.
+
+            elements(id, frame_id, source, role, text, parent_id, depth, left_bound, \
+            top_bound, width_bound, height_bound, confidence, sort_order, properties, \
+            on_screen) is every piece of text on that screen as its own row, with \
+            where it sat: the bounds are 0 to 1, top_bound 0 is the top of the screen. \
+            source is 'accessibility' or 'ocr'. This is how you read a layout rather \
+            than a page of text: rows near each other in top_bound were near each \
+            other on screen, so the line under a heading, or the message under a name \
+            in a sidebar, is found by joining elements to itself on a small top_bound \
+            difference within one frame. Chat apps that expose only a conversation \
+            list are readable this way and no other.
+
+            audio_transcriptions(id, audio_chunk_id, timestamp, transcription, device, \
+            is_input_device, speaker_id, transcription_engine, start_time, end_time) \
+            is what was heard, with speaker_id joining speakers(id, name).
+
+            ui_events(id, timestamp, event_type, text_content, app_name, window_title, \
+            browser_url, element_role, element_name, frame_id) is what was typed, \
+            clicked and copied; event_type includes 'text', 'click', 'clipboard'.
+
+            Also ocr_text(frame_id, text), meetings(id, meeting_start, meeting_end, \
+            meeting_app), meeting_transcript_segments(meeting_id, timestamp, speaker, \
+            transcription), video_chunks(id, file_path, fps).
             """,
         schema: object(["sql": string("A single SELECT statement.")], required: ["sql"])
     ) { args in

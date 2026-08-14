@@ -64,6 +64,9 @@ Bugs in the shared code go back upstream, as in
   socket is the app talking to its own engine.
 * **One folder holds it all.** SQLite with full text search, so your agent reads
   it directly.
+* **Any agent can read it.** A bridge ships inside the app, so Claude Code,
+  Claude Desktop, Cursor or anything else that speaks MCP connects with one
+  line and no install. Read only, no port, no key. See [docs/MCP.md](docs/MCP.md).
 
 ## Install
 

@@ -110,12 +110,14 @@ fn print_desktop_app_tip() {
 fn print_mcp_tip() {
     eprintln!();
     eprintln!(
-        "  {} wire screenpipe into claude with one command:",
+        "  {} wire litepipe into claude with one command:",
         "tip:".cyan().bold(),
     );
+    // The bridge ships inside the app, so this names the binary already on the
+    // disk rather than fetching a stranger's package from npm at every launch.
     eprintln!(
         "       {}",
-        "claude mcp add screenpipe -- npx -y screenpipe-mcp"
+        "claude mcp add litepipe -- /Applications/litepipe.app/Contents/MacOS/litepipe-mcp"
             .green()
             .bold(),
     );
