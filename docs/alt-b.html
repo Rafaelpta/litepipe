@@ -707,13 +707,19 @@
   .qa .ans { padding: 0 46px 28px 0; max-width: 44rem; font-size: 16.5px; line-height: 1.72; color: var(--ink-2); text-wrap: pretty; }
   .qa .ans code { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink); background: rgba(11, 16, 21, .05); padding: 1px 6px; border-radius: 4px; }
 
-  footer { background: var(--ink); color: var(--faint); padding: 20px 0 22px; }
-  footer .row { display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: space-between; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 10.5px; }
-  footer .by { display: flex; align-items: center; gap: 8px; }
-  footer .by img { width: 14px; height: 14px; border-radius: 4px; opacity: .7; }
-  footer .by a { color: var(--ground); border-bottom: 1px solid rgba(255,255,255,.28); padding-bottom: 1px; }
-  footer .flinks { display: flex; flex-wrap: wrap; gap: 20px; }
-  footer a:hover { color: var(--ground); }
+  /* o rodape nao precisa de peso: uma linha fina separa, e o resto sussurra */
+  footer { background: var(--ground); border-top: 1px solid var(--rule); color: var(--muted); padding: 16px 0 18px; }
+  footer .row { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; align-items: center; font-family: "DM Sans", sans-serif; font-size: 13.5px; }
+  footer .by { display: flex; align-items: center; gap: 11px; color: var(--ink-2); }
+  footer .by .mk { width: 20px; height: 20px; flex: none; color: var(--ink); }
+  footer .flinks a, footer .by { white-space: nowrap; }
+  footer .by .sep { width: 1px; height: 15px; background: var(--rule-2); }
+  footer .by a { color: var(--ink); border-bottom: 1px solid var(--rule-2); padding-bottom: 1px; }
+  footer .by a:hover { border-color: var(--ink); }
+  footer .flinks { display: flex; flex-wrap: wrap; gap: 22px; }
+  footer .flinks a { color: var(--ink-2); }
+  footer .flinks a:hover { color: var(--ink); }
+  footer .flinks a[aria-disabled="true"] { color: var(--faint); cursor: default; }
 
   /* shared drawing bits */
   .stroke { fill: none; stroke: currentColor; stroke-width: 1.4; }
@@ -1353,7 +1359,7 @@
 <footer>
   <div class="in">
     <div class="row">
-      <span class="by"><img src="assets/litepipe-icon.png" alt="" width="14" height="14">Built by <a href="https://ottic.ai">Ottic</a></span>
+      <span class="by"><svg class="mk" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><circle cx="8" cy="5" r="1.8" opacity=".9"/><circle cx="12" cy="5" r="1.8" opacity=".9"/><circle cx="16" cy="5" r="1.8"/><circle cx="20" cy="5" r="1.8" opacity=".9"/><circle cx="24" cy="5" r="1.8" opacity=".9"/><circle cx="4" cy="9" r="1.8" opacity=".72"/><circle cx="8" cy="9" r="1.8"/><circle cx="24" cy="9" r="1.8"/><circle cx="28" cy="9" r="1.8" opacity=".72"/><circle cx="4" cy="13" r="1.8" opacity=".9"/><circle cx="8" cy="13" r="1.8" opacity=".55"/><circle cx="24" cy="13" r="1.8" opacity=".55"/><circle cx="28" cy="13" r="1.8" opacity=".9"/><circle cx="4" cy="17" r="1.8"/><circle cx="28" cy="17" r="1.8"/><circle cx="4" cy="21" r="1.8" opacity=".9"/><circle cx="8" cy="21" r="1.8" opacity=".55"/><circle cx="24" cy="21" r="1.8" opacity=".55"/><circle cx="28" cy="21" r="1.8" opacity=".9"/><circle cx="4" cy="25" r="1.8" opacity=".72"/><circle cx="8" cy="25" r="1.8"/><circle cx="24" cy="25" r="1.8"/><circle cx="28" cy="25" r="1.8" opacity=".72"/><circle cx="8" cy="29" r="1.8" opacity=".9"/><circle cx="12" cy="29" r="1.8" opacity=".9"/><circle cx="16" cy="29" r="1.8"/><circle cx="20" cy="29" r="1.8" opacity=".9"/><circle cx="24" cy="29" r="1.8" opacity=".9"/></svg><i class="sep"></i>Built by <a href="https://ottic.ai">Ottic</a></span>
       <nav class="flinks">
         <a href="https://github.com/Rafaelpta/litepipe">Source</a>
         <a href="#" aria-disabled="true">Privacy</a>
