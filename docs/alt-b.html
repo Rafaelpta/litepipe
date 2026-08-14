@@ -230,6 +230,21 @@
   /* the four heavy cards go below 768, as five of eleven do on theirs */
   @media (max-width: 767px) { .pcards figure.drop { display: none; } }
 
+  /* no telefone o palco espalhado nao cabe. encolher ate caber deixaria os prints
+     ilegiveis e o titulo, que fica por cima, cai em cima dos cartoes. entao aqui
+     ele deixa de ser palco: o titulo sobe e o que resta dos cartoes vira grade */
+  @media (max-width: 700px) {
+    .periph { width: auto; margin-left: 0; padding: 8px 0 0; }
+    .periph .rays { display: none; }
+    .pstage { width: auto; max-width: none; height: auto; left: auto; transform: none;
+              display: flex; flex-direction: column; gap: 26px; padding: 0 20px; }
+    .pcentre { order: -1; position: static; transform: none; width: auto; z-index: auto; }
+    .pcentre h2 { font-size: 34px; letter-spacing: -1.5px; }
+    .pcentre p { margin: 14px 0 0; max-width: none; font-size: 16.5px; line-height: 1.6; }
+    .pcards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 10px; }
+    .pcards figure { position: static; width: auto; }
+  }
+
   /* ---------- the demo ---------- */
   .demo-top { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: center; justify-content: space-between; }
   .demo-tabs { display: inline-flex; gap: 2px; padding: 4px; border-radius: 99px; background: oklch(0.955 0.002 75); border: 1px solid var(--rule); }
@@ -713,6 +728,24 @@
   .qa .sign::after { width: 1.5px; height: 18px; transform: translate(-50%, -50%); }
   .qa .ans { padding: 0 46px 28px 0; max-width: 44rem; font-size: 16.5px; line-height: 1.72; color: var(--ink-2); text-wrap: pretty; }
   .qa .ans code { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink); background: rgba(11, 16, 21, .05); padding: 1px 6px; border-radius: 4px; }
+
+  /* o diagrama e uma composicao de cartoes sobrepostos em coordenadas fixas, feita
+     para 583px. num telefone os cartoes se cobrem e os textos ao lado das setas
+     viram colunas de duas palavras. aqui a sobreposicao se desfaz e tudo empilha */
+  @media (max-width: 700px) {
+    #connected .mstage { height: auto; padding: 16px; }
+    .lyr { padding: 22px 14px 18px; }
+    .lyr .fall { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .lyr .fall svg { width: 100%; max-width: 210px; }
+    .jpanel { height: auto; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .jcard { position: static; width: auto; left: auto; right: auto; top: auto; bottom: auto; }
+    .quote .who { margin-left: 0; }
+
+    /* item de grade nao encolhe abaixo do proprio conteudo enquanto o minimo for
+       automatico, e era isso que empurrava o painel do app para fora da tela */
+    .app > * { min-width: 0; }
+    .segs { flex-wrap: wrap; }
+  }
 
   /* o rodape nao precisa de peso: uma linha fina separa, e o resto sussurra */
   footer { background: var(--ground); border-top: 1px solid var(--rule); color: var(--muted); padding: 16px 0 18px; }
