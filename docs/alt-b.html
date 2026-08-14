@@ -343,11 +343,11 @@
   .segs span.on { background: #fff; color: var(--o-fg); box-shadow: 0 1px 2px rgba(11,16,21,.08); }
   .segs svg { opacity: .65; }
 
-  .sections { display: flex; flex-direction: column; gap: 22px; margin-top: 26px; }
+  .sections { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
   .sec { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
   .sec.on { opacity: 1; transform: none; }
   .sec p.lab, p.lab { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--o-faint); margin-bottom: 12px; line-height: 1.4; }
-  .sec p { font-size: 15px; line-height: 1.65; color: oklch(0.32 0.008 56); max-width: 42rem; }
+  .sec p { font-size: 16.5px; line-height: 1.7; color: oklch(0.30 0.008 56); max-width: 40rem; text-wrap: pretty; }
   .sec p + p { margin-top: 10px; }
   .sec ul { list-style: none; display: flex; flex-direction: column; gap: 13px; }
   .sec li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 1.5; color: oklch(0.32 0.008 56); }
@@ -909,8 +909,8 @@
                     <h2>Peripheral context connected to your agents, locally</h2>
           <p>Everything you saw, said and heard stays in one file on your Mac. Your own AI reads it right there, on the account you already pay for. Nothing is uploaded, and nothing leaves the machine.</p>
           <div class="quote">
-            <p>&ldquo;Holy shit. I can give my agents persistent context of everything I do, without sending anything to a third party cloud.&rdquo;</p>
-            <div class="who"><img src="assets/rafael.jpg" alt="" width="48" height="48" loading="lazy"><div class="nm"><b>Rafael Costa</b><span>CEO, Ottic</span></div></div>
+            <p>&ldquo;Having a context layer that runs locally is a huge win.&rdquo;</p>
+            <div class="who"><img src="assets/killian.jpg" alt="" width="48" height="48" loading="lazy"><div class="nm"><b>Killian Dunne</b><span>CEO, Laugh Labs</span></div></div>
           </div>
         </div>
 
@@ -995,9 +995,9 @@
 
       <div class="demo-top">
         <div class="demo-tabs" role="tablist" aria-label="Things you can ask">
-          <button class="dtab scene-btn" role="tab" aria-selected="true" data-i="0" aria-controls="stage">Yesterday</button>
-          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="1" aria-controls="stage">Left hanging</button>
-          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="2" aria-controls="stage">Repeated work</button>
+          <button class="dtab scene-btn" role="tab" aria-selected="true" data-i="0" aria-controls="stage">Owed</button>
+          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="1" aria-controls="stage">That number</button>
+          <button class="dtab scene-btn" role="tab" aria-selected="false" data-i="2" aria-controls="stage">The fix</button>
         </div>
         <p class="demo-caption" id="caption"></p>
       </div>
@@ -1051,17 +1051,7 @@
                   <span class="num" id="timer">0.0s</span>
                   <span class="num" id="tokens">&darr; 0 tokens</span>
                 </div>
-                <div class="doc" id="doc">
-                  <h4 id="dtitle"></h4>
-                  <p class="meta" id="dmeta"></p>
-                  <div class="segs">
-                    <span class="on"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5l1.3 3.2 3.2 1.3-3.2 1.3L8 11.5 6.7 8.3 3.5 7l3.2-1.3z"/></svg>Summary</span>
-                    <span><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="9" rx="1.5"/><path d="M5 6.5h6M5 9.5h4"/></svg>Moments</span>
-                    <span><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg>Timeline</span>
-                  </div>
-                </div>
                 <div class="sections" id="sections"></div>
-                <div class="srcs" id="srcs"></div>
               </div>
 
               <div class="composer" id="composer">
@@ -1092,11 +1082,11 @@
       </div>
 
       <div class="prompts" role="tablist" aria-label="More things you can ask">
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="3" aria-controls="stage">Catch me up, I was out Thursday.</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="4" aria-controls="stage">Who was I talking to when this came up?</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="5" aria-controls="stage">How much of last week went to this client?</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="6" aria-controls="stage">What did I say I would send, and to whom?</button>
-        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="7" aria-controls="stage">Find the dashboard I had open on Tuesday.</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="3" aria-controls="stage">Catch me up on Ana before this call.</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="4" aria-controls="stage">Turn last week into line items for this client.</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="5" aria-controls="stage">When did we decide the pricing, and who was in the room?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="6" aria-controls="stage">What am I doing over and over that a script could do?</button>
+        <button class="ppill scene-btn" role="tab" aria-selected="false" data-i="7" aria-controls="stage">What did that paper say about the diagram on page three?</button>
       </div>
 
 
@@ -1424,88 +1414,61 @@
 <script>
 (function () {
   var S = [
-    { cap: "Ask what a day actually went to, and get it back in sentences instead of a timeline.",
-      q: "Walk me through yesterday.",
-      title: "Yesterday, hour by hour", meta: "Monday \u00b7 09:14 to 18:20 \u00b7 4 sources",
-      steps: [["Looking at how the day went", "activity_summary"], ["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
-      secs: [
-        { lab: "The shape of it", p: "Two blocks. The morning went to the auth migration, finished and merged just before lunch. The afternoon was the launch post, rewritten four times, and the call with Ana." },
-        { lab: "Decided on the call", p: "The permissions step becomes one action per line, and the app restarts on its own instead of asking." },
-        { lab: "Left open", items: [["the pricing redirect, half done since Thursday", 0], ["Marco, still waiting on the invoice reply", 0]] }
-      ],
-      mom: [["Terminal", "09:14"], ["Chrome", "14:02"], ["Meet", "15:40"], ["Gmail", "18:20"]] },
+    { cap: "Everything you promised out loud and never sent, written back in the words you used.",
+      q: "Draft the replies to everything I promised and never sent.",
+      steps: [["Searching what was said", "search_content"], ["Reading a transcript", "meeting_transcript"], ["Querying the archive", "query"]],
+      say: ["Three are still open. On Tuesday's call you told Marco the invoice would go out that afternoon, and it never went. You told Ana you would send the onboarding copy after the review. And you told Prerna you would look at the paperwork by Friday.",
+            "I wrote all three, each in the words you used when you promised it, so they read like you and not like a template.",
+            "They are drafts in your editor. Nothing was sent."] },
 
-    { cap: "Everything you started or promised and never closed, oldest first.",
-      q: "What have I left hanging?",
-      title: "Five things still open", meta: "Across three weeks \u00b7 4 sources",
-      steps: [["Searching what was on screen", "search_content"], ["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"]],
-      secs: [
-        { lab: "Five, oldest first", items: [["Marco's invoice, asked five days ago", 0], ["the advisory letter, still missing a name", 0], ["the pricing redirect, half written", 0], ["the reply to Prerna about the paperwork", 0], ["the design review blocking the permissions copy", 0]] },
-        { lab: "Why you can trust it", p: "Each one points back at the moment it was promised, so you can reread what you actually said before you answer." }
-      ],
-      mom: [["Gmail", "5 days"], ["Slack", "3 days"], ["Terminal", "Thu"], ["WhatsApp", "Mon"]] },
+    { cap: "A number from a tool with no API, in a tab you closed days ago.",
+      q: "What was that number I saw on the dashboard on Tuesday?",
+      steps: [["Searching what was on screen", "search_content"], ["Opening a moment", "frame_context"], ["Reading the text on it", "ocr"]],
+      say: ["Forty one thousand two hundred, on the Q3 row, at 14:02 on Tuesday.",
+            "It sat behind a login, in a tool with no API, and the tab has been closed since. It is here only because it was on your screen.",
+            "The doc you wrote afterwards still says thirty nine thousand."] },
+
+    { cap: "The command that worked, eleven seconds on screen, gone from your shell history.",
+      q: "What did I actually do that made it work?",
+      steps: [["Searching what was on screen", "search_content"], ["Opening a moment", "frame_context"], ["Looking at how the day went", "activity_summary"]],
+      say: ["The third attempt, at 16:42 on Wednesday. You dropped the flag you had been passing since the first try, and it went through.",
+            "It was on screen for about eleven seconds before you cleared the terminal, so your shell history does not have it.",
+            "The two attempts before it failed the same way, which is why it looked like nothing had changed."] },
+
+    { cap: "Everything one person said to you, gathered before you have to face them again.",
+      q: "Catch me up on Ana before this call.",
+      steps: [["Searching for a person", "search_speakers"], ["Reading a transcript", "meeting_transcript"], ["Querying the archive", "query"]],
+      say: ["You have talked to Ana four times in three weeks. She took the onboarding copy on Monday and asked for the permissions wording by Thursday.",
+            "The last thing she said out loud was that Friday was the real deadline, not next week. You have not answered that.",
+            "She has also said twice that the pricing page confuses her team."] },
+
+    { cap: "Hours counted from the work itself, each line traced back to the screen it came from.",
+      q: "Turn last week into line items for this client.",
+      steps: [["Looking at how the day went", "activity_summary"], ["Querying the archive", "query"], ["Opening a moment", "frame_context"]],
+      say: ["Eleven hours and forty minutes, across four days. Six went to the doc and the deck, three to two calls, the rest to the inbox and the dashboard.",
+            "Every line traces back to the screen it came from, so you can defend it if anyone asks.",
+            "Tuesday carried most of it. On Friday you did not touch this client at all."] },
+
+    { cap: "The moment a decision was made, and who was in the room when it was.",
+      q: "When did we decide the pricing, and who was in the room?",
+      steps: [["Reading a transcript", "meeting_transcript"], ["Searching for a person", "search_speakers"], ["Querying the archive", "query"]],
+      say: ["On the call on the sixth, at minute nineteen. Fourteen people were on it and nobody hit record.",
+            "You said the number, Marco agreed, and Ana asked whether it included onboarding. Nobody answered her.",
+            "The doc was updated two days later with a different number."] },
 
     { cap: "The chore you repeat without noticing, found by how often the same screens come back.",
       q: "What am I doing over and over that a script could do?",
-      title: "The weekly client report", meta: "11 runs in 3 weeks \u00b7 3 sources",
       steps: [["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"], ["Opening a moment", "frame_context"]],
-      secs: [
-        { lab: "Found it", p: "The weekly client report. Eleven times in three weeks, always the same shape: open the dashboard, copy four numbers into a doc, rewrite last week's paragraph, paste the whole thing into an email." },
-        { lab: "What it costs", p: "About forty minutes each time, and it never varies. Nothing in it needs judgement until the final paragraph." },
-        { lab: "Why it is low risk", p: "The output is a draft you read before sending, and every number in it traces back to the screen it came from." }
-      ],
-      mom: [["Dashboard", "11 runs"], ["Docs", "~40 min"], ["Gmail", "3 weeks"]] },
+      say: ["The weekly client report. Eleven runs in three weeks, always the same shape: open the dashboard, copy four numbers, rewrite last week's paragraph, send it.",
+            "About forty minutes each time, and nothing in it needs your judgement until the final paragraph.",
+            "It is the safe kind to hand over, because you read the draft before it goes."] },
 
-    { cap: "One day away, summarised by what actually moved rather than by what got posted.",
-      q: "Catch me up, I was out Thursday.",
-      title: "Thursday, while you were out", meta: "One day \u00b7 3 sources",
-      steps: [["Looking at how the day went", "activity_summary"], ["Reading a transcript", "meeting_transcript"], ["Searching what was on screen", "search_content"]],
-      secs: [
-        { lab: "The call at eleven", p: "Ana walked the team through the new permissions flow and agreed to ship it behind a flag. Your name came up once, on the redirect." },
-        { lab: "Waiting on you", items: [["Marco resent the invoice", 0], ["design asked whether the copy change blocks their review", 0]] }
-      ],
-      mom: [["Meet", "Thu 11:04"], ["Slack", "Thu 14:20"], ["Gmail", "Thu 16:50"]] },
-
-    { cap: "The same sentence, everywhere it was said, and who was in the room each time.",
-      q: "Who was I talking to when this came up?",
-      title: "Said twice, three days apart", meta: "29 July and 1 August \u00b7 3 sources",
-      steps: [["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"], ["Opening a moment", "frame_context"]],
-      secs: [
-        { lab: "Twice", p: "First on the call with Ana on 29 July, at minute fourteen. Then again in the thread with Marco three days later, where you repeated it almost word for word." },
-        { lab: "Which one counts", p: "The first. That is where the number was agreed, and the doc still has not caught up." }
-      ],
-      mom: [["Meet", "29 Jul"], ["WhatsApp", "1 Aug"], ["Notion", "stale"]] },
-
-    { cap: "Hours counted from the work itself, not from a timer you forgot to start.",
-      q: "How much of last week went to this client?",
-      title: "Eleven hours forty", meta: "Four days \u00b7 4 sources",
-      steps: [["Querying the archive", "query"], ["Looking at how the day went", "activity_summary"]],
-      secs: [
-        { lab: "Eleven hours forty", p: "Across four days last week, counted from the work rather than from a stopwatch." },
-        { lab: "Where it went", items: [["six hours in the doc and the deck", 1], ["three on two calls", 1], ["the rest split between the inbox and the dashboard", 1]] },
-        { lab: "The shape of it", p: "Tuesday carried most of it. On Friday you did not touch it at all." }
-      ],
-      mom: [["Docs", "6h"], ["Meet", "3h"], ["Gmail", "1h20"], ["Chrome", "1h20"]] },
-
-    { cap: "What you said you would send, to whom, and whether it ever went.",
-      q: "What did I say I would send, and to whom?",
-      title: "Four promises, three open", meta: "Last fortnight \u00b7 3 sources",
-      steps: [["Searching what was on screen", "search_content"], ["Reading a transcript", "meeting_transcript"]],
-      secs: [
-        { lab: "Four promises, three still open", items: [["the pricing sheet to John, promised for Friday", 0], ["the org chart to Isabela, promised in the thread", 0], ["the advisory draft to Michael, promised Monday", 0], ["the deck to Ana, already sent", 1]] },
-        { lab: "The receipt", p: "Each links back to the sentence where you promised it, so you can see whether you said Friday or next week." }
-      ],
-      mom: [["Meet", "4 Aug"], ["Slack", "6 Aug"], ["WhatsApp", "7 Aug"]] },
-
-    { cap: "A page behind a login, still readable a week after you closed the tab.",
-      q: "Find the dashboard I had open on Tuesday.",
-      title: "Tuesday at 16:40", meta: "One moment \u00b7 2 sources",
-      steps: [["Searching what was on screen", "search_content"], ["Opening a moment", "frame_context"]],
-      secs: [
-        { lab: "Found", p: "Tuesday at 16:40, the analytics dashboard behind your work login. Nothing else on this machine could reach that page." },
-        { lab: "Still here", p: "The screen can be opened and read a week later, with the tab title and everything that was around it." }
-      ],
-      mom: [["Chrome", "Tue 16:40"], ["OCR", "read it"]] }
+    { cap: "A page you read once, still readable a week after you closed the tab.",
+      q: "What did that paper say about the diagram on page three?",
+      steps: [["Searching what was on screen", "search_content"], ["Opening a moment", "frame_context"], ["Reading the text on it", "ocr"]],
+      say: ["You had it open on Thursday for about twenty minutes and stopped on page three.",
+            "The diagram splits the loop into capture and recall, and the paragraph under it argues that the second one is the hard half.",
+            "You closed the tab without saving it anywhere."] }
   ];
 
   var el = function (id) { return document.getElementById(id); };
@@ -1513,8 +1476,7 @@
       send = el("send"), umsg = el("umsg"), bubble = el("bubble"),
       starters = el("starters"), status = el("status"),
       mx = el("mx"), verb = el("verb"), timer = el("timer"), tokens = el("tokens"), ran = el("ran"),
-      capEl = el("caption"), secsEl = el("sections"), srcs = el("srcs"), empty = el("empty"), connect = el("connect"),
-      doc = el("doc"), dtitle = el("dtitle"), dmeta = el("dmeta"),
+      capEl = el("caption"), secsEl = el("sections"), empty = el("empty"), connect = el("connect"),
       btns = [].slice.call(document.querySelectorAll(".scene-btn")), stage = el("stage");
   if (!ctext || !btns.length) return;
 
@@ -1541,28 +1503,17 @@
 
   function paint(s) {
     capEl.textContent = s.cap;
-    secsEl.innerHTML = s.secs.map(function (b) {
-      var inner = b.items
-        ? "<ul>" + b.items.map(function (it) {
-            return '<li class="' + (it[1] ? "done" : "") + '"><i></i><span>' + it[0] + "</span></li>";
-          }).join("") + "</ul>"
-        : "<p>" + b.p + "</p>";
-      return '<div class="sec"><p class="lab">' + b.lab + "</p>" + inner + "</div>";
-    }).join("");
-    srcs.innerHTML = s.mom.map(function (m) {
-      return '<span><i></i>' + m[0] + " &middot; " + m[1] + "</span>";
+    secsEl.innerHTML = s.say.map(function (t) {
+      return '<div class="sec"><p>' + t + "</p></div>";
     }).join("");
     bubble.textContent = s.q;
-    dtitle.textContent = s.title;
-    dmeta.textContent = s.meta;
   }
 
   function reset() {
     ctext.textContent = ""; cph.style.display = ""; caret.classList.add("off");
     composer.classList.remove("hot"); send.classList.remove("hot", "fire");
     umsg.classList.remove("on"); starters.classList.remove("off"); connect.classList.remove("off");
-    empty.classList.remove("off"); status.classList.remove("on"); srcs.classList.remove("on");
-    doc.classList.remove("on");
+    empty.classList.remove("off"); status.classList.remove("on");
     timer.textContent = "0.0s"; tokens.innerHTML = "&darr; 0 tokens";
   }
 
@@ -1581,16 +1532,14 @@
       tokens.innerHTML = "&darr; " + (tk > 999 ? (tk / 1000).toFixed(1) + "k" : tk) + " tokens";
     }, 100);
 
-    var hold = 1500 + s.steps.length * 120;
+    var hold = 1400 + s.steps.length * 120;
     later(function () {
       clearTimers();
       status.classList.remove("on");
-      doc.classList.add("on");
-      s.secs.forEach(function (_, k) {
-        later(function () { secsEl.children[k].classList.add("on"); }, 320 + k * 380);
+      s.say.forEach(function (_, k) {
+        later(function () { secsEl.children[k].classList.add("on"); }, 180 + k * 340);
       });
-      var done = 320 + s.secs.length * 380 + 120;
-      later(function () { srcs.classList.add("on"); }, done);
+      var done = 180 + s.say.length * 340 + 120;
       later(function () { if (auto && visible) run((i + 1) % 4); }, done + 4200);
     }, hold);
   }
@@ -1607,7 +1556,7 @@
 
     if (reduced) {
       umsg.classList.add("on"); starters.classList.add("off"); connect.classList.add("off");
-      empty.classList.add("off"); srcs.classList.add("on"); doc.classList.add("on");
+      empty.classList.add("off");
       [].forEach.call(secsEl.children, function (n) { n.classList.add("on"); });
       return;
     }
