@@ -575,6 +575,7 @@
                   display: grid; place-items: center; font-style: normal;
                   font-size: 15px; font-weight: 500; letter-spacing: .5px;
                   background: #DCE3EC; color: #5B6B7F; }
+  .quote .who img { width: 48px; height: 48px; border-radius: 7px; flex: none; object-fit: cover; display: block; }
   .quote .who .nm { font-size: 14px; line-height: 1.45; }
   .quote .who .nm b { display: block; font-weight: 400; color: var(--ink); }
   .quote .who .nm span { color: var(--muted); }
@@ -909,7 +910,7 @@
           <p>Everything you saw, said and heard stays in one file on your Mac. Your own AI reads it right there, on the account you already pay for. Nothing is uploaded, and nothing leaves the machine.</p>
           <div class="quote">
             <p>&ldquo;Holy shit. I can give my agents persistent context of everything I do, without sending anything to a third party cloud.&rdquo;</p>
-            <div class="who"><i>JD</i><div class="nm"><b>John Doe</b><span>CEO, Acme</span></div></div>
+            <div class="who"><img src="assets/rafael.jpg" alt="" width="48" height="48" loading="lazy"><div class="nm"><b>Rafael Costa</b><span>CEO, Ottic</span></div></div>
           </div>
         </div>
 
@@ -1611,28 +1612,11 @@
       return;
     }
 
-    var c = 0;
-    later(function () {
-      caret.classList.remove("off");
-      composer.classList.add("hot");
-      (function type() {
-        if (c <= s.q.length) {
-          if (c === 1) { cph.style.display = "none"; send.classList.add("hot"); }
-          ctext.textContent = s.q.slice(0, c++);
-          later(type, 17);
-        } else {
-          later(function () {
-            send.classList.add("fire");
-            later(function () { send.classList.remove("fire", "hot"); }, 170);
-            ctext.textContent = ""; cph.style.display = ""; caret.classList.add("off");
-            composer.classList.remove("hot");
-            umsg.classList.add("on"); empty.classList.add("off");
-            starters.classList.add("off"); connect.classList.add("off");
-            later(function () { work(s, i); }, 300);
-          }, 420);
-        }
-      })();
-    }, 320);
+    /* a pergunta ja entra escrita. ver alguem digitar nao conta nada que a
+       propria pergunta nao conte, e atrasava a resposta, que e o argumento */
+    umsg.classList.add("on"); empty.classList.add("off");
+    starters.classList.add("off"); connect.classList.add("off");
+    later(function () { work(s, i); }, 260);
   }
 
   btns.forEach(function (b, i) { b.addEventListener("click", function () { run(i, true); }); });
