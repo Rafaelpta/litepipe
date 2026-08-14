@@ -4,7 +4,7 @@
 
 # litepipe
 
-**Turn your activity into agent memory.**
+**A local memory of everything you have seen, said or heard while you work at your computer.**
 
 It remembers your work. It stays on your Mac. It feeds your AI.
 
