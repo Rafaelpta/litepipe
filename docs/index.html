@@ -72,8 +72,8 @@
   .tagline {
     display: inline-flex; align-items: center; gap: 9px; margin-bottom: 30px;
     padding: 6px 14px 6px 8px; border-radius: 99px; background: var(--white);
-    border: 1px solid var(--rule); font-family: "JetBrains Mono", monospace;
-    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--rule); font-family: "DM Sans", sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--muted);
   }
   .tagline i { width: 6px; height: 6px; border-radius: 99px; background: var(--accent); font-style: normal; animation: pulse 2.4s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
@@ -109,7 +109,7 @@
   .tape-head { display: flex; flex-wrap: wrap; gap: 14px 40px; align-items: baseline; justify-content: space-between; margin-bottom: 34px; }
   .tape-head h2 { font-size: 26px; letter-spacing: -1px; max-width: 22ch; }
   @media (min-width: 700px) { .tape-head h2 { font-size: 32px; letter-spacing: -1.4px; } }
-  .tape-head p { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #7E8A92; }
+  .tape-head p { font-family: "DM Sans", sans-serif; font-size: 13.5px; font-weight: 500; color: #7E8A92; }
   .tape svg { width: 100%; height: auto; display: block; fill: var(--accent-soft); }
   .tape .axis { margin-top: 12px; display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #6B747C; }
   .tape-legend { margin-top: 30px; display: grid; grid-template-columns: 1fr; gap: 20px; }
@@ -381,8 +381,7 @@
   .grounded { margin-top: 40px; border: 1px solid var(--rule-2); border-radius: 12px; overflow: hidden; background: var(--white); }
   .grounded .gh {
     padding: 14px 20px; border-bottom: 1px solid var(--rule);
-    font-family: "JetBrains Mono", monospace; font-size: 10.5px;
-    text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted);
+    font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; color: var(--muted);
     display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between;
   }
   .grounded .gh em { font-style: normal; color: var(--accent); }
@@ -404,7 +403,7 @@
   section { padding: 78px 0; }
   @media (min-width: 800px) { section { padding: 110px 0; } }
 
-  .eyebrow { font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); margin-bottom: 18px; }
+  .eyebrow { font-family: "DM Sans", sans-serif; font-size: 13.5px; font-weight: 500; color: var(--muted); margin-bottom: 18px; }
   .band.dark .eyebrow, .tape-band .eyebrow { color: #7E8A92; }
   h2 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 34px; line-height: 1.06; letter-spacing: -1.5px; max-width: 20ch; text-wrap: balance; }
   @media (min-width: 700px) { h2 { font-size: 46px; letter-spacing: -2.2px; } }
@@ -439,9 +438,8 @@
   #stage-a { height: 606px; }
   .lyr { display: flex; flex-direction: column; height: 100%; padding: 30px 26px 26px; }
   .lyr .step { display: flex; align-items: baseline; gap: 9px; margin-bottom: 9px;
-               font-family: "JetBrains Mono", monospace; font-size: 9.5px;
-               letter-spacing: .13em; text-transform: uppercase; color: var(--muted); }
-  .lyr .step b { color: var(--faint); font-weight: 400; }
+               font-family: "DM Sans", sans-serif; font-size: 12.5px; color: var(--muted); }
+  .lyr .step b { color: var(--faint); font-weight: 400; font-family: "JetBrains Mono", monospace; font-size: 11px; }
 
   .lyr .cap { display: flex; gap: 8px; }
   .lyr .cap .w { flex: 1; border-radius: 6px; background: var(--white);
@@ -487,9 +485,8 @@
                  transition: opacity .6s ease, transform .6s ease; }
   .arch .bound.on { opacity: 1; transform: none; }
   .arch .bound span { position: absolute; top: -8px; left: 22px; padding: 0 8px;
-                      background: var(--paper); font-family: "JetBrains Mono", monospace;
-                      font-size: 9.5px; letter-spacing: .13em;
-                      text-transform: uppercase; color: var(--muted); }
+                      background: var(--paper); font-family: "DM Sans", sans-serif;
+                      font-size: 12px; font-weight: 500; color: var(--muted); }
   .arch .bound em { position: absolute; bottom: -9px; right: 22px; padding: 0 8px;
                     background: var(--paper); font-style: normal; font-size: 11px; color: var(--faint); }
 
@@ -563,8 +560,7 @@
   .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
   .badges span { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px;
                  border-radius: 100px; background: var(--accent-wash); color: var(--accent);
-                 font-family: "JetBrains Mono", monospace; font-size: 10px;
-                 letter-spacing: .12em; text-transform: uppercase; }
+                 font-family: "DM Sans", sans-serif; font-size: 13.5px; font-weight: 500; }
   .badges span i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
   /* a tabela no formato da referencia: marca no cabecalho, e a nossa coluna
@@ -620,8 +616,7 @@
   .filecard span { display: block; margin-top: 8px; font-size: 12.5px; line-height: 1.5; color: #9BA7AF; }
   .filecard em { display: block; margin-top: 14px; padding-top: 12px; font-style: normal;
                  border-top: 1px dashed rgba(255,255,255,.18);
-                 font-family: "JetBrains Mono", monospace; font-size: 9.5px;
-                 letter-spacing: .13em; text-transform: uppercase; color: #6FD9BC; }
+                 font-family: "DM Sans", sans-serif; font-size: 12.5px; color: #6FD9BC; }
 
   /* three phases with drawings */
   .three { margin-top: 54px; display: grid; grid-template-columns: 1fr; gap: 40px; }
@@ -631,7 +626,7 @@
   .three .art svg { width: 100%; height: 100%; }
   .three .step { display: flex; align-items: center; gap: 10px; padding-top: 20px; border-top: 2px solid var(--ink); }
   .three .no { font-family: "JetBrains Mono", monospace; font-size: 10.5px; letter-spacing: 0.1em; color: var(--ground); background: var(--ink); border-radius: 99px; padding: 3px 8px; }
-  .three .k { font-family: "JetBrains Mono", monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+  .three .k { font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); }
   .three h3 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 22px; letter-spacing: -0.7px; line-height: 1.2; margin: 14px 0 12px; text-wrap: balance; }
   .three p { font-size: 15.5px; line-height: 1.75; color: var(--ink-2); }
   .three p + p { margin-top: 12px; }
@@ -667,7 +662,7 @@
   .tablewrap { margin-top: 52px; overflow-x: auto; }
   table { border-collapse: collapse; width: 100%; min-width: 46rem; font-size: 15.5px; }
   th, td { text-align: left; padding: 20px 24px 20px 0; vertical-align: top; }
-  thead th { font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.16em; color: var(--faint); border-bottom: 2px solid rgba(255,255,255,.3); padding-bottom: 14px; }
+  thead th { font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; color: var(--faint); border-bottom: 2px solid rgba(255,255,255,.3); padding-bottom: 14px; }
   thead th.us { color: var(--accent-soft); }
   tbody th { width: 14rem; font-weight: 500; font-size: 15.5px; color: var(--ground); }
   tbody td { color: #97A0A7; line-height: 1.65; }
