@@ -22,8 +22,8 @@ struct MenuBarMenu: View {
         }
 
         Button("Open litepipe") { Self.activate() }
-        Button("Ask about your day") {
-            nav.sidebarItem = .assistant
+        Button("Connect an agent") {
+            nav.sidebarItem = .agents
             Self.activate()
         }
 

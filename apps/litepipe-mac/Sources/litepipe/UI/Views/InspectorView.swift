@@ -13,11 +13,7 @@ struct InspectorView: View {
 
     var body: some View {
         Group {
-            if nav.sidebarItem == .assistant {
-                // The chat has nothing to select, so the column says what it is
-                // instead of what is missing.
-                ChatInspectorNote()
-            } else if let photo = target {
+            if let photo = target {
                 info(photo)
             } else if lib.items.isEmpty {
                 // Nothing has been captured, so there is nothing to have failed

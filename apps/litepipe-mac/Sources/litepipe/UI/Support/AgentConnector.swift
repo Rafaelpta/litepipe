@@ -12,8 +12,10 @@ enum AgentConnector {
         let id: String
         let name: String
         let symbol: String
-        /// Where the answer appears once connected.
-        let answersHere: Bool
+        /// Whether the client has to be restarted before it notices the new
+        /// server. A long running process reads its config once at launch; one
+        /// that is spawned per question picks the wiring up on the next one.
+        let needsRestart: Bool
         /// What has to exist for this to be installed at all.
         let appPath: String
         /// The file the assistant reads its servers from.
@@ -28,17 +30,17 @@ enum AgentConnector {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return [
             Target(id: "claude-desktop", name: "Claude Desktop", symbol: "sparkles",
-                   answersHere: false,
+                   needsRestart: true,
                    appPath: "/Applications/Claude.app",
                    configPath: "\(home)/Library/Application Support/Claude/claude_desktop_config.json",
                    download: "https://claude.ai/download"),
             Target(id: "claude-code", name: "Claude Code", symbol: "terminal",
-                   answersHere: true,
+                   needsRestart: false,
                    appPath: "\(home)/.local/bin/claude",
                    configPath: "\(home)/.claude.json",
                    download: "https://claude.com/claude-code"),
             Target(id: "cursor", name: "Cursor", symbol: "curlybraces",
-                   answersHere: false,
+                   needsRestart: true,
                    appPath: "/Applications/Cursor.app",
                    configPath: "\(home)/.cursor/mcp.json",
                    download: "https://cursor.com"),
@@ -47,12 +49,52 @@ enum AgentConnector {
 
     static var installed: [Target] { targets.filter(\.isInstalled) }
 
-    /// The same wiring the Connect button writes, as a line someone can run
-    /// themselves. Registering it with the CLI rather than editing a file means
-    /// it survives the CLI moving its config, which it has done before.
-    static var claudeCodeCommand: String {
-        "claude mcp add litepipe -- \(serverPath)"
+    /// The same wiring the Connect button writes, as something someone can run or
+    /// paste themselves. Registering through a CLI rather than editing a file means
+    /// it survives that CLI moving its config, which both of them have done before.
+    ///
+    /// Three of them because the button only covers clients whose config is JSON
+    /// under `mcpServers`. Codex keeps TOML in `~/.codex/config.toml`, so it cannot
+    /// be written by the same code, and a page that only spoke Claude left everyone
+    /// else reading a list their agent was not on.
+    enum Recipe: String, CaseIterable, Identifiable {
+        case claudeCode = "Claude Code"
+        case codex = "Codex"
+        case json = "JSON"
+
+        var id: String { rawValue }
+
+        /// What the snippet is for, in the one line under it.
+        var note: String {
+            switch self {
+            case .claudeCode: "Run it in a terminal."
+            case .codex: "Run it in a terminal. Covers the Codex CLI, the ChatGPT app and the IDE extension, which share one config."
+            case .json: "For any other MCP client. Add it to that client's config, next to whatever is already there."
+            }
+        }
     }
+
+    static func recipe(_ kind: Recipe) -> String {
+        switch kind {
+        case .claudeCode:
+            // `--scope user` or the server is registered for the current directory
+            // only, and every session started anywhere else answers as though the
+            // archive does not exist. A memory is not a per project tool. The
+            // Connect button already writes at user scope; this line did not.
+            return "claude mcp add --scope user litepipe -- \(serverPath)"
+        case .codex:
+            return "codex mcp add litepipe -- \(serverPath)"
+        case .json:
+            return """
+                   "litepipe": {
+                     "command": "\(serverPath)",
+                     "args": []
+                   }
+                   """
+        }
+    }
+
+    static var claudeCodeCommand: String { recipe(.claudeCode) }
 
     // MARK: - Requirements
 

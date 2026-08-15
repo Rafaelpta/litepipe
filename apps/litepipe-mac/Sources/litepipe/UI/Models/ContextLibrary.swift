@@ -209,8 +209,8 @@ final class ContextLibrary {
             case .share(let name): base = shareSlice(name, visible)
             case .firewall, .firewallRules:
                 base = visible.filter { $0.source == .chat || $0.source == .email }
-            // The assistant has no grid of its own; it reads whatever else is selected.
-            case .assistant:      base = []
+            // A written page about connecting, with no grid behind it.
+            case .agents:         base = []
             case .connectedApps:  base = visible.filter { $0.source == .terminal || $0.source == .editor }
             case .blocked:        base = visible.filter { matches($0, ["password", "secret", "api key", "token", "senha"]) }
             case .requests:       base = Array(visible.filter { $0.source == .meeting }.suffix(20))

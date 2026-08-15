@@ -8,10 +8,10 @@ struct SidebarView: View {
     var body: some View {
         @Bindable var nav = nav
         List(selection: $nav.sidebarItem) {
-            // Above the sections, with no header of its own — the way New Chat
-            // sits above everything in a chat app.
+            // Above the sections, with no header of its own. An archive nothing
+            // reads is not worth keeping, so the way in sits first.
             Section {
-                row(.assistant, "sparkles.rectangle.stack")
+                row(.agents, "powerplug")
             }
 
             Section("Capture") {
