@@ -176,13 +176,24 @@ enum Tools {
     private static let meetingTranscript = Tool(
         name: "meeting_transcript",
         title: "Read a meeting transcript",
-        description: "The transcript of one meeting, in order, with speakers and times.",
+        description: "The transcript of one meeting, in order, with speakers and times. "
+                   + "Unnamed voices come back numbered, which is what diarisation "
+                   + "produces until somebody names them.",
         schema: object(["meeting_id": integer("From list_meetings.")], required: ["meeting_id"])
     ) { args in
         guard let id = int(args, "meeting_id") else { throw Err("meeting_id is required.") }
+        // This is the one table that does not follow the `timestamp` convention the
+        // rest of the archive uses, and asking for the convention rather than the
+        // column made every call fail with `no such column: timestamp`.
+        //
+        // speaker_name is written by whoever named the voice, which is nobody so
+        // far, so the id is the only identity that exists and the fallback carries
+        // it rather than printing the same '?' against four different people.
         let rows = try Archive.rows("""
-            SELECT time(timestamp), COALESCE(speaker,'?'), COALESCE(transcription,'')
-            FROM meeting_transcript_segments WHERE meeting_id = ? ORDER BY timestamp;
+            SELECT time(captured_at),
+                   COALESCE(NULLIF(speaker_name,''), 'speaker ' || speaker_id, '?'),
+                   COALESCE(transcript,'')
+            FROM meeting_transcript_segments WHERE meeting_id = ? ORDER BY captured_at;
             """, [String(id)])
         guard !rows.isEmpty else { return "Meeting \(id) has no transcript." }
         var out = ""
@@ -263,8 +274,12 @@ enum Tools {
             clicked and copied; event_type includes 'text', 'click', 'clipboard'.
 
             Also ocr_text(frame_id, text), meetings(id, meeting_start, meeting_end, \
-            meeting_app), meeting_transcript_segments(meeting_id, timestamp, speaker, \
-            transcription), video_chunks(id, file_path, fps).
+            meeting_app, title), video_chunks(id, file_path, fps).
+
+            meeting_transcript_segments(meeting_id, captured_at, speaker_name, \
+            transcript, speaker_id) is the one table that does not name its time \
+            column `timestamp`: it is `captured_at`. speaker_name is usually empty \
+            and speaker_id is what identifies a voice.
             """,
         schema: object(["sql": string("A single SELECT statement.")], required: ["sql"])
     ) { args in
