@@ -22,8 +22,12 @@ can check for itself.
 ### Claude Code
 
 ```
-claude mcp add litepipe -- /Applications/litepipe.app/Contents/MacOS/litepipe-mcp
+claude mcp add --scope user litepipe -- /Applications/litepipe.app/Contents/MacOS/litepipe-mcp
 ```
+
+Without `--scope user` the server is registered for the current directory only, and
+every session started anywhere else answers as though the archive does not exist.
+A memory is not a per project tool.
 
 ### Claude Desktop
 
