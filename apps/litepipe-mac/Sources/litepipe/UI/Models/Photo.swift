@@ -178,9 +178,9 @@ enum ViewMode: String, CaseIterable, Identifiable {
 /// Capture is the raw append-only stream, Collections are recomputable indexes over it,
 /// Memory is the small distilled layer an agent reads.
 enum SidebarItem: Hashable {
-    /// Talking to the archive. Sits above everything because it is the one place
-    /// you go with a question rather than a place to browse.
-    case assistant
+    /// Pointing an agent at the archive. Sits above everything because it is the
+    /// one row that is about using this memory rather than browsing it.
+    case agents
     // Capture — the raw stream
     case timeline, highlights, places, today, recentlyDeleted
     // Collections — derived structure
@@ -202,6 +202,10 @@ enum SidebarItem: Hashable {
     /// emptiness up as three different features.
     var page: SidebarItem? {
         switch self {
+        // A written page rather than a grid, which is also how the inspector
+        // learns to stay out of its way.
+        case .agents:
+            .agents
         case .agentMemory, .facts, .playbooks, .sops, .memoryTarget:
             .agentMemory
         case .firewall, .firewallRules, .connectedApps, .blocked:
@@ -220,7 +224,7 @@ enum SidebarItem: Hashable {
 
     var displayName: String {
         switch self {
-        case .assistant: "Chat"
+        case .agents: "Agents"
         case .timeline: "Timeline"
         case .highlights: "Highlights"
         case .places: "Places"

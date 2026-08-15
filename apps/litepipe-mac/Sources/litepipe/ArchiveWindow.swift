@@ -47,7 +47,6 @@ struct ArchiveWindow: View {
                     .environment(models.library)
                     .environment(models.nav)
                     .environment(models.selection)
-                    .environment(models.chat)
             } else {
                 // Before the grants there is nothing captured to show, so the
                 // window opens on the ask instead of an empty grid.
@@ -87,7 +86,6 @@ final class ArchiveModels {
     let library: ContextLibrary
     let nav = NavigationState()
     let selection = SelectionModel()
-    let chat = ChatModel()
     /// Owns the permission flow. It reads the live grants at startup and decides
     /// whether this window opens on the archive or on the ask.
     let onboarding = OnboardingModel()

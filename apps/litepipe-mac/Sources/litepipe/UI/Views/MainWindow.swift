@@ -44,7 +44,6 @@ struct ContentColumn: View {
     @Environment(NavigationState.self) private var nav
     @Environment(ContextLibrary.self) private var lib
     @Environment(SelectionModel.self) private var sel
-    @Environment(ChatModel.self) private var chat
     @Namespace private var heroNS
 
     /// `monitor_1` is the engine's name for it, not a person's.
@@ -87,8 +86,8 @@ struct ContentColumn: View {
 
     @ViewBuilder private var mainContent: some View {
         let photos = currentPhotos
-        if nav.sidebarItem == .assistant {
-            ChatPane()
+        if nav.sidebarItem == .agents {
+            ConnectAgentsView()
         } else if nav.sidebarItem == .places {
             MapPane(photos: photos)
         } else if let page = nav.sidebarItem.page {
@@ -203,13 +202,6 @@ struct ContentColumn: View {
     }
 
     @ToolbarContentBuilder private var gridToolbar: some ToolbarContent {
-        if nav.sidebarItem == .assistant {
-            ToolbarItem {
-                Button { chat.reset() } label: { Label("New Chat", systemImage: "square.and.pencil") }
-                    .help("Start a new conversation")
-                    .disabled(chat.turns.isEmpty)
-            }
-        }
         if isTimeline {
             ToolbarItem(placement: .principal) {
                 @Bindable var nav = nav
@@ -226,7 +218,7 @@ struct ContentColumn: View {
             }
         }
         ToolbarItemGroup {
-            if nav.sidebarItem != .assistant {
+            if nav.sidebarItem != .agents {
             Picker("Mode", selection: Binding(
                 get: { nav.rawMode },
                 set: { raw in
@@ -246,7 +238,7 @@ struct ContentColumn: View {
             // Only worth the space on a machine with more than one screen. The
             // engine captures every display at once, so without this every window
             // appears twice: once under a picture of the display it was not on.
-            if lib.monitors.count > 1, nav.sidebarItem != .assistant {
+            if lib.monitors.count > 1, nav.sidebarItem != .agents {
                 Picker("Display", selection: Binding(
                     get: { nav.monitor },
                     set: { nav.monitor = $0; sel.clear() }
@@ -260,7 +252,7 @@ struct ContentColumn: View {
                 .help("A capture's text comes from the window in focus, its picture from a whole screen. On the screen that did not hold the focused window the two will not match.")
             }
 
-            if nav.sidebarItem != .places, nav.sidebarItem != .assistant,
+            if nav.sidebarItem != .places, nav.sidebarItem != .agents,
                !isTimeline || nav.viewMode == .days || nav.viewMode == .all {
                 Slider(value: Binding(
                     get: { nav.zoomLevel },

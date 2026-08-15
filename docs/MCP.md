@@ -44,14 +44,37 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
+### Codex
+
+```
+codex mcp add litepipe -- /Applications/litepipe.app/Contents/MacOS/litepipe-mcp
+```
+
+Or write it into `~/.codex/config.toml` yourself, which is TOML rather than JSON:
+
+```toml
+[mcp_servers.litepipe]
+command = "/Applications/litepipe.app/Contents/MacOS/litepipe-mcp"
+args = []
+```
+
+The Codex CLI, the ChatGPT desktop app and the IDE extension read the same file, so
+connecting once covers all three.
+
 ### Cursor
 
 The same entry, in `~/.cursor/mcp.json`.
 
+### Anything else
+
+Every MCP client takes the same two facts: a command to spawn and no arguments. If
+it reads JSON, the Claude Desktop block above is the shape. If it reads TOML, the
+Codex block is. There is no port and no key to configure either way.
+
 ### Or use the app
 
-Open litepipe, go to Connect, and pick the client. It writes the same entry and
-leaves any other servers in the file alone.
+Open litepipe and pick the client under Agents, the first row of the sidebar. It
+writes the same entry and leaves any other servers in the file alone.
 
 > **Move the app to Applications first.** If you run litepipe straight from the
 > mounted disk image, the path written into the config points at `/Volumes/...`,
@@ -189,6 +212,19 @@ meetings(id, meeting_start, meeting_end, meeting_app)
 meeting_transcript_segments(meeting_id, timestamp, speaker, transcription)
 video_chunks(id, file_path, fps)
 ```
+
+## Try asking it
+
+Questions worth starting with, once a few days have been captured. Ask them in
+your agent, in its own window. litepipe holds the archive and answers nothing on
+its own, which is the whole arrangement.
+
+* What did I do yesterday?
+* What are my top five open loops right now?
+* Find one repeated, costly workflow that could become a useful low risk automation
+* Generate a small batch of LinkedIn post drafts based on my recent activity
+
+The same four are on the Agents page in the app, ready to copy.
 
 ## Try it without a client
 
