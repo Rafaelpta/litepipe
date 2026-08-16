@@ -44,6 +44,11 @@ func toolResult(_ id: Any, text: String, isError: Bool = false) {
     reply(id, ["content": [["type": "text", "text": text]], "isError": isError])
 }
 
+/// The number the app was built with. Read from the bundle this binary sits in,
+/// which is the only copy that has one: a `swift build` result answers `dev`.
+let bundledVersion: String =
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+
 // MARK: - Loop
 
 note("started, archive at \(ContextDB.defaultPath)")
@@ -72,7 +77,10 @@ while let line = readLine(strippingNewline: true) {
         reply(id as Any, [
             "protocolVersion": version,
             "capabilities": ["tools": [:] as [String: Any]],
-            "serverInfo": ["name": "litepipe", "version": "0.3.0"],
+            // Read from the bundle the binary sits in rather than typed here, where
+            // it went stale the first time the app shipped a new number and told
+            // every client it was still 0.3.0.
+            "serverInfo": ["name": "litepipe", "version": bundledVersion],
             "instructions": """
                 litepipe is a local archive of everything this Mac has shown, said or heard: \
                 screen text captured as it changed, plus meeting transcripts. It is read only.
