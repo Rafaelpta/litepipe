@@ -81,13 +81,23 @@ def main():
     print(f"{len(declared)} tools declared: {', '.join(sorted(declared))}\n")
 
     meeting_id = one_value(bridge, "SELECT id FROM meetings ORDER BY meeting_start DESC LIMIT 1")
-    frame_id = one_value(bridge, "SELECT id FROM frames ORDER BY timestamp DESC LIMIT 1")
+    # The wordiest screen in the archive, not the newest one. A result longer than
+    # the character cap takes a different path out of the reader, and that path
+    # used to hand back a row with one column, which crashed every caller that
+    # reads a fixed one. Picking the largest exercises it on purpose.
+    frame_id = one_value(bridge, """
+        SELECT id FROM frames
+        ORDER BY length(COALESCE(NULLIF(full_text,''), accessibility_text, '')) DESC LIMIT 1
+        """)
 
     checks = [
         ("search_content", {"query": "the", "limit": 3}),
+        # Enough hits to run past the cap.
+        ("search_content", {"query": "the", "limit": 100}),
         ("activity_summary", {}),
         ("list_meetings", {"limit": 3}),
         ("query", {"sql": "SELECT count(*) FROM frames"}),
+        ("query", {"sql": "SELECT id, full_text FROM frames ORDER BY id DESC LIMIT 200"}),
     ]
     if meeting_id:
         checks.append(("meeting_transcript", {"meeting_id": int(meeting_id)}))

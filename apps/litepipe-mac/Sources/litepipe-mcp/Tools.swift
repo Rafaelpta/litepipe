@@ -217,17 +217,26 @@ enum Tools {
     ) { args in
         guard let id = int(args, "frame_id") else { throw Err("frame_id is required.") }
         let n = min(int(args, "neighbours") ?? 2, 10)
+        // Cut the text in SQL rather than letting the reader drop the whole row
+        // for being too long: a busy screen holds more than the cap on its own,
+        // and answering "truncated" to a request for one moment is not an answer.
+        let textCap = 8000
         let centre = try Archive.rows("""
             SELECT timestamp, COALESCE(app_name,''), COALESCE(window_name,''),
-                   COALESCE(browser_url,''), COALESCE(NULLIF(full_text,''), COALESCE(accessibility_text,''))
+                   COALESCE(browser_url,''),
+                   substr(COALESCE(NULLIF(full_text,''), accessibility_text, ''), 1, \(textCap)),
+                   length(COALESCE(NULLIF(full_text,''), accessibility_text, ''))
             FROM frames WHERE id = ?;
             """, [String(id)])
-        guard let c = centre.first else { throw Err("No frame with id \(id).") }
+        guard let c = centre.first, c.count >= 6 else { throw Err("No frame with id \(id).") }
 
         var out = "frame \(id) — \(c[0])\n\(c[1])"
         if !c[2].isEmpty { out += " — \(c[2])" }
         if !c[3].isEmpty { out += "\n\(c[3])" }
         out += "\n\n\(c[4])\n"
+        if let full = Int(c[5]), full > textCap {
+            out += "\n… \(full - textCap) more characters on this screen\n"
+        }
 
         let around = try Archive.rows("""
             SELECT id, timestamp, COALESCE(app_name,''), COALESCE(window_name,'')
@@ -374,7 +383,13 @@ enum Archive {
             }
             size += row.reduce(0) { $0 + $1.count }
             if size > Tools.maxChars {
-                out.append(["… truncated at \(Tools.maxChars) characters, narrow the query for more"])
+                // Full width, or the callers that read a fixed column crash the
+                // whole process on the row that says the answer was cut short.
+                // Three of the six tools index by position, and one screen with
+                // more text than the cap was enough to take the server down.
+                var note = ["… truncated at \(Tools.maxChars) characters, narrow the query for more"]
+                note.append(contentsOf: Array(repeating: "", count: max(0, cols - 1)))
+                out.append(note)
                 break
             }
             out.append(row)
