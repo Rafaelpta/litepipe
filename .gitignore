@@ -57,6 +57,10 @@ app.py
 *.py3z
 __pycache__/
 
+# The blanket rules above are for stray scripts and virtualenvs, not for the
+# tooling the mac app is built and checked with.
+!apps/litepipe-mac/scripts/*.py
+
 screenpipe-app-tauri/src-tauri/.next/
 .vercel
 .wrangler/
