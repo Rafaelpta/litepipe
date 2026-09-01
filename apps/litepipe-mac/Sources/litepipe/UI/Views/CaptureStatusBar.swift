@@ -22,6 +22,10 @@ struct CaptureStatusBar: View {
             .padding(.top, 9)
             .padding(.bottom, 10)
         }
+        // The sidebar pins this strip with safeAreaInset, so the list scrolls
+        // underneath it. Without a background of its own the rows show straight
+        // through the status line.
+        .background(.bar)
         .sheet(isPresented: $showExclusions) { ExclusionsSheet() }
         .confirmationDialog(
             confirmDelete.map { "Delete \($0.label.lowercased())?" } ?? "",
