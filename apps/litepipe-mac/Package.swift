@@ -22,6 +22,14 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("sqlite3")
             ]
+        ),
+        // The shortcut binding is a value type with no AppKit event plumbing,
+        // so the rules that keep a global hotkey from firing by accident can be
+        // checked without a running app.
+        .testTarget(
+            name: "litepipeTests",
+            dependencies: ["litepipe"],
+            path: "Tests/litepipeTests"
         )
     ]
 )

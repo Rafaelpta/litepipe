@@ -60,9 +60,6 @@ final class EngineController: ObservableObject {
         UserDefaults.standard.set(k, forKey: "engine.apikey")
         return k
     }()
-    private var hotkeyMonitor: Any?
-    private var chordActive = false
-    private var chordDirty = false
     // During a meeting the hotkey (and pause button) end the meeting cleanly
     // instead of killing the capture engine. Returns true when a meeting was
     // active and consumed the action. Set by the companion; if the tap was
@@ -275,38 +272,21 @@ final class EngineController: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.start() }
     }
 
-    // MARK: - Global shortcut (option+control toggles context awareness)
+    // MARK: - Global shortcut
 
-    // A global .flagsChanged monitor toggles pause/resume when control+option are
-    // pressed together (needs Accessibility, which litepipe already has). Debounced
-    // so holding the chord fires once.
+    // The shortcut itself lives in GlobalHotkey, which matches a key the user
+    // chose rather than watching for a bare chord on the way up.
     private func startHotkey() {
-        guard hotkeyMonitor == nil else { return }
-        // A quick TAP of the chord toggles on release. Any other key pressed
-        // while it is down (window managers and app shortcuts use
-        // control+option plus another key) marks the chord dirty and the
-        // release does nothing — so those shortcuts no longer pause capture.
-        hotkeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] e in
-            guard let self else { return }
-            if e.type == .keyDown {
-                if self.chordActive { self.chordDirty = true }
-                return
-            }
-            let both = e.modifierFlags.contains(.control) && e.modifierFlags.contains(.option)
-            if both, !self.chordActive {
-                self.chordActive = true
-                self.chordDirty = false
-            } else if !both, self.chordActive {
-                self.chordActive = false
-                if !self.chordDirty {
-                    DispatchQueue.main.async {
-                        if self.meetingAbort?() == true {
-                            litepipeLog("hotkey ended the meeting transcription")
-                            self.playCue(paused: true)
-                            return
-                        }
-                        self.togglePause(source: "hotkey")
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                GlobalHotkey.shared.start { [weak self] in
+                    guard let self else { return }
+                    if self.meetingAbort?() == true {
+                        litepipeLog("hotkey ended the meeting transcription")
+                        self.playCue(paused: true)
+                        return
                     }
+                    self.togglePause(source: "hotkey")
                 }
             }
         }

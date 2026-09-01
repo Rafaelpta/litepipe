@@ -365,17 +365,97 @@ private func byteString(_ b: Int64) -> String {
 // MARK: - Shortcuts
 
 private struct ShortcutsPane: View {
+    @State private var binding: HotkeyBinding? = HotkeyBinding.current
+    @State private var recording = false
+    @State private var problem: String?
+    @State private var recorder: Any?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Shortcuts").font(.system(size: 18, weight: .semibold)).foregroundColor(DS.Colors.fg)
             HStack {
                 Text("Pause / resume context awareness").font(.system(size: 13)).foregroundColor(DS.Colors.dim)
                 Spacer()
-                keycap("⌥"); keycap("⌃")
+                shortcutDisplay
             }
+            .contentShape(Rectangle())
+            .onTapGesture { recording ? cancel() : record() }
             .padding(12).background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.03)))
+
+            HStack(spacing: 8) {
+                Button(recording ? "Cancel" : "Change") { recording ? cancel() : record() }
+                Button("Clear") { clear() }.disabled(binding == nil || recording)
+            }
+            .font(.system(size: 12))
+
+            if let problem {
+                Text(problem).font(.system(size: 11)).foregroundColor(.orange)
+            }
+            Text("A shortcut needs a key and at least one modifier. Modifiers on their own fire by accident, because the app cannot tell them from a hand on the way to another shortcut.")
+                .font(.system(size: 11)).foregroundColor(DS.Colors.faint).fixedSize(horizontal: false, vertical: true)
+        }
+        .onDisappear { stopRecording() }
+    }
+
+    @ViewBuilder private var shortcutDisplay: some View {
+        if recording {
+            Text("Press a shortcut…").font(.system(size: 11)).foregroundColor(.orange)
+        } else if let binding {
+            HStack(spacing: 4) {
+                ForEach(Array(binding.keycaps().enumerated()), id: \.offset) { _, cap in keycap(cap) }
+            }
+        } else {
+            Text("Off").font(.system(size: 11)).foregroundColor(DS.Colors.faint)
         }
     }
+
+    // MARK: - Recording
+
+    /// The shortcut is unregistered while recording, so pressing the current one
+    /// to replace it does not pause capture on the way past.
+    private func record() {
+        problem = nil
+        recording = true
+        GlobalHotkey.shared.stop()
+        recorder = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { e in
+            capture(e)
+            return nil
+        }
+    }
+
+    private func capture(_ e: NSEvent) {
+        if e.keyCode == 53 { cancel(); return } // escape
+        let label = HotkeyBinding.name(forKeyCode: e.keyCode, characters: e.charactersIgnoringModifiers)
+        guard let chosen = HotkeyBinding(keyCode: e.keyCode, modifiers: e.modifierFlags, label: label) else {
+            problem = "Hold ⌘, ⌃, ⌥ or ⇧ with the key."
+            return // stay in recording mode so the next press can succeed
+        }
+        binding = chosen
+        HotkeyBinding.current = chosen
+        problem = nil
+        stopRecording()
+    }
+
+    private func cancel() {
+        problem = nil
+        stopRecording()
+    }
+
+    // No need to touch the monitor: it reads the current binding on every
+    // event, so clearing the setting is enough to make it match nothing.
+    private func clear() {
+        binding = nil
+        HotkeyBinding.current = nil
+        problem = nil
+    }
+
+    private func stopRecording() {
+        if let recorder { NSEvent.removeMonitor(recorder) }
+        recorder = nil
+        recording = false
+        GlobalHotkey.shared.reload()
+    }
+
     private func keycap(_ s: String) -> some View {
         Text(s).font(.system(size: 11, weight: .medium)).foregroundColor(DS.Colors.dim)
             .frame(minWidth: 20).padding(.horizontal, 5).padding(.vertical, 3)
