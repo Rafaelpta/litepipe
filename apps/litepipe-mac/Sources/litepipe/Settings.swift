@@ -80,6 +80,10 @@ enum DataStore {
 }
 
 final class SettingsController {
+    /// The one instance, so the menu bar item and ⌘, raise the same window
+    /// rather than each building their own.
+    @MainActor static let shared = SettingsController(engine: EngineController.shared)
+
     private var window: NSWindow?
     private let engine: EngineController
     init(engine: EngineController) { self.engine = engine }

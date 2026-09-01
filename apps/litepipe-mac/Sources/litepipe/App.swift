@@ -75,6 +75,12 @@ struct ArchiveCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        // Without this the window exists and nothing can open it: the app had
+        // no Settings command at all, so ⌘, did nothing.
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") { SettingsController.shared.show() }
+                .keyboardShortcut(",", modifiers: .command)
+        }
         CommandGroup(after: .windowArrangement) {
             Button("litepipe Archive") {
                 openWindow(id: LitepipeApp.archiveWindowID)

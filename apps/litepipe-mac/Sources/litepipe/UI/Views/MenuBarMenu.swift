@@ -22,6 +22,10 @@ struct MenuBarMenu: View {
         }
 
         Button("Open litepipe") { Self.activate() }
+        Button("Settings…") {
+            NSApp.activate(ignoringOtherApps: true)
+            SettingsController.shared.show()
+        }
         Button("Connect an agent") {
             nav.sidebarItem = .agents
             Self.activate()
